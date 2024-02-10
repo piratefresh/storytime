@@ -11,7 +11,39 @@
     },
     "dev": {
       "cache": false,
-      "persistent": true
+      "persistent": true,
+      "dependsOn": ["^build"]
+    },
+    "db:generate": {
+      "cache": false,
+      "dotEnv": [".env"],
+      "dependsOn": ["^build"]
+    },
+    "db:push": {
+      "cache": false,
+      "dotEnv": [".env"],
+      "dependsOn": ["^build"]
+    },
+    "db:studio": {
+      "cache": false,
+      "dotEnv": [".env"],
+      "dependsOn": ["^build"]
+    },
+    "db:drop": {
+      "cache": false,
+      "dotEnv": [".env"],
+      "dependsOn": ["^build"]
+    },
+    "web:dev": {
+      "cache": false,
+      "dotEnv": [".env"],
+      "dependsOn": ["^build"]
+    },
+    "email:dev": {
+      "cache": false,
+      "dotEnv": [".env"],
+      "dependsOn": ["^build"]
     }
-  }
+  },
+  "globalEnv": ["DATABASE_URL"]
 }

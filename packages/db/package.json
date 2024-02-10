@@ -1,0 +1,23 @@
+{
+  "name": "@repo/db",
+  "version": "1.0.0",
+  "description": "",
+  "main": "./index.ts",
+  "types": "./index.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "db:generate": "dotenv -e .env prisma generate",
+    "db:push": "dotenv -e .env prisma db push --skip-generate",
+    "db:studio": "npx prisma studio",
+    "db:drop": "dotenv -e .env prisma db push --force-reset"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "prisma": "^5.9.1"
+  },
+  "dependencies": {
+    "@prisma/client": "5.9.1"
+  }
+}

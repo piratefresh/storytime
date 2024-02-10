@@ -1,0 +1,90 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id             String  @id @default(uuid())
+  email          String
+  emailVerified  Boolean @default(false)
+  hashedPassword String
+  firstName      String?
+  lastName       String?
+  stories        Story[]
+
+  sessions              Session[]
+  OAuthAccount          OAuthAccount[]
+  EmailVerificationCode EmailVerificationCode[]
+}
+
+model OAuthAccount {
+  providerId     String @id
+  providerUserId String
+  userId         String
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Session {
+  id        String   @id
+  userId    String
+  expiresAt DateTime
+  user      User     @relation(references: [id], fields: [userId], onDelete: Cascade)
+}
+
+model EmailVerificationCode {
+  id        String   @id @default(uuid())
+  email     String
+  code      String
+  createdAt DateTime @default(now())
+  userId    String
+  expiresAt DateTime
+
+  user User @relation(fields: [userId], references: [id])
+}
+
+model Story {
+  id          String      @id @default(uuid())
+  title       String
+  description String?
+  status      String // Could be an enum: Enum StoryStatus { PLANNING, DRAFTING, COMPLETED, etc. }
+  ownerId     String
+  owner       User        @relation(fields: [ownerId], references: [id])
+  assets      Asset[]
+  characters  Character[]
+  settings    Setting[]
+}
+
+model Asset {
+  id          String   @id @default(uuid())
+  name        String
+  type        String // Could be an enum: Enum AssetType { IMAGE, DOCUMENT, AUDIO, etc. }
+  description String?
+  tags        String[]
+  storyId     String
+  story       Story    @relation(fields: [storyId], references: [id])
+}
+
+model Character {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+  storyId     String
+  story       Story   @relation(fields: [storyId], references: [id])
+}
+
+model Setting {
+  id          String  @id @default(uuid())
+  name        String
+  description String?
+  location    String?
+  storyId     String
+  story       Story   @relation(fields: [storyId], references: [id])
+}

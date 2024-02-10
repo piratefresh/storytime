@@ -6,13 +6,26 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint . --max-warnings 0"
+    "lint": "eslint . --max-warnings 0",
+    "web:dev": "next dev",
+    "email:dev": "email dev"
   },
   "dependencies": {
+    "@hookform/resolvers": "^3.3.4",
+    "@lucia-auth/adapter-prisma": "^4.0.0",
+    "@react-email/components": "0.0.14",
+    "@repo/db": "workspace:*",
     "@repo/ui": "workspace:*",
+    "lucia": "^3.0.1",
     "next": "^14.0.4",
+    "oslo": "^1.1.0",
     "react": "^18.2.0",
-    "react-dom": "^18.2.0"
+    "react-dom": "^18.2.0",
+    "react-email": "2.0.0",
+    "react-hook-form": "^7.49.3",
+    "resend": "^3.1.0",
+    "sonner": "^1.4.0",
+    "zod": "^3.22.4"
   },
   "devDependencies": {
     "@next/eslint-plugin-next": "^14.0.4",
@@ -20,9 +33,10 @@
     "@repo/typescript-config": "workspace:*",
     "@types/eslint": "^8.56.1",
     "@types/node": "^20.10.6",
-    "@types/react": "^18.2.46",
+    "@types/react": "^18.2.52",
     "@types/react-dom": "^18.2.18",
     "eslint": "^8.56.0",
+    "prisma": "^5.9.1",
     "typescript": "^5.3.3"
   }
 }
