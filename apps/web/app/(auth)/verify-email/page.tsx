@@ -11,7 +11,7 @@ function VerifyUserPage({
   const code = searchParams?.code;
   const email = searchParams?.email;
   return (
-    <div>
+    <div className="bg-red">
       <h1>Welcome, {code}!</h1>
 
       <VerifyEmailForm code={code as string} />

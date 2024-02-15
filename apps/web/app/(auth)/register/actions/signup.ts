@@ -58,7 +58,7 @@ export async function signup(data: FormData) {
 
   if (user) {
     return {
-      error: "email already in use",
+      error: "Email already in use",
     };
   }
   await db.user.create({

@@ -16,8 +16,7 @@ export async function login(formData: FormData) {
   // If form validation fails, return errors early. Otherwise, continue.
   if (!validatedFields.success) {
     return {
-      errors: validatedFields.error.flatten().fieldErrors,
-      message: "Missing Fields. Failed to Create Invoice.",
+      error: "Missing Fields. Failed to Create Invoice.",
     };
   }
   const email = formData.email;
@@ -40,7 +39,7 @@ export async function login(formData: FormData) {
     // it is crucial your implementation is protected against brute-force attacks with login throttling etc.
     // If usernames are public, you may outright tell the user that the username is invalid.
     return {
-      errors: "Incorrect username or password",
+      error: "Incorrect username or password",
     };
   }
 
@@ -53,7 +52,7 @@ export async function login(formData: FormData) {
 
   if (!validPassword) {
     return {
-      errors: "Incorrect username or password",
+      error: "Incorrect username or password",
     };
   }
 

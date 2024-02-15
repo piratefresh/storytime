@@ -14,7 +14,7 @@ model User {
   id             String  @id @default(uuid())
   email          String
   emailVerified  Boolean @default(false)
-  hashedPassword String
+  hashedPassword String?
   firstName      String?
   lastName       String?
   stories        Story[]

@@ -4,8 +4,18 @@ import { useFormState, useFormStatus } from "react-dom";
 import { login } from "@/app/(auth)/login/actions/login";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-
 import { z } from "zod";
+import {
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "./ui/form";
+import { Input } from "./ui/input";
+import { Button } from "./ui/button";
 
 export const userAuthSchema = z.object({
   email: z.string().email(),
@@ -21,34 +31,66 @@ export function LoginForm() {
 
   const onAction = async () => {
     const valid = await form.trigger();
-    if (valid) login(form.getValues());
+    if (valid) {
+      const response = await login(form.getValues());
+      if (response.error) {
+        form.setError("root.serverError", {
+          type: `${response.error}`,
+        });
+      }
+    }
   };
 
-  const [state, dispatch] = useFormState(onAction, null);
+  const [state, dispatch] = useFormState(onAction, undefined);
 
   const { errors } = form.formState;
 
-  console.log("state: ", state);
-
   return (
-    <form action={dispatch}>
-      <input {...form.register("email")} />
-      <p>{errors.email?.message}</p>
+    <Form {...form}>
+      <form action={dispatch} className="flex flex-col gap-4">
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <FormControl>
+                <Input placeholder="shadcn" {...field} />
+              </FormControl>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
 
-      <input {...form.register("password")} />
-      <p>{errors.password?.message}</p>
+        <FormField
+          control={form.control}
+          name="password"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Password</FormLabel>
+              <FormControl>
+                <Input placeholder="shadcn" type="password" {...field} />
+              </FormControl>
 
-      <Button />
-    </form>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+
+        <FormMessage>{errors.root?.serverError?.type}</FormMessage>
+
+        <SubmitButton />
+      </form>
+    </Form>
   );
 }
 
-const Button = () => {
+const SubmitButton = () => {
   const status = useFormStatus();
-  console.log("status: ", status);
+
   return (
-    <button disabled={status.pending} type="submit">
+    <Button disabled={status.pending} type="submit">
       Submit
-    </button>
+    </Button>
   );
 };

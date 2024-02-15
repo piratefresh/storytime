@@ -5,6 +5,7 @@ import styles from "./page.module.css";
 import { Button } from "@repo/ui/button";
 import { logout } from "./(auth)/logout/actions/logout";
 import { LogoutForm } from "@/components/logout-form";
+import { validateRequest } from "@/lib/auth";
 
 function Gradient({
   conic,
@@ -53,7 +54,8 @@ const LINKS = [
   },
 ];
 
-export default function Page(): JSX.Element {
+export default async function Page(): Promise<JSX.Element> {
+  const { user } = await validateRequest();
   return (
     <main className={styles.main}>
       <div className={styles.description}>
@@ -61,6 +63,7 @@ export default function Page(): JSX.Element {
           examples/basic&nbsp;
           <Code className={styles.code}>web</Code>
         </p>
+        {user ? <h1>I am, {user.email}</h1> : null}
         <div>
           <a
             href="https://vercel.com?utm_source=create-turbo&utm_medium=basic&utm_campaign=create-turbo"

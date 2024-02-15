@@ -1,6 +1,12 @@
 import { LoginForm } from "@/components/login-form";
 import { validateRequest } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import {
+  TypographyP,
+  TypographyH1,
+  TypographyH2,
+} from "@/components/ui/typography";
+import { UserAuthForm } from "@/components/user-auth-form";
 
 export async function LoginPage() {
   const { user } = await validateRequest();
@@ -8,9 +14,18 @@ export async function LoginPage() {
     return redirect("/");
   }
   return (
-    <div>
-      <h1>Login</h1>
-      <LoginForm />
+    <div className="grid place-content-center min-h-screen">
+      <div className="flex flex-col gap-4">
+        <TypographyH1>Storytime</TypographyH1>
+        <TypographyP>Create stories</TypographyP>
+        <TypographyH2>Login</TypographyH2>
+
+        <>
+          <a href="/login/github">Sign in with GitHub</a>
+        </>
+
+        <UserAuthForm />
+      </div>
     </div>
   );
 }

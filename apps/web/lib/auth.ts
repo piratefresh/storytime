@@ -6,6 +6,7 @@ import { cache } from "react";
 import { db } from "./db";
 import { TimeSpan, createDate } from "oslo";
 import { generateRandomString, alphabet } from "oslo/crypto";
+import { GitHub, Google } from "arctic";
 
 const adapter = new PrismaAdapter(db.session, db.user);
 
@@ -22,9 +23,22 @@ export const lucia = new Lucia(adapter, {
       username: attributes.username,
       emailVerified: attributes.emailVerified,
       email: attributes.email,
+      providerId: attributes.providerId,
+      providerUserId: attributes.providerUserId,
     };
   },
 });
+
+export const github = new GitHub(
+  process.env.GITHUB_CLIENT_ID!,
+  process.env.GITHUB_SECRET!
+);
+
+export const google = new Google(
+  process.env.GOOGLE_CLIENT_ID!,
+  process.env.GOOGLE_SECRET!,
+  process.env.GOOGLE_REDIRECT_URI!
+);
 
 export const validateRequest = cache(
   async (): Promise<
@@ -96,4 +110,6 @@ interface DatabaseUserAttributes {
   username: string;
   email: string;
   emailVerified: boolean;
+  providerId: string;
+  providerUserId: string;
 }

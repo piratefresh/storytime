@@ -13,13 +13,13 @@ export async function resendVerificationCode({ email }: { email: string }) {
 
   if (!user) {
     return {
-      error: "email not found",
+      error: "Email not found",
     };
   }
 
   if (user.emailVerified) {
     return {
-      error: "email already verified",
+      error: "Email already verified",
     };
   }
 

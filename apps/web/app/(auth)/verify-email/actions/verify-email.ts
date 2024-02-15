@@ -39,7 +39,7 @@ export async function emailVerification(
     const validCode = await verifyVerificationCode(user, code);
     if (!validCode) {
       return {
-        error: "invalid code",
+        error: "Verification code is invalid or expired",
       };
     }
 

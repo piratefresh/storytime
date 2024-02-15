@@ -45,5 +45,12 @@
       "dependsOn": ["^build"]
     }
   },
-  "globalEnv": ["DATABASE_URL"]
+  "globalEnv": [
+    "DATABASE_URL",
+    "RESEND_API_KEY",
+    "GITHUB_CLIENT_ID",
+    "GITHUB_SECRET",
+    "GOOGLE_CLIENT_ID",
+    "GOOGLE_SECRET"
+  ]
 }
