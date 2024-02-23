@@ -1,0 +1,1 @@
+export async function createStory({title, description, genre,status })

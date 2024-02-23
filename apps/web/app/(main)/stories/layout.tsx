@@ -1,4 +1,9 @@
+"use client";
+
 import { Nav } from "@/components/nav/nav";
+
+import { Separator } from "@/components/ui/separator";
+import { Archive, Atom, File, FolderOpen, Globe, Home } from "lucide-react";
 import { useState } from "react";
 
 export default function StoriesLayout({
@@ -8,85 +13,34 @@ export default function StoriesLayout({
 }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   return (
-    <main>
+    <div className="flex flex-row min-h-full h-full w-full overflow-hidden">
       <Nav
         isCollapsed={isCollapsed}
         links={[
           {
-            title: "Inbox",
-            label: "128",
-            icon: Inbox,
-            variant: "default",
-          },
-          {
-            title: "Drafts",
+            title: "Stories",
             label: "9",
-            icon: File,
+            icon: FolderOpen,
             variant: "ghost",
+            href: "/",
           },
           {
-            title: "Sent",
+            title: "Assets",
             label: "",
-            icon: Send,
+            icon: Atom,
             variant: "ghost",
+            href: "/",
           },
           {
-            title: "Junk",
-            label: "23",
-            icon: ArchiveX,
-            variant: "ghost",
-          },
-          {
-            title: "Trash",
+            title: "Community",
             label: "",
-            icon: Trash2,
+            icon: Globe,
             variant: "ghost",
-          },
-          {
-            title: "Archive",
-            label: "",
-            icon: Archive,
-            variant: "ghost",
+            href: "/",
           },
         ]}
       />
-      <Separator />
-      <Nav
-        isCollapsed={isCollapsed}
-        links={[
-          {
-            title: "Social",
-            label: "972",
-            icon: Users2,
-            variant: "ghost",
-          },
-          {
-            title: "Updates",
-            label: "342",
-            icon: AlertCircle,
-            variant: "ghost",
-          },
-          {
-            title: "Forums",
-            label: "128",
-            icon: MessagesSquare,
-            variant: "ghost",
-          },
-          {
-            title: "Shopping",
-            label: "8",
-            icon: ShoppingCart,
-            variant: "ghost",
-          },
-          {
-            title: "Promotions",
-            label: "21",
-            icon: Archive,
-            variant: "ghost",
-          },
-        ]}
-      />
-      {children}
-    </main>
+      <main className="flex flex-1 justify-center">{children}</main>
+    </div>
   );
 }
