@@ -37,6 +37,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import React from "react";
+import { cn } from "@/lib/utils";
 
 export const MenuBar = () => {
   const [activeFormat, setActiveFormat] = React.useState("paragraph");
@@ -106,47 +107,71 @@ export const MenuBar = () => {
         type="button"
         onClick={() => editor.chain().focus().toggleBold().run()}
         disabled={!editor.can().chain().focus().toggleBold().run()}
-        className={editor.isActive("bold") ? isActive : ""}
+        className={cn(
+          "p-1 rounded-sm relative hover:bg-primary hover:text-white",
+          {
+            [isActive]: editor.isActive("bold"),
+          }
+        )}
       >
-        <Bold />
+        <Bold size={24} />
       </button>
       <button
         type="button"
         onClick={() => editor.chain().focus().toggleItalic().run()}
         disabled={!editor.can().chain().focus().toggleItalic().run()}
-        className={editor.isActive("italic") ? isActive : ""}
+        className={cn(
+          "p-1 rounded-sm relative hover:bg-primary hover:text-white",
+          {
+            [isActive]: editor.isActive("italic"),
+          }
+        )}
       >
-        <Italic />
+        <Italic size={24} />
       </button>
       <button
         type="button"
         onClick={() => editor.chain().focus().toggleStrike().run()}
         disabled={!editor.can().chain().focus().toggleStrike().run()}
-        className={editor.isActive("strike") ? isActive : ""}
+        className={cn(
+          "p-1 rounded-sm relative hover:bg-primary hover:text-white",
+          {
+            [isActive]: editor.isActive("strike"),
+          }
+        )}
       >
-        <Strikethrough />
+        <Strikethrough size={24} />
       </button>
       <button
         type="button"
         onClick={() => editor.chain().focus().toggleCode().run()}
         disabled={!editor.can().chain().focus().toggleCode().run()}
-        className={editor.isActive("code") ? isActive : ""}
+        className={cn(
+          "p-1 rounded-sm relative hover:bg-primary hover:text-white",
+          {
+            [isActive]: editor.isActive("code"),
+          }
+        )}
       >
-        <Code />
+        <Code size={24} />
       </button>
       <button
         type="button"
         onClick={() => editor.chain().focus().unsetAllMarks().run()}
-        className={editor.isActive("code") ? isActive : ""}
+        className={cn(
+          "p-1 rounded-sm relative hover:bg-primary hover:text-white"
+        )}
       >
-        <RemoveFormatting />
+        <RemoveFormatting size={24} />
       </button>
       <button
         type="button"
         onClick={() => editor.chain().focus().clearNodes().run()}
-        className={editor.isActive("code") ? isActive : ""}
+        className={cn(
+          "p-1 rounded-sm relative hover:bg-primary hover:text-white"
+        )}
       >
-        <RemoveFormatting />
+        <RemoveFormatting size={24} />
       </button>
       <Select value={activeFormat}>
         <SelectTrigger className="w-[180px]">
@@ -182,60 +207,88 @@ export const MenuBar = () => {
       <button
         type="button"
         onClick={() => editor.chain().focus().toggleBulletList().run()}
-        className={editor.isActive("bulletList") ? isActive : ""}
+        className={cn(
+          "p-1 rounded-sm relative hover:bg-primary hover:text-white",
+          {
+            [isActive]: editor.isActive("bulletList"),
+          }
+        )}
       >
-        <List />
+        <List size={24} />
       </button>
       <button
         type="button"
         onClick={() => editor.chain().focus().toggleOrderedList().run()}
-        className={editor.isActive("orderedList") ? isActive : ""}
+        className={cn(
+          "p-1 rounded-sm relative hover:bg-primary hover:text-white",
+          {
+            [isActive]: editor.isActive("orderedList"),
+          }
+        )}
       >
-        <ListOrdered />
+        <ListOrdered size={24} />
       </button>
       <button
         type="button"
         onClick={() => editor.chain().focus().toggleCodeBlock().run()}
-        className={editor.isActive("codeBlock") ? isActive : ""}
+        className={cn(
+          "p-1 rounded-sm relative hover:bg-primary hover:text-white",
+          {
+            [isActive]: editor.isActive("codeBlock"),
+          }
+        )}
       >
-        <Code />
+        <Code size={24} />
       </button>
       <button
         type="button"
         onClick={() => editor.chain().focus().toggleBlockquote().run()}
-        className={editor.isActive("blockquote") ? isActive : ""}
+        className={cn(
+          "p-1 rounded-sm relative hover:bg-primary hover:text-white",
+          {
+            [isActive]: editor.isActive("blockquote"),
+          }
+        )}
       >
-        <TextQuote />
+        <TextQuote size={24} />
       </button>
       <button
         type="button"
         onClick={() => editor.chain().focus().setHorizontalRule().run()}
-        className={editor.isActive("code") ? isActive : ""}
+        className={cn(
+          "p-1 rounded-sm relative hover:bg-primary hover:text-white"
+        )}
       >
-        <MoveHorizontal />
+        <MoveHorizontal size={24} />
       </button>
       <button
         type="button"
         onClick={() => editor.chain().focus().setHardBreak().run()}
-        className={editor.isActive("code") ? isActive : ""}
+        className={cn(
+          "p-1 rounded-sm relative hover:bg-primary hover:text-white"
+        )}
       >
-        <Minus />
+        <Minus size={24} />
       </button>
       <button
         type="button"
         onClick={() => editor.chain().focus().undo().run()}
         disabled={!editor.can().chain().focus().undo().run()}
-        className={editor.isActive("code") ? isActive : ""}
+        className={cn(
+          "p-1 rounded-sm relative hover:bg-primary hover:text-white"
+        )}
       >
-        <Undo />
+        <Undo size={24} />
       </button>
       <button
         type="button"
         onClick={() => editor.chain().focus().redo().run()}
         disabled={!editor.can().chain().focus().redo().run()}
-        className={editor.isActive("code") ? isActive : ""}
+        className={cn(
+          "p-1 rounded-sm relative hover:bg-primary hover:text-white"
+        )}
       >
-        <Redo />
+        <Redo size={24} />
       </button>
       <button
         type="button"
@@ -249,36 +302,56 @@ export const MenuBar = () => {
       <button
         type="button"
         onClick={() => editor.chain().focus().setTextAlign("left").run()}
-        className={editor.isActive({ textAlign: "left" }) ? isActive : ""}
+        className={cn(
+          "p-1 rounded-sm relative hover:bg-primary hover:text-white",
+          {
+            [isActive]: editor.isActive({ textAlign: "left" }),
+          }
+        )}
       >
-        <AlignLeft />
+        <AlignLeft size={24} />
       </button>
       <button
         type="button"
         onClick={() => editor.chain().focus().setTextAlign("center").run()}
-        className={editor.isActive({ textAlign: "center" }) ? isActive : ""}
+        className={cn(
+          "p-1 rounded-sm relative hover:bg-primary hover:text-white",
+          {
+            [isActive]: editor.isActive({ textAlign: "center" }),
+          }
+        )}
       >
-        <AlignCenter />
+        <AlignCenter size={24} />
       </button>
       <button
         type="button"
         onClick={() => editor.chain().focus().setTextAlign("right").run()}
-        className={editor.isActive({ textAlign: "right" }) ? isActive : ""}
+        className={cn(
+          "p-1 rounded-sm relative hover:bg-primary hover:text-white",
+          {
+            [isActive]: editor.isActive({ textAlign: "right" }),
+          }
+        )}
       >
-        <AlignRight />
+        <AlignRight size={24} />
       </button>
       <button
         type="button"
         onClick={() => editor.chain().focus().setTextAlign("justify").run()}
-        className={editor.isActive({ textAlign: "justify" }) ? isActive : ""}
+        className={cn(
+          "p-1 rounded-sm relative hover:bg-primary hover:text-white",
+          {
+            [isActive]: editor.isActive({ textAlign: "justify" }),
+          }
+        )}
       >
-        <AlignJustify />
+        <AlignJustify size={24} />
       </button>
       <button
         type="button"
         onClick={() => editor.chain().focus().unsetTextAlign().run()}
       >
-        <Baseline />
+        <Baseline size={24} />
       </button>
       <button
         type="button"
@@ -289,9 +362,14 @@ export const MenuBar = () => {
             .updateAttributes("image", { float: "left" })
             .run()
         }
-        className={editor.isActive("code") ? isActive : ""}
+        className={cn(
+          "p-1 rounded-sm relative hover:bg-primary hover:text-white",
+          {
+            [isActive]: editor.isActive({ float: "left" }),
+          }
+        )}
       >
-        <AlignLeft />
+        <AlignLeft size={24} />
       </button>
       <button
         type="button"
@@ -302,9 +380,14 @@ export const MenuBar = () => {
             .updateAttributes("image", { float: "right" })
             .run()
         }
-        className={editor.isActive("code") ? isActive : ""}
+        className={cn(
+          "p-1 rounded-sm relative hover:bg-primary hover:text-white",
+          {
+            [isActive]: editor.isActive({ float: "right" }),
+          }
+        )}
       >
-        <AlignRight />
+        <AlignRight size={24} />
       </button>
       <button
         type="button"
@@ -315,7 +398,9 @@ export const MenuBar = () => {
             .updateAttributes("image", { float: "none" })
             .run()
         }
-        className={editor.isActive("code") ? isActive : ""}
+        className={cn(
+          "p-1 rounded-sm relative hover:bg-primary hover:text-white"
+        )}
       >
         unset float
       </button>

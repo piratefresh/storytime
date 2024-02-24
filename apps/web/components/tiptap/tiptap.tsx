@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  useEditor,
-  EditorContent,
-  Editor,
-  BubbleMenu,
-  EditorProvider,
-} from "@tiptap/react";
+import { BubbleMenu, EditorProvider } from "@tiptap/react";
 
 // extensions
 import Highlight from "@tiptap/extension-highlight";
@@ -19,6 +13,7 @@ import Float from "./extensions/float";
 import StarterKit from "@tiptap/starter-kit";
 import { MenuBar } from "./menubar";
 import { EditorProps } from "@tiptap/pm/view";
+import { CustomTooltipNode, Link } from "./extensions/node-link";
 
 const content = `
 <h2>
@@ -30,7 +25,7 @@ const content = `
 <ul>
   <li>
     That’s a bullet list with one …
-  </li>
+  </li> 
   <li>
     … or two list items.
   </li>
@@ -72,15 +67,61 @@ const extensions = [
   Float.configure({
     types: ["image", "node"], // Allow float node types
   }),
+  Link.configure({
+    suggestion: {
+      items: async ({ query }) => {
+        return [
+          "Lea Thompson",
+          "Cyndi Lauper",
+          "Tom Cruise",
+          "Madonna",
+          "Jerry Hall",
+          "Joan Collins",
+          "Winona Ryder",
+          "Christina Applegate",
+          "Alyssa Milano",
+          "Molly Ringwald",
+          "Ally Sheedy",
+          "Debbie Harry",
+          "Olivia Newton-John",
+          "Elton John",
+          "Michael J. Fox",
+          "Axl Rose",
+          "Emilio Estevez",
+          "Ralph Macchio",
+          "Rob Lowe",
+          "Jennifer Grey",
+          "Mickey Rourke",
+          "John Cusack",
+          "Matthew Broderick",
+          "Justine Bateman",
+          "Lisa Bonet",
+        ].slice(0, 5);
+      },
+    },
+  }),
+  CustomTooltipNode,
 ];
 
 const editorProps: EditorProps = {
   attributes: {
     class: "mt-8 prose prose-slate mx-auto lg:prose-lg focus:outline-none",
   },
+  handleDOMEvents: {
+    keydown: (_view, event) => {
+      // prevent default event listeners from firing when slash command is active
+      if (["ArrowUp", "ArrowDown", "Enter"].includes(event.key)) {
+        const slashCommand = document.querySelector("#slash-command");
+        console.log("slashCommand", slashCommand);
+        if (slashCommand) {
+          return true;
+        }
+      }
+    },
+  },
 };
 
-const Tiptap = () => {
+const Tiptap = ({ onChange }) => {
   return (
     <div className="flex flex-col rounded-md border">
       <EditorProvider
@@ -89,6 +130,14 @@ const Tiptap = () => {
         content={content}
         slotBefore={<MenuBar />}
         onSelectionUpdate={(selection) => {}}
+        onUpdate={({ editor }) => {
+          const value = editor.getHTML();
+          onChange(value);
+        }}
+        onCreate={({ editor }) => {
+          const value = editor.getHTML();
+          onChange(value);
+        }}
       >
         <BubbleMenu>This is the bubble menu</BubbleMenu>
       </EditorProvider>
