@@ -50,8 +50,6 @@ export function CreateStoryForm() {
 
   const { errors } = form.formState;
 
-  console.log("errors: ", errors);
-
   const onAction = async () => {
     const valid = await form.trigger();
     if (valid) {

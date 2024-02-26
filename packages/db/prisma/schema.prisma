@@ -53,8 +53,9 @@ model EmailVerificationCode {
 model Story {
   id          String      @id @default(uuid())
   title       String
-  description String?
-  status      String // Could be an enum: Enum StoryStatus { PLANNING, DRAFTING, COMPLETED, etc. }
+  description String
+  genre       String[]
+  status      StoryStatus @default(PLANNING) // Set the default value here
   ownerId     String
   owner       User        @relation(fields: [ownerId], references: [id])
   assets      Asset[]
@@ -87,4 +88,10 @@ model Setting {
   location    String?
   storyId     String
   story       Story   @relation(fields: [storyId], references: [id])
+}
+
+enum StoryStatus {
+  PLANNING
+  DRAFTING
+  COMPLETED
 }

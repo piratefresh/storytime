@@ -1,6 +1,5 @@
 "use server";
 
-import { NextResponse } from "next/server";
 import { z } from "zod";
 
 const storySchema = z.object({
@@ -23,6 +22,5 @@ export async function createStory(formData: FormData) {
   const description = formData.description;
   const genre = formData.genre;
 
-  console.log("formData: ", formData);
-  return title;
+  return JSON.stringify(formData);
 }

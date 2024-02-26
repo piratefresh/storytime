@@ -197,160 +197,163 @@ export const Component = (props: NodeViewWrapperProps) => {
   );
 };
 
-export default TiptapImage.extend({
-  // defaultOptions: {
-  //   ...TiptapImage.options,
-  //   sizes: ["inline", "block", "left", "right"],
-  // },
-  selectable: true,
-  // group: "block",
-  draggable: true,
-  addAttributes() {
-    return {
-      // Inherit all the attrs of the Image extension
-      ...this.parent?.(),
+export const CustomImage = () =>
+  TiptapImage.extend({
+    // defaultOptions: {
+    //   ...TiptapImage.options,
+    //   sizes: ["inline", "block", "left", "right"],
+    // },
+    selectable: true,
+    // group: "block",
+    draggable: true,
+    addAttributes() {
+      return {
+        // Inherit all the attrs of the Image extension
+        ...this.parent?.(),
 
-      // New attrs
-      width: {
-        default: "100%",
-        // tell them to render on the img tag
-        renderHTML: (attributes) => {
-          return {
-            width: attributes.width,
-          };
-        },
-      },
-
-      height: {
-        default: "auto",
-        renderHTML: (attributes) => {
-          return {
-            height: attributes.height,
-          };
-        },
-      },
-
-      // We'll use this to tell if we are going to drag the image
-      // through the editor or if we are resizing it
-      isDraggable: {
-        default: true,
-        // We don't want it to render on the img tag
-        renderHTML: (attributes) => {
-          return {};
-        },
-      },
-    };
-  },
-
-  addNodeView() {
-    return ReactNodeViewRenderer(Component);
-  },
-  onFocus({ event }) {},
-  addProseMirrorPlugins() {
-    return [
-      new Plugin({
-        props: {
-          handleDOMEvents: {
-            drop(view: EditorView, event: DragEvent) {
-              const hasFiles =
-                event.dataTransfer &&
-                event.dataTransfer.files &&
-                event.dataTransfer.files.length;
-
-              if (!hasFiles) {
-                return false; // Indicate that the event was not handled
-              }
-
-              const images = Array.from(event.dataTransfer.files).filter(
-                (file) => /image/i.test(file.type)
-              );
-
-              if (images.length === 0) {
-                return false; // Indicate that the event was not handled
-              }
-
-              event.preventDefault();
-
-              const { schema } = view.state;
-              const coordinates = view.posAtCoords({
-                left: event.clientX,
-                top: event.clientY,
-              });
-
-              if (!coordinates) {
-                return false; // Early exit if coordinates are null
-              }
-
-              images.forEach((image) => {
-                const reader = new FileReader();
-
-                reader.onload = (readerEvent: ProgressEvent<FileReader>) => {
-                  // Using null assertion for target.result since we've already ensured the file is an image
-                  const imgSrc = readerEvent.target?.result;
-                  if (typeof imgSrc === "string") {
-                    const imageNode = schema.nodes.image?.create({
-                      src: imgSrc,
-                    });
-                    if (imageNode) {
-                      const transaction = view.state.tr.insert(
-                        coordinates.pos,
-                        imageNode
-                      );
-                      view.dispatch(transaction);
-                    }
-                  }
-                };
-                reader.readAsDataURL(image);
-              });
-
-              return true; // Indicate that the event was handled
-            },
-            paste(view: EditorView, event: ClipboardEvent) {
-              const hasFiles =
-                event.clipboardData &&
-                event.clipboardData.files &&
-                event.clipboardData.files.length;
-
-              if (!hasFiles) {
-                return false; // Indicate that the event was not handled
-              }
-
-              const images = Array.from(event.clipboardData.files).filter(
-                (file) => /image/i.test(file.type)
-              );
-
-              if (images.length === 0) {
-                return false; // Indicate that the event was not handled
-              }
-
-              event.preventDefault();
-
-              const { schema } = view.state;
-
-              images.forEach((image) => {
-                const reader = new FileReader();
-
-                reader.onload = (readerEvent: ProgressEvent<FileReader>) => {
-                  const imgSrc = readerEvent.target?.result;
-                  if (typeof imgSrc === "string") {
-                    const imageNode = schema.nodes.image?.create({
-                      src: imgSrc,
-                    });
-                    if (imageNode) {
-                      const transaction =
-                        view.state.tr.replaceSelectionWith(imageNode);
-                      view.dispatch(transaction);
-                    }
-                  }
-                };
-                reader.readAsDataURL(image);
-              });
-
-              return true; // Indicate that the event was handled
-            },
+        // New attrs
+        width: {
+          default: "100%",
+          // tell them to render on the img tag
+          renderHTML: (attributes) => {
+            return {
+              width: attributes.width,
+            };
           },
         },
-      }),
-    ];
-  },
-});
+
+        height: {
+          default: "auto",
+          renderHTML: (attributes) => {
+            return {
+              height: attributes.height,
+            };
+          },
+        },
+
+        // We'll use this to tell if we are going to drag the image
+        // through the editor or if we are resizing it
+        isDraggable: {
+          default: true,
+          // We don't want it to render on the img tag
+          renderHTML: (attributes) => {
+            return {};
+          },
+        },
+      };
+    },
+
+    addNodeView() {
+      return ReactNodeViewRenderer(Component);
+    },
+    onFocus({ event }) {},
+    addProseMirrorPlugins() {
+      return [
+        new Plugin({
+          props: {
+            handleDOMEvents: {
+              drop(view: EditorView, event: DragEvent) {
+                const hasFiles =
+                  event.dataTransfer &&
+                  event.dataTransfer.files &&
+                  event.dataTransfer.files.length;
+
+                if (!hasFiles) {
+                  return false; // Indicate that the event was not handled
+                }
+
+                const images = Array.from(event.dataTransfer.files).filter(
+                  (file) => /image/i.test(file.type)
+                );
+
+                if (images.length === 0) {
+                  return false; // Indicate that the event was not handled
+                }
+
+                event.preventDefault();
+
+                const { schema } = view.state;
+                const coordinates = view.posAtCoords({
+                  left: event.clientX,
+                  top: event.clientY,
+                });
+
+                if (!coordinates) {
+                  return false; // Early exit if coordinates are null
+                }
+
+                images.forEach((image) => {
+                  const reader = new FileReader();
+
+                  reader.onload = (readerEvent: ProgressEvent<FileReader>) => {
+                    // Using null assertion for target.result since we've already ensured the file is an image
+                    const imgSrc = readerEvent.target?.result;
+                    if (typeof imgSrc === "string") {
+                      const imageNode = schema.nodes.image?.create({
+                        src: imgSrc,
+                      });
+                      if (imageNode) {
+                        const transaction = view.state.tr.insert(
+                          coordinates.pos,
+                          imageNode
+                        );
+                        view.dispatch(transaction);
+                      }
+                    }
+                  };
+                  reader.readAsDataURL(image);
+                });
+
+                return true; // Indicate that the event was handled
+              },
+              paste(view: EditorView, event: ClipboardEvent) {
+                const hasFiles =
+                  event.clipboardData &&
+                  event.clipboardData.files &&
+                  event.clipboardData.files.length;
+
+                if (!hasFiles) {
+                  return false; // Indicate that the event was not handled
+                }
+
+                const images = Array.from(event.clipboardData.files).filter(
+                  (file) => /image/i.test(file.type)
+                );
+
+                if (images.length === 0) {
+                  return false; // Indicate that the event was not handled
+                }
+
+                event.preventDefault();
+
+                const { schema } = view.state;
+
+                images.forEach((image) => {
+                  const reader = new FileReader();
+
+                  reader.onload = (readerEvent: ProgressEvent<FileReader>) => {
+                    const imgSrc = readerEvent.target?.result;
+                    if (typeof imgSrc === "string") {
+                      const imageNode = schema.nodes.image?.create({
+                        src: imgSrc,
+                      });
+                      if (imageNode) {
+                        const transaction =
+                          view.state.tr.replaceSelectionWith(imageNode);
+                        view.dispatch(transaction);
+                      }
+                    }
+                  };
+                  reader.readAsDataURL(image);
+                });
+
+                return true; // Indicate that the event was handled
+              },
+            },
+          },
+        }),
+      ];
+    },
+  });
+
+export default CustomImage;
