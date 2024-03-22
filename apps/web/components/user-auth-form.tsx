@@ -22,6 +22,8 @@ import { Input } from "./ui/input";
 import { Button } from "./ui/button";
 import { cn } from "@/lib/utils";
 import { GithubLoginButton } from "./github-login-button";
+import Link from "next/link";
+import { TypographyP } from "./ui/typography";
 
 type FormData = z.infer<typeof userAuthSchema>;
 
@@ -94,7 +96,9 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
           <SubmitButton />
         </form>
       </Form>
-
+      <Link href={pathname === "/login" ? "/login" : "/register"}>
+        <TypographyP>Create Account</TypographyP>
+      </Link>
       <GithubLoginButton />
     </div>
   );

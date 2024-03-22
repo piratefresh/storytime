@@ -1,4 +1,5 @@
 const { resolve } = require("node:path");
+const eslintPluginUnicorn = require("eslint-plugin-unicorn");
 
 const project = resolve(process.cwd(), "tsconfig.json");
 
@@ -10,6 +11,7 @@ module.exports = {
     require.resolve("@vercel/style-guide/eslint/next"),
     "eslint-config-turbo",
     "plugin:tailwindcss/recommended",
+    require.resolve("eslint-plugin-unicorn"),
   ],
   globals: {
     React: true,
@@ -19,7 +21,7 @@ module.exports = {
     node: true,
     browser: true,
   },
-  plugins: ["only-warn"],
+  plugins: ["only-warn", eslintPluginUnicorn],
   settings: {
     "import/resolver": {
       typescript: {

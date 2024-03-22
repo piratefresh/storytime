@@ -11,15 +11,25 @@ import {
 } from "@/components/ui/form";
 import { TypographyH1 } from "@/components/ui/typography";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "./ui/button";
+import { Button } from "@/components/ui/button";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
-import { Input } from "./ui/input";
+import { Input } from "@/components/ui/input";
 import { useFormState, useFormStatus } from "react-dom";
-import Tiptap from "./tiptap/tiptap";
 import { createStory } from "@/app/(main)/stories/create/actions/create-story";
+import { User } from "lucia";
+import { Textarea } from "@/components/ui/textarea";
+import { MultiSelect } from "@/components/ui/multiselect";
+import { Genres } from "@/app/constants/genres";
 
-import { DevTool } from "@hookform/devtools";
+import React from "react";
+import * as Popover from "@radix-ui/react-popover";
+import { MixerHorizontalIcon, Cross2Icon } from "@radix-ui/react-icons";
+
+const genreOptions = Object.entries(Genres).map(([key, value]) => ({
+  value,
+  label: value,
+}));
 
 const formSchema = z.object({
   title: z.string().min(2, {
@@ -31,7 +41,7 @@ const formSchema = z.object({
   genre: z.array(z.string()),
 });
 
-export function CreateStoryForm() {
+export function CreateStoryForm({ user }: { user: User | null }) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -41,23 +51,20 @@ export function CreateStoryForm() {
     },
   });
 
-  // 2. Define a submit handler.
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    // Do something with the form values.
-    // ✅ This will be type-safe and validated.
-    console.log(values);
-  }
-
   const { errors } = form.formState;
 
   const onAction = async () => {
     const valid = await form.trigger();
     if (valid) {
       const response = await createStory(form.getValues());
+      console.log("response: ", response);
       if (response.error) {
         form.setError("root.serverError", {
           type: `${response.error}`,
         });
+      }
+
+      if (response) {
       }
     }
   };
@@ -65,7 +72,7 @@ export function CreateStoryForm() {
   const [state, dispatch] = useFormState(onAction, undefined);
   return (
     <Form {...form}>
-      <form action={dispatch} className="space-y-8">
+      <form action={dispatch} className="space-y-8 w-full max-w-screen-md">
         <TypographyH1>Create a Story</TypographyH1>
         <FormField
           control={form.control}
@@ -74,7 +81,7 @@ export function CreateStoryForm() {
             <FormItem>
               <FormLabel>Title</FormLabel>
               <FormControl>
-                <Input placeholder="shadcn" {...field} />
+                <Input placeholder="A great story title" {...field} />
               </FormControl>
               <FormDescription>
                 This is your public display name.
@@ -90,7 +97,11 @@ export function CreateStoryForm() {
             <FormItem>
               <FormLabel>Description</FormLabel>
               <FormControl>
-                <Tiptap {...field} />
+                <Textarea
+                  className="min-h-[30dvh]"
+                  placeholder="A short description of the story"
+                  {...field}
+                />
               </FormControl>
               <FormDescription>
                 This is your public display name.
@@ -106,9 +117,10 @@ export function CreateStoryForm() {
             <FormItem>
               <FormLabel>Genre</FormLabel>
               <FormControl>
-                <Input
+                <MultiSelect
+                  selected={field.value}
+                  options={genreOptions}
                   {...field}
-                  onChange={(v) => field.onChange([v.currentTarget.value])}
                 />
               </FormControl>
               <FormDescription>
@@ -118,8 +130,6 @@ export function CreateStoryForm() {
             </FormItem>
           )}
         />
-
-        <h2>Test</h2>
 
         <SubmitButton />
       </form>
@@ -131,5 +141,9 @@ export function CreateStoryForm() {
 const SubmitButton = () => {
   const status = useFormStatus();
 
-  return <Button type="submit">Submit</Button>;
+  return (
+    <Button type="submit" disabled={status.pending}>
+      Submit
+    </Button>
+  );
 };

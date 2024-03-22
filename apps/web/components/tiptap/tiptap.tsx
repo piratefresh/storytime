@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { BubbleMenu, EditorProvider } from "@tiptap/react";
 
 // extensions
@@ -14,6 +15,9 @@ import StarterKit from "@tiptap/starter-kit";
 import { MenuBar } from "./menubar";
 import { EditorProps } from "@tiptap/pm/view";
 import { CustomTooltipNode, Link } from "./extensions/node-link";
+import { User } from "lucia";
+import { useUploadImage } from "@/hooks/useUploadImage";
+import { LineNumbers } from "./extensions/line-number";
 
 const content = `
 <h2>
@@ -46,66 +50,9 @@ display: none;
 </blockquote>
 `;
 
-const extensions = [
-  StarterKit.configure({
-    bulletList: {
-      keepMarks: true,
-      keepAttributes: false, // TODO : Making this as `false` becase marks are not preserved when I try to preserve attrs, awaiting a bit of help
-    },
-    orderedList: {
-      keepMarks: true,
-      keepAttributes: false, // TODO : Making this as `false` becase marks are not preserved when I try to preserve attrs, awaiting a bit of help
-    },
-  }),
-  Highlight,
-  Typography,
-  Image.configure({
-    allowBase64: true,
-  }),
-  Color.configure({ types: [TextStyle.name] }),
-  TextAlign.configure({ types: ["heading", "paragraph"] }),
-  Float.configure({
-    types: ["image", "node"], // Allow float node types
-  }),
-  Link.configure({
-    suggestion: {
-      items: async ({ query }) => {
-        return [
-          "Lea Thompson",
-          "Cyndi Lauper",
-          "Tom Cruise",
-          "Madonna",
-          "Jerry Hall",
-          "Joan Collins",
-          "Winona Ryder",
-          "Christina Applegate",
-          "Alyssa Milano",
-          "Molly Ringwald",
-          "Ally Sheedy",
-          "Debbie Harry",
-          "Olivia Newton-John",
-          "Elton John",
-          "Michael J. Fox",
-          "Axl Rose",
-          "Emilio Estevez",
-          "Ralph Macchio",
-          "Rob Lowe",
-          "Jennifer Grey",
-          "Mickey Rourke",
-          "John Cusack",
-          "Matthew Broderick",
-          "Justine Bateman",
-          "Lisa Bonet",
-        ].slice(0, 5);
-      },
-    },
-  }),
-  CustomTooltipNode,
-];
-
 const editorProps: EditorProps = {
   attributes: {
-    class: "mt-8 prose prose-slate mx-auto lg:prose-lg focus:outline-none",
+    class: "mt-8 prose prose-slate mx-auto pr-5 lg:prose-lg focus:outline-none",
   },
   handleDOMEvents: {
     keydown: (_view, event) => {
@@ -121,26 +68,84 @@ const editorProps: EditorProps = {
   },
 };
 
-const Tiptap = ({ onChange }) => {
+const Tiptap = ({
+  onChange,
+  user,
+  contentId,
+}: {
+  onChange: (content: string) => void;
+  user: User | null;
+  contentId?: string;
+}) => {
+  const extensions = React.useMemo(() => {
+    const baseExtensions = [
+      StarterKit.configure({
+        bulletList: {
+          keepMarks: true,
+          keepAttributes: false,
+        },
+        orderedList: {
+          keepMarks: true,
+          keepAttributes: false,
+        },
+      }),
+      Highlight,
+      Typography,
+      Color.configure({ types: [TextStyle.name] }),
+      TextAlign.configure({ types: ["heading", "paragraph"] }),
+      Float.configure({
+        types: ["image", "node"],
+      }),
+      Link.configure({
+        suggestion: {
+          items: async ({ query }) => {
+            return ["Fire", "Frost", "Wind", "Earth"].slice(0, 5);
+          },
+        },
+      }),
+      CustomTooltipNode,
+      LineNumbers,
+    ];
+
+    // Conditionally add the Image extension if contentId is available
+    if (contentId) {
+      baseExtensions.push(
+        Image.configure({
+          allowBase64: true,
+          accept: ["image/jpeg", "image/png"],
+          maxFileSize: 1048576 * 10, // 10 MB
+          uploadImage: async (file) => {
+            // Assuming useUploadImage is defined elsewhere and properly handles the upload
+            return await useUploadImage({ file, contentId });
+          },
+        })
+      );
+    }
+
+    return baseExtensions;
+  }, [contentId]);
+
   return (
-    <div className="flex flex-col rounded-md border">
-      <EditorProvider
-        editorProps={editorProps}
-        extensions={extensions}
-        content={content}
-        slotBefore={<MenuBar />}
-        onSelectionUpdate={(selection) => {}}
-        onUpdate={({ editor }) => {
-          const value = editor.getHTML();
-          onChange(value);
-        }}
-        onCreate={({ editor }) => {
-          const value = editor.getHTML();
-          onChange(value);
-        }}
-      >
-        <BubbleMenu>This is the bubble menu</BubbleMenu>
-      </EditorProvider>
+    <div className="flex">
+      <div className="flex flex-col rounded-md border">
+        <EditorProvider
+          editorProps={editorProps}
+          extensions={extensions}
+          content={content}
+          slotBefore={<MenuBar />}
+          onSelectionUpdate={(selection) => {}}
+          onUpdate={({ editor }) => {
+            const value = editor.getHTML();
+            onChange(value);
+          }}
+          onCreate={({ editor }) => {
+            const value = editor.getHTML();
+            onChange(value);
+          }}
+        >
+          <BubbleMenu>This is the bubble menu</BubbleMenu>
+        </EditorProvider>
+      </div>
     </div>
   );
 };

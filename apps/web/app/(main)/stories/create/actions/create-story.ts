@@ -1,15 +1,21 @@
 "use server";
 
+import { lucia } from "@/lib/auth";
+import db from "@/lib/db";
+import { ActionResult } from "@/lib/form";
+import { Genre } from "@repo/db";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 
 const storySchema = z.object({
   title: z.string(),
-  description: z.string().min(6),
+  description: z.string().min(2),
   genre: z.array(z.string()),
 });
 type FormData = z.infer<typeof storySchema>;
 
-export async function createStory(formData: FormData) {
+export async function createStory(formData: FormData): Promise<ActionResult> {
   const validatedFields = storySchema.safeParse(formData);
   // If form validation fails, return errors early. Otherwise, continue.
   if (!validatedFields.success) {
@@ -18,9 +24,34 @@ export async function createStory(formData: FormData) {
     };
   }
 
-  const title = formData.title;
-  const description = formData.description;
-  const genre = formData.genre;
+  const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
+  if (!sessionId) {
+    return {
+      error: "Session not found",
+    };
+  }
+  const { user } = await lucia.validateSession(sessionId);
+  if (!user) {
+    return {
+      error: "User not found",
+    };
+  }
 
-  return JSON.stringify(formData);
+  const story = await db.story.create({
+    data: {
+      title: formData.title,
+      description: formData.description,
+      genre: formData.genre,
+      ownerId: user.id,
+      status: "PLANNING",
+    },
+  });
+
+  if (!story) {
+    return {
+      error: "Failed to create story",
+    };
+  }
+
+  return redirect(`/stories/${story.title}`);
 }

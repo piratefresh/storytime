@@ -1,4 +1,3 @@
-import { LoginForm } from "@/components/login-form";
 import { validateRequest } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import {
@@ -19,10 +18,6 @@ export async function LoginPage() {
         <TypographyH1>Storytime</TypographyH1>
         <TypographyP>Create stories</TypographyP>
         <TypographyH2>Login</TypographyH2>
-
-        <>
-          <a href="/login/github">Sign in with GitHub</a>
-        </>
 
         <UserAuthForm />
       </div>

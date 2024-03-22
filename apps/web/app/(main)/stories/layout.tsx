@@ -1,5 +1,6 @@
 "use client";
 
+import { CMDK } from "@/components/cmdk";
 import { Nav } from "@/components/nav/nav";
 
 import { Separator } from "@/components/ui/separator";
@@ -40,7 +41,8 @@ export default function StoriesLayout({
           },
         ]}
       />
-      <main className="flex flex-1 justify-center">{children}</main>
+      <CMDK />
+      <main className="flex flex-1 justify-center px-6 py-8">{children}</main>
     </div>
   );
 }

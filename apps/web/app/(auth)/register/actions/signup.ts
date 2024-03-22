@@ -21,6 +21,7 @@ export async function sendEmailVerificationCode({
   code: string;
 }) {
   try {
+    console.log("sending email");
     const { data, error } = await resend.emails.send({
       from: "Magnus <onboarding@resend.dev>",
       to: [email],

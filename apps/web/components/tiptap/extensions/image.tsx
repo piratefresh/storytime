@@ -1,7 +1,7 @@
 import React from "react";
 import { cn } from "@/lib/utils";
-import TiptapImage from "@tiptap/extension-image";
-import { Plugin } from "@tiptap/pm/state";
+import TiptapImage, { ImageOptions } from "@tiptap/extension-image";
+import { Plugin, PluginKey } from "@tiptap/pm/state";
 import { EditorView } from "@tiptap/pm/view";
 import {
   ReactNodeViewRenderer,
@@ -24,6 +24,22 @@ interface IResizer {
   onResize: (direction: string, x: number, y: number) => void;
   selected: boolean;
 }
+
+type UploadResult = {
+  url: string | null;
+  bucket: string;
+  key: string;
+  name?: string;
+  size?: number;
+};
+
+type CustomImageOptions = ImageOptions & {
+  uploadImage: (file: File) => Promise<UploadResult>;
+  maxFileSize: number;
+  accept: string[];
+  onUploadStart?: () => void;
+  onUploadEnd?: () => void;
+};
 
 export const Resizer = ({ onResize, selected }: IResizer) => {
   const [direction, setDirection] = React.useState("");
@@ -197,163 +213,188 @@ export const Component = (props: NodeViewWrapperProps) => {
   );
 };
 
-export const CustomImage = () =>
-  TiptapImage.extend({
-    // defaultOptions: {
-    //   ...TiptapImage.options,
-    //   sizes: ["inline", "block", "left", "right"],
-    // },
-    selectable: true,
-    // group: "block",
-    draggable: true,
-    addAttributes() {
-      return {
-        // Inherit all the attrs of the Image extension
-        ...this.parent?.(),
+export const KB = 1024 as const;
 
-        // New attrs
-        width: {
-          default: "100%",
-          // tell them to render on the img tag
-          renderHTML: (attributes) => {
-            return {
-              width: attributes.width,
-            };
-          },
+export function formatBytes(bytes: number, decimals = 2) {
+  if (bytes <= 0) return "0 Bytes";
+
+  const sizes = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(KB));
+
+  return (
+    parseFloat((bytes / Math.pow(KB, i)).toFixed(decimals)) + " " + sizes[i]
+  );
+}
+
+export const CustomImage = TiptapImage.extend<CustomImageOptions>({
+  selectable: true,
+  draggable: true,
+  addAttributes() {
+    return {
+      // Inherit all the attrs of the Image extension
+      ...this.parent?.(),
+
+      // New attrs
+      width: {
+        default: "100%",
+        // tell them to render on the img tag
+        renderHTML: (attributes) => {
+          return {
+            width: attributes.width,
+          };
         },
+      },
 
-        height: {
-          default: "auto",
-          renderHTML: (attributes) => {
-            return {
-              height: attributes.height,
-            };
-          },
+      height: {
+        default: "auto",
+        renderHTML: (attributes) => {
+          return {
+            height: attributes.height,
+          };
         },
+      },
 
-        // We'll use this to tell if we are going to drag the image
-        // through the editor or if we are resizing it
-        isDraggable: {
-          default: true,
-          // We don't want it to render on the img tag
-          renderHTML: (attributes) => {
-            return {};
-          },
+      // We'll use this to tell if we are going to drag the image
+      // through the editor or if we are resizing it
+      isDraggable: {
+        default: true,
+        // We don't want it to render on the img tag
+        renderHTML: (attributes) => {
+          return {};
         },
-      };
-    },
+      },
+    };
+  },
 
-    addNodeView() {
-      return ReactNodeViewRenderer(Component);
-    },
-    onFocus({ event }) {},
-    addProseMirrorPlugins() {
-      return [
-        new Plugin({
-          props: {
-            handleDOMEvents: {
-              drop(view: EditorView, event: DragEvent) {
-                const hasFiles =
-                  event.dataTransfer &&
-                  event.dataTransfer.files &&
-                  event.dataTransfer.files.length;
+  addNodeView() {
+    return ReactNodeViewRenderer(Component);
+  },
 
-                if (!hasFiles) {
-                  return false; // Indicate that the event was not handled
-                }
+  addOptions() {
+    return {
+      ...this.parent?.(),
+    };
+  },
+  addProseMirrorPlugins() {
+    return [
+      new Plugin({
+        key: new PluginKey("imageUpload"),
+        props: {
+          handlePaste: (view, event) => {
+            const items = event.clipboardData?.items;
+            if (!items) return false;
 
-                const images = Array.from(event.dataTransfer.files).filter(
-                  (file) => /image/i.test(file.type)
+            for (const item of items) {
+              if (!this.options.accept.includes(item.type)) return false;
+
+              const file = item.getAsFile();
+              if (!file) return false;
+              if (file.size > this.options.maxFileSize) {
+                window.alert(
+                  `File is too big. Max file size is ${formatBytes(this.options.maxFileSize)}`
                 );
+                return false;
+              }
 
-                if (images.length === 0) {
-                  return false; // Indicate that the event was not handled
-                }
+              this.options.onUploadStart?.();
+              this.options
+                .uploadImage(file)
+                .then(({ url }) => {
+                  this.options.onUploadEnd?.();
 
-                event.preventDefault();
-
-                const { schema } = view.state;
-                const coordinates = view.posAtCoords({
-                  left: event.clientX,
-                  top: event.clientY,
-                });
-
-                if (!coordinates) {
-                  return false; // Early exit if coordinates are null
-                }
-
-                images.forEach((image) => {
-                  const reader = new FileReader();
-
-                  reader.onload = (readerEvent: ProgressEvent<FileReader>) => {
-                    // Using null assertion for target.result since we've already ensured the file is an image
-                    const imgSrc = readerEvent.target?.result;
-                    if (typeof imgSrc === "string") {
-                      const imageNode = schema.nodes.image?.create({
-                        src: imgSrc,
-                      });
-                      if (imageNode) {
-                        const transaction = view.state.tr.insert(
-                          coordinates.pos,
-                          imageNode
-                        );
-                        view.dispatch(transaction);
-                      }
+                  if (!url) {
+                    console.error("URL not returned from S3.");
+                    return false;
+                  }
+                  // pre-load image
+                  const src = url;
+                  const img = new Image();
+                  img.src = src;
+                  img.onload = () => {
+                    const { schema } = view.state;
+                    const imageNode = schema.nodes.image;
+                    if (!imageNode) {
+                      console.error(
+                        "Image node type is not defined in the schema."
+                      );
+                      return false;
                     }
+                    const image = imageNode.create({ src });
+                    const transaction =
+                      view.state.tr.replaceSelectionWith(image);
+                    return view.dispatch(transaction);
                   };
-                  reader.readAsDataURL(image);
-                });
-
-                return true; // Indicate that the event was handled
-              },
-              paste(view: EditorView, event: ClipboardEvent) {
-                const hasFiles =
-                  event.clipboardData &&
-                  event.clipboardData.files &&
-                  event.clipboardData.files.length;
-
-                if (!hasFiles) {
-                  return false; // Indicate that the event was not handled
-                }
-
-                const images = Array.from(event.clipboardData.files).filter(
-                  (file) => /image/i.test(file.type)
+                })
+                .catch(() =>
+                  window.alert(`Failed to upload image. Please try again`)
                 );
+            }
 
-                if (images.length === 0) {
-                  return false; // Indicate that the event was not handled
-                }
-
-                event.preventDefault();
-
-                const { schema } = view.state;
-
-                images.forEach((image) => {
-                  const reader = new FileReader();
-
-                  reader.onload = (readerEvent: ProgressEvent<FileReader>) => {
-                    const imgSrc = readerEvent.target?.result;
-                    if (typeof imgSrc === "string") {
-                      const imageNode = schema.nodes.image?.create({
-                        src: imgSrc,
-                      });
-                      if (imageNode) {
-                        const transaction =
-                          view.state.tr.replaceSelectionWith(imageNode);
-                        view.dispatch(transaction);
-                      }
-                    }
-                  };
-                  reader.readAsDataURL(image);
-                });
-
-                return true; // Indicate that the event was handled
-              },
-            },
+            return true;
           },
-        }),
-      ];
-    },
-  });
+          handleDrop: (view, event) => {
+            const files = event.dataTransfer?.files;
+            if (!files) return false;
+
+            for (const file of files) {
+              if (!file.type.startsWith("image")) continue;
+              // first just make sure in our code that we're only allowing the file types we want
+              if (!this.options.accept.includes(file.type)) {
+                console.log(
+                  `Unsupported file type. Supported types: ${this.options.accept.join(", ")}`
+                );
+                return false;
+              }
+
+              if (file.size > this.options.maxFileSize) {
+                window.alert(
+                  `File is too big. Max file size is ${formatBytes(this.options.maxFileSize)}`
+                );
+                return false;
+              }
+
+              this.options.onUploadStart?.();
+              console.log("file: ", file);
+              this.options
+                .uploadImage(file)
+                .then((url) => {
+                  console.log("url: ", url);
+                  this.options.onUploadEnd?.();
+                  // pre-load image
+
+                  const img = new Image();
+                  if (!url) {
+                    console.error("URL not returned from S3.");
+                    return false;
+                  }
+                  const src = url;
+                  img.src = src;
+                  img.onload = () => {
+                    const { schema } = view.state;
+                    const imageNode = schema.nodes.image;
+                    if (!imageNode) {
+                      console.error(
+                        "Image node type is not defined in the schema."
+                      );
+                      return false;
+                    }
+                    const image = imageNode.create({ src });
+                    const transaction =
+                      view.state.tr.replaceSelectionWith(image);
+                    return view.dispatch(transaction);
+                  };
+                })
+                .catch(() =>
+                  window.alert(`Failed to upload image. Please try again`)
+                );
+            }
+
+            return true;
+          },
+        },
+      }),
+    ];
+  },
+});
 
 export default CustomImage;
