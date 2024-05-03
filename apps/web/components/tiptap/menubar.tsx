@@ -404,6 +404,26 @@ export const MenuBar = () => {
       >
         unset float
       </button>
+
+      <button
+        type="button"
+        onClick={() => editor.commands.setPageBreak()}
+        className={cn(
+          "p-1 rounded-sm relative hover:bg-primary hover:text-white"
+        )}
+      >
+        Page Break
+      </button>
+
+      <button
+        type="button"
+        onClick={() => editor.chain().focus().unsetPageBreak()}
+        className={cn(
+          "p-1 rounded-sm relative hover:bg-primary hover:text-white"
+        )}
+      >
+        Un Page Break
+      </button>
     </div>
   );
 };

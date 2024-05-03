@@ -67,7 +67,7 @@ export default async function StoryPage({
         <div>No Folders</div>
       )}
 
-      <Flow />
+      <Flow story={story} />
     </div>
   );
 }

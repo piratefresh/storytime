@@ -9,6 +9,9 @@ import Typography from "@tiptap/extension-typography";
 import { Color } from "@tiptap/extension-color";
 import TextStyle from "@tiptap/extension-text-style";
 import { TextAlign } from "@tiptap/extension-text-align";
+import CharacterCount from "@tiptap/extension-character-count";
+import { Markdown } from "tiptap-markdown";
+
 import Image from "./extensions/image";
 import Float from "./extensions/float";
 import StarterKit from "@tiptap/starter-kit";
@@ -18,41 +21,60 @@ import { CustomTooltipNode, Link } from "./extensions/node-link";
 import { User } from "lucia";
 import { useUploadImage } from "@/hooks/useUploadImage";
 import { LineNumbers } from "./extensions/line-number";
+import { PageBreak } from "./extensions/page-break";
+import { CharacterCountDisplay } from "./characterCount/characterCount";
 
 const content = `
-<h2>
-  Hi there,
-</h2>
-<p>
-  this is a <em>basic</em> example of <strong>tiptap</strong>. Sure, there are all kind of basic text styles you’d probably expect from a text editor. But wait until you see the lists:
-</p>
-<ul>
-  <li>
-    That’s a bullet list with one …
-  </li> 
-  <li>
-    … or two list items.
-  </li>
-</ul>
-<p>
-  Isn’t that great? And all of that is editable. But wait, there’s more. Let’s try a code block:
-</p>
-<pre><code class="language-css">body {
-display: none;
-}</code></pre>
-<p>
-  I know, I know, this is impressive. It’s only the tip of the iceberg though. Give it a try and click a little bit around. Don’t forget to check the other examples too.
-</p>
-<blockquote>
-  Wow, that’s amazing. Good work, boy! 👏
-  <br />
-  — Mom
-</blockquote>
+# A Quiet Evening
+
+## By Jane Doe
+
+### Chapter 1: The Unexpected Guest
+
+It was a cold and stormy night, the wind howled outside and the rain battered against the windows. Inside, the Smith's cozy living room was a stark contrast, with the warm glow of a fire and the soft ticking of the grandfather clock.
+
+Sarah was curled up on the sofa, lost in a book, when she heard a faint knock at the door. Puzzled, she glanced at the clock. *Who could it be at this hour?* she wondered.
+
+She stood up and walked cautiously to the door. Peering through the peephole, she saw a shadowy figure standing outside. Taking a deep breath, she opened the door.
+
+"Hello, may I help you?" she asked, her voice trembling slightly.
+
+"Good evening, ma'am. I'm terribly sorry to bother you," the man began, his hat in his hands, "but my car broke down just up the road, and my phone is dead. Could I use your phone to call for a tow truck?"
+
+Sarah hesitated for a moment, then nodded and stepped aside to let him in.
+
+### Chapter 2: An Intriguing Conversation
+
+As the stranger stepped into the light, Sarah could see he was a young man, not much older than she was, with a kind face and earnest eyes. She led him to the telephone in the kitchen, then made them both a cup of tea.
+
+While he talked on the phone, Sarah couldn't help but notice the unusual pendant he wore around his neck. It was a silver wolf, its eyes set with small green stones.
+
+"Thank you for the tea, and for letting me use your phone," the man said as he hung up.
+
+"It's no trouble at all," Sarah replied. "It's such a nasty night to be stuck outside. What's your name?"
+
+"I'm Michael," he said, "and I can't thank you enough for your kindness tonight."
+
+As they sipped their tea, the storm outside seemed to grow even more fierce. They talked about many things, finding they had much in common. Before long, Sarah felt as if she had known Michael for years.
+
+### Chapter 3: The Night Takes a Turn
+
+The conversation flowed easily until the lights flickered and went out, plunging the room into darkness. The wind screamed like a banshee, making the house creak and groan.
+
+"Don't worry," Michael said, his voice calm, "It's just the storm. It should pass soon."
+
+But Sarah felt a chill that had nothing to do with the wind. There was something about the night, about Michael, that didn't seem quite right...
+
+---
+
+*To be continued...*
+
 `;
 
 const editorProps: EditorProps = {
   attributes: {
-    class: "mt-8 prose prose-slate mx-auto pr-5 lg:prose-lg focus:outline-none",
+    class:
+      "mt-8 prose prose-slate mx-auto pl-8 lg:prose-lg focus:outline-none dark:prose-invert",
   },
   handleDOMEvents: {
     keydown: (_view, event) => {
@@ -105,6 +127,9 @@ const Tiptap = ({
       }),
       CustomTooltipNode,
       LineNumbers,
+      PageBreak,
+      Markdown,
+      CharacterCount,
     ];
 
     // Conditionally add the Image extension if contentId is available
@@ -133,6 +158,7 @@ const Tiptap = ({
           extensions={extensions}
           content={content}
           slotBefore={<MenuBar />}
+          slotAfter={<CharacterCountDisplay />}
           onSelectionUpdate={(selection) => {}}
           onUpdate={({ editor }) => {
             const value = editor.getHTML();

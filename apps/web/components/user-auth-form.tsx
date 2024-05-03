@@ -96,10 +96,12 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
           <SubmitButton />
         </form>
       </Form>
-      <Link href={pathname === "/login" ? "/login" : "/register"}>
+      <Link href={pathname === "/login" ? "/register" : "/login"}>
         <TypographyP>Create Account</TypographyP>
       </Link>
-      <GithubLoginButton />
+      <GithubLoginButton
+        isLogin={pathname === "/login" ? "/register" : "/login"}
+      />
     </div>
   );
 }

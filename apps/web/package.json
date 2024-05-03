@@ -30,6 +30,7 @@
     "@repo/db": "workspace:*",
     "@repo/ui": "workspace:*",
     "@tiptap/core": "^2.2.3",
+    "@tiptap/extension-character-count": "^2.3.1",
     "@tiptap/extension-color": "^2.2.3",
     "@tiptap/extension-highlight": "^2.2.3",
     "@tiptap/extension-image": "^2.2.3",
@@ -60,6 +61,7 @@
     "tailwind-merge": "^2.2.1",
     "tailwindcss-animate": "^1.0.7",
     "tippy.js": "^6.3.7",
+    "tiptap-markdown": "^0.8.10",
     "uuid": "^9.0.1",
     "zod": "^3.22.4"
   },

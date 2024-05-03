@@ -17,6 +17,11 @@ import "reactflow/dist/style.css";
 import FloatingEdge from "./floating-edge";
 import FloatingConnectionLine from "./floating-connection-line";
 import { createNodesAndEdges } from "./utils";
+import { Story } from "@repo/db";
+
+interface FlowProps {
+  story: Story;
+}
 
 const { nodes: initialNodes, edges: initialEdges } = createNodesAndEdges();
 
@@ -24,9 +29,22 @@ const edgeTypes: EdgeTypes = {
   floating: FloatingEdge,
 };
 
-function Flow() {
-  const [nodes, , onNodesChange] = useNodesState(initialNodes);
+function Flow({ story }: FlowProps) {
+  const [nodes, , onNodesChange] = useNodesState<Node[]>([
+    {
+      id: story?.title,
+      data: {
+        label: story?.title,
+      },
+      position: {
+        x: 1280,
+        y: 653.5,
+      },
+    },
+  ]);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
+
+  console.log("intiailNodes", initialNodes);
 
   const onConnect: OnConnect = useCallback(
     (params) =>

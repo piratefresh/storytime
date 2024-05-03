@@ -1,6 +1,6 @@
 import Link from "next/link";
 
-export const GithubLoginButton = () => (
+export const GithubLoginButton = ({ isLogin }: { isLogin: boolean }) => (
   <Link className="flex" href="/login/github">
     <button
       type="button"
@@ -19,7 +19,7 @@ export const GithubLoginButton = () => (
           clip-rule="evenodd"
         />
       </svg>
-      Sign in with Github
+      {isLogin ? `Sign in with Github` : `Sign up with Github`}
     </button>
   </Link>
 );
