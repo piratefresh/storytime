@@ -74,7 +74,7 @@ But Sarah felt a chill that had nothing to do with the wind. There was something
 const editorProps: EditorProps = {
   attributes: {
     class:
-      "mt-8 prose prose-slate mx-auto pl-8 lg:prose-lg focus:outline-none dark:prose-invert",
+      "mt-8 prose-sm prose-slate mx-auto px-8 lg:prose-sm focus:outline-none dark:prose-invert",
   },
   handleDOMEvents: {
     keydown: (_view, event) => {
@@ -126,7 +126,9 @@ const Tiptap = ({
         },
       }),
       CustomTooltipNode,
-      LineNumbers,
+      LineNumbers.configure({
+        showLineNumbers: true, // Use state to pass down the configuration
+      }),
       PageBreak,
       Markdown,
       CharacterCount,

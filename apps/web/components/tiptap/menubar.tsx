@@ -47,6 +47,26 @@ export const MenuBar = () => {
     return null;
   }
 
+  function toggleLineNumbers() {
+    if (!editor) {
+      return null;
+    }
+
+    const currentSetting = editor.extensionManager.extensions.find(
+      (ext) => ext.name === "lineNumbers"
+    )?.options.showLineNumbers;
+
+    if (currentSetting !== undefined) {
+      const transaction = editor.view.state.tr.setMeta("lineNumbers", {
+        showLineNumbers: !currentSetting,
+      });
+
+      editor.view.dispatch(transaction);
+    } else {
+      console.error("Line numbers extension not found.");
+    }
+  }
+
   const updateActiveFormat = () => {
     if (editor.isActive("paragraph")) {
       setActiveFormat("paragraph");
@@ -424,6 +444,7 @@ export const MenuBar = () => {
       >
         Un Page Break
       </button>
+      <button onClick={() => toggleLineNumbers()}>Toggle Line Numbers</button>
     </div>
   );
 };

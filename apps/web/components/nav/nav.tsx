@@ -20,6 +20,7 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "../ui/collapsible";
+import { TypographyH1 } from "../ui/typography";
 
 interface NavProps {
   isCollapsed: boolean;
@@ -46,11 +47,11 @@ export function Nav({ links, isCollapsed }: NavProps) {
   return (
     <div
       data-collapsed={isCollapsed}
-      className="group flex flex-col gap-4 py-2 data-[collapsed=true]:py-2 min-h-screen min-w-[220px] bg-gray-400"
+      className="group flex flex-col gap-4 py-2 data-[collapsed=true]:py-2 min-h-screen min-w-[220px] border-r"
     >
       <nav className="grid gap-1 px-2 group-[[data-collapsed=true]]:justify-center group-[[data-collapsed=true]]:px-2">
-        <div className="flex flex-row justify-between">
-          <h3>Storytime</h3>
+        <div className="inline-flex flex-col items-start gap-8">
+          <TypographyH1>Storytime</TypographyH1>
           <DropdownMenu>
             <DropdownMenuTrigger>MG</DropdownMenuTrigger>
             <DropdownMenuContent className="w-56">
@@ -74,33 +75,35 @@ export function Nav({ links, isCollapsed }: NavProps) {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        {links.map((link, index) => (
-          <Collapsible key={`${link.href}-${index}`}>
-            <Link href={link.href as string}>
-              <div className="flex items-center gap-4">
-                <link.icon className="h-4 w-4" />
-                <span>{link.title}</span>
-              </div>
-            </Link>
-            {link.items ? (
-              <>
-                <CollapsibleTrigger>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    className="p-0 items-center"
-                  >
-                    <ChevronsUpDown className="h-4 w-4" />
-                    <span className="sr-only">Toggle</span>
-                  </Button>
-                </CollapsibleTrigger>
-                <CollapsibleContent>
-                  {link.items ? <NavItems items={link.items} /> : null}
-                </CollapsibleContent>
-              </>
-            ) : null}
-          </Collapsible>
-        ))}
+        <div className="flex flex-col gap-4">
+          {links.map((link, index) => (
+            <Collapsible key={`${link.href}-${index}`}>
+              <Link href={link.href as string}>
+                <div className="flex items-center gap-4">
+                  <link.icon className="h-6 w-6" />
+                  <span>{link.title}</span>
+                </div>
+              </Link>
+              {link.items ? (
+                <>
+                  <CollapsibleTrigger>
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      className="p-0 items-center"
+                    >
+                      <ChevronsUpDown className="h-4 w-4" />
+                      <span className="sr-only">Toggle</span>
+                    </Button>
+                  </CollapsibleTrigger>
+                  <CollapsibleContent>
+                    {link.items ? <NavItems items={link.items} /> : null}
+                  </CollapsibleContent>
+                </>
+              ) : null}
+            </Collapsible>
+          ))}
+        </div>
       </nav>
     </div>
   );

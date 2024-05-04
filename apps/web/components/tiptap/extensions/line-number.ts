@@ -7,45 +7,21 @@ function createLineNumberWidget(lineNumber: string) {
   const lineNumberElement = document.createElement("div");
   lineNumberElement.textContent = lineNumber.toString();
   lineNumberElement.className =
-    "cursor-pointer select-none absolute left-0 z-index[-1] text-sm";
+    "cursor-none select-none absolute left-0 z-index[-1] text-sm leading-none";
   lineNumberElement.style.userSelect = "none";
+  lineNumberElement.style.marginTop = "10px";
 
   return lineNumberElement;
 }
 
-// function generateLineNumbers(doc: ProsemirrorNode) {
-//   const decorations: Decoration[] = [];
-//   let lineNumber = 1;
+function generateLineNumbers(
+  doc: ProsemirrorNode,
+  shouldDisplayLineNumbers: boolean
+) {
+  if (!shouldDisplayLineNumbers) {
+    return DecorationSet.empty;
+  }
 
-//   doc.descendants((node, pos) => {
-//     if (node.isTextblock) {
-//       // Get the text content of the node
-//       const text = node.textContent;
-//       const lines = text.split("\n");
-//       let linePos = pos;
-
-//       lines.forEach((line, index) => {
-//         // For the first line in the node, add the line number widget.
-//         // For subsequent lines, account for the new lines when positioning the widget.
-//         if (index > 0) {
-//           linePos += lines[index - 1].length + 1; // '+1' for the newline character
-//         }
-
-//         decorations.push(
-//           Decoration.widget(
-//             linePos,
-//             createLineNumberWidget(String(lineNumber++)),
-//             { side: -1 }
-//           )
-//         );
-//       });
-//     }
-//   });
-
-//   return DecorationSet.create(doc, decorations);
-// }
-
-function generateLineNumbers(doc: ProsemirrorNode) {
   const decorations: Decoration[] = [];
   let lineNumber = 1;
 
@@ -86,28 +62,36 @@ function generateLineNumbers(doc: ProsemirrorNode) {
   return DecorationSet.create(doc, decorations);
 }
 
+const lineNumbersKey = new PluginKey("lineNumbers");
+
 export const LineNumbers = Extension.create({
   name: "lineNumbers",
 
-  onFocused() {
-    console.log("onFocused");
-  },
-  onSelectionUpdate() {
-    console.log("select");
+  addOptions() {
+    return {
+      showLineNumbers: true,
+    };
   },
 
   addProseMirrorPlugins() {
+    const extension = this;
     return [
       new Plugin({
-        key: new PluginKey("lineNumbers"),
+        key: lineNumbersKey,
         state: {
           init(_, { doc }) {
-            return generateLineNumbers(doc);
+            return generateLineNumbers(doc, extension.options.showLineNumbers);
           },
           apply(transaction, oldState) {
-            return transaction.docChanged
-              ? generateLineNumbers(transaction.doc)
-              : oldState;
+            const newState =
+              transaction.getMeta("lineNumbers")?.showLineNumbers;
+
+            if (newState !== undefined) {
+              extension.options.showLineNumbers = newState;
+
+              return generateLineNumbers(transaction.doc, newState);
+            }
+            return oldState;
           },
         },
         props: {
