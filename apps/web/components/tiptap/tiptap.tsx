@@ -25,49 +25,36 @@ import { PageBreak } from "./extensions/page-break";
 import { CharacterCountDisplay } from "./characterCount/characterCount";
 
 const content = `
-# A Quiet Evening
+# Character Profile: Tony Soprano
 
-## By Jane Doe
+## Basic Information
+- **Name:** Tony Soprano
+- **Nickname:** "Tony" or "T"
+- **Age:** Late 40s to early 50s
+- **Occupation:** Mafia boss
 
-### Chapter 1: The Unexpected Guest
+## Physical Description
+- **Appearance:** Stocky build, receding hairline, often seen in tailored suits
+- **Style:** Classic and sophisticated, exuding authority and power
 
-It was a cold and stormy night, the wind howled outside and the rain battered against the windows. Inside, the Smith's cozy living room was a stark contrast, with the warm glow of a fire and the soft ticking of the grandfather clock.
+## Personality
+- **Complex:** Tony is a multifaceted character, capable of both kindness and ruthlessness.
+- **Conflicted:** He struggles with the demands of his criminal lifestyle and the desire for a more conventional family life.
+- **Charismatic:** Despite his flaws, Tony possesses a magnetic charm that draws people to him.
+- **Protective:** He is fiercely loyal to his family and will go to great lengths to ensure their safety and well-being.
 
-Sarah was curled up on the sofa, lost in a book, when she heard a faint knock at the door. Puzzled, she glanced at the clock. *Who could it be at this hour?* she wondered.
+## Background
+- **Family:** Born into an Italian-American family with ties to the mob, Tony was groomed from a young age to take over the family business.
+- **Upbringing:** Raised in a tough neighborhood in New Jersey, Tony learned the ways of the streets early on.
+- **Education:** Despite limited formal education, Tony is street-smart and shrewd in business dealings.
+- **Personal Struggles:** Tony grapples with mental health issues, including depression and anxiety, which he tries to manage through therapy.
 
-She stood up and walked cautiously to the door. Peering through the peephole, she saw a shadowy figure standing outside. Taking a deep breath, she opened the door.
+## Plot Points
+- **Family Dynamics:** The series delves into Tony's complicated relationships with his wife, children, and extended family, exploring the tensions between his criminal life and his desire for a normal family.
+- **Power Struggles:** As the head of the Soprano crime family, Tony must navigate the treacherous waters of organized crime, dealing with rival factions and internal power struggles.
+- **Psychological Depth:** Through therapy sessions with Dr. Jennifer Melfi, Tony confronts his inner demons and grapples with questions of morality and identity.
+- **Legacy:** Ultimately, Tony's story is one of legacy and mortality, as he grapples with the consequences of his actions and the legacy he will leave behind.
 
-"Hello, may I help you?" she asked, her voice trembling slightly.
-
-"Good evening, ma'am. I'm terribly sorry to bother you," the man began, his hat in his hands, "but my car broke down just up the road, and my phone is dead. Could I use your phone to call for a tow truck?"
-
-Sarah hesitated for a moment, then nodded and stepped aside to let him in.
-
-### Chapter 2: An Intriguing Conversation
-
-As the stranger stepped into the light, Sarah could see he was a young man, not much older than she was, with a kind face and earnest eyes. She led him to the telephone in the kitchen, then made them both a cup of tea.
-
-While he talked on the phone, Sarah couldn't help but notice the unusual pendant he wore around his neck. It was a silver wolf, its eyes set with small green stones.
-
-"Thank you for the tea, and for letting me use your phone," the man said as he hung up.
-
-"It's no trouble at all," Sarah replied. "It's such a nasty night to be stuck outside. What's your name?"
-
-"I'm Michael," he said, "and I can't thank you enough for your kindness tonight."
-
-As they sipped their tea, the storm outside seemed to grow even more fierce. They talked about many things, finding they had much in common. Before long, Sarah felt as if she had known Michael for years.
-
-### Chapter 3: The Night Takes a Turn
-
-The conversation flowed easily until the lights flickered and went out, plunging the room into darkness. The wind screamed like a banshee, making the house creak and groan.
-
-"Don't worry," Michael said, his voice calm, "It's just the storm. It should pass soon."
-
-But Sarah felt a chill that had nothing to do with the wind. There was something about the night, about Michael, that didn't seem quite right...
-
----
-
-*To be continued...*
 
 `;
 

@@ -15,7 +15,7 @@ async function CreateFolderPage({
   }
   const story = await getStory({
     title: decodeURIComponent(title),
-    id: user.id,
+    userId: user.id,
   });
 
   if (!story) {

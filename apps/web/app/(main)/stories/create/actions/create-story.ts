@@ -37,6 +37,21 @@ export async function createStory(formData: FormData): Promise<ActionResult> {
     };
   }
 
+  // Check if a story with the same title already exists for the user
+  const existingStory = await db.story.findFirst({
+    where: {
+      ownerId: user.id,
+      title: formData.title,
+    },
+  });
+
+  if (existingStory) {
+    return {
+      error:
+        "You already have a story with this title. Please choose a different title.",
+    };
+  }
+
   const story = await db.story.create({
     data: {
       title: formData.title,

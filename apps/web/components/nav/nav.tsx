@@ -21,6 +21,8 @@ import {
   CollapsibleTrigger,
 } from "../ui/collapsible";
 import { TypographyH1 } from "../ui/typography";
+import { UserInfo } from "./user-info";
+import { useSession } from "../session-provider";
 
 interface NavProps {
   isCollapsed: boolean;
@@ -44,6 +46,8 @@ function NavItems({ items }: { items: SidebarNavItem[] }) {
 }
 
 export function Nav({ links, isCollapsed }: NavProps) {
+  const { user } = useSession();
+  console.log(user);
   return (
     <div
       data-collapsed={isCollapsed}
@@ -53,7 +57,7 @@ export function Nav({ links, isCollapsed }: NavProps) {
         <div className="inline-flex flex-col items-start gap-8">
           <TypographyH1>Storytime</TypographyH1>
           <DropdownMenu>
-            <DropdownMenuTrigger>MG</DropdownMenuTrigger>
+            <DropdownMenuTrigger>{user.email}</DropdownMenuTrigger>
             <DropdownMenuContent className="w-56">
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />

@@ -17,7 +17,13 @@ export default async function StoriesPage() {
           </Button>
         </Link>
       </div>
-      {stories.length > 0 ? <div>Few Stories</div> : <div>No nStories</div>}
+      {stories.length > 0 ? (
+        stories.map((story) => (
+          <Link href={`/stories/${story.title}`}>{story.title}</Link>
+        ))
+      ) : (
+        <div>No nStories</div>
+      )}
     </div>
   );
 }

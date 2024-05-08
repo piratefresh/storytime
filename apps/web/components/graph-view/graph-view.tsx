@@ -44,8 +44,6 @@ function Flow({ story }: FlowProps) {
   ]);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
 
-  console.log("intiailNodes", initialNodes);
-
   const onConnect: OnConnect = useCallback(
     (params) =>
       setEdges((eds) =>
@@ -71,6 +69,7 @@ function Flow({ story }: FlowProps) {
       fitView
       edgeTypes={edgeTypes}
       connectionLineComponent={FloatingConnectionLine}
+      className="border"
     />
   );
 }

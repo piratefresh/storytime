@@ -6,10 +6,10 @@ import { redirect } from "next/navigation";
 import { cache } from "react";
 
 export const getStory = cache(
-  async ({ id, title }: { id: string; title: string }) => {
+  async ({ title, userId }: { title: string; userId: string }) => {
     const item = await db.story.findFirst({
       where: {
-        ownerId: id,
+        ownerId: userId,
         title,
       },
       include: {
@@ -19,7 +19,6 @@ export const getStory = cache(
     return item;
   }
 );
-
 async function FolderPage({
   params: { title, name },
 }: {
@@ -29,7 +28,7 @@ async function FolderPage({
 
   const story = await getStory({
     title: decodeURIComponent(title),
-    id: user.id,
+    userId: user.id,
   });
 
   if (!story) {

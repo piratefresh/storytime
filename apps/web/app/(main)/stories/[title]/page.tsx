@@ -6,12 +6,14 @@ import { Button } from "@/components/ui/button";
 import { TypographyH2 } from "@/components/ui/typography";
 import Link from "next/link";
 import Flow from "@/components/graph-view/graph-view";
+import { TreeView } from "@/components/tree-view/tree-view";
+import { AssetListView } from "./components/AssetListView";
 
 export const getStory = cache(
-  async ({ id, title }: { id: string; title: string }) => {
+  async ({ title, userId }: { title: string; userId: string }) => {
     const item = await db.story.findFirst({
       where: {
-        ownerId: id,
+        ownerId: userId,
         title,
       },
       include: {
@@ -35,11 +37,14 @@ export default async function StoryPage({
 
   const story = await getStory({
     title: decodeURIComponent(title),
-    id: user.id,
+    userId: user.id,
   });
 
+  if (!story) {
+    redirect("/stories");
+  }
   return (
-    <div className="flex flex-col gap-8 align-end">
+    <div className="flex flex-col gap-8 align-end flex-1 min-h-screen">
       <div className="flex gap-4 justify-between items-center border-b">
         <TypographyH2 className="border-b">{story?.title}</TypographyH2>
         <div className="flex gap-4">
@@ -66,8 +71,10 @@ export default async function StoryPage({
       ) : (
         <div>No Folders</div>
       )}
-
-      <Flow story={story} />
+      <div className="flex flex-row gap-4 flex-1">
+        <AssetListView story={story} />
+        <Flow story={story} />
+      </div>
     </div>
   );
 }

@@ -80,6 +80,9 @@ model Folder {
   storyId     String?
   story       Story?     @relation(fields: [storyId], references: [id])
   assets      Asset[]
+  parentId    String?
+  parent      Folder?    @relation("FolderNesting", fields: [parentId], references: [id])
+  children    Folder[]   @relation("FolderNesting")
 }
 
 model Asset {

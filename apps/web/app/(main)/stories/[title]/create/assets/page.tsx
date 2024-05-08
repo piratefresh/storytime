@@ -5,10 +5,10 @@ import { cache } from "react";
 import db from "@/lib/db";
 
 export const getStory = cache(
-  async ({ id, title }: { id: string; title: string }) => {
+  async ({ title, userId }: { title: string; userId: string }) => {
     const item = await db.story.findFirst({
       where: {
-        ownerId: id,
+        ownerId: userId,
         title,
       },
       include: {
@@ -31,7 +31,7 @@ async function CreateAssetPage({
   }
   const story = await getStory({
     title: decodeURIComponent(title),
-    id: user.id,
+    userId: user.id,
   });
 
   if (!story) {
