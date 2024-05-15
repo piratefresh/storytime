@@ -121,6 +121,16 @@ export const MenuBar = () => {
 
   const isActive = "bg-black text-white";
 
+  const replaceSelectedText = (replacementText: string) => {
+    if (editor) {
+      const { state, dispatch } = editor.view;
+      const { from, to } = state.selection;
+      editor.commands.insertContentAt({ from, to }, replacementText, {
+        updateSelection: true,
+      });
+    }
+  };
+
   return (
     <div className="flex flex-wrap gap-2 bg-accent p-2">
       <button
@@ -445,6 +455,15 @@ export const MenuBar = () => {
         Un Page Break
       </button>
       <button onClick={() => toggleLineNumbers()}>Toggle Line Numbers</button>
+
+      <button
+        onClick={() => {
+          console.log("onclick");
+          editor?.commands.generateText("Nilsen");
+        }}
+      >
+        Fake AI
+      </button>
     </div>
   );
 };

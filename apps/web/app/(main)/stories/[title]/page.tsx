@@ -6,12 +6,22 @@ import { Button } from "@/components/ui/button";
 import { TypographyH2 } from "@/components/ui/typography";
 import Link from "next/link";
 import Flow from "@/components/graph-view/graph-view";
-import { TreeView } from "@/components/tree-view/tree-view";
 import { AssetListView } from "./components/AssetListView";
+import { Prisma } from "@repo/db";
+
+export type StoryWithFolder = Prisma.StoryGetPayload<{
+  include: { folder: true };
+}>;
 
 export const getStory = cache(
-  async ({ title, userId }: { title: string; userId: string }) => {
-    const item = await db.story.findFirst({
+  async ({
+    title,
+    userId,
+  }: {
+    title: string;
+    userId: string;
+  }): Promise<StoryWithFolder | null> => {
+    const story = await db.story.findFirst({
       where: {
         ownerId: userId,
         title,
@@ -20,7 +30,7 @@ export const getStory = cache(
         folder: true,
       },
     });
-    return item;
+    return story || null;
   }
 );
 
@@ -59,18 +69,7 @@ export default async function StoryPage({
         <p>{story?.description}</p>
       </div>
 
-      {story?.folder?.length > 0 ? (
-        <div>
-          <TypographyH2>Folders</TypographyH2>
-          <ul>
-            {story?.folder.map((folder) => (
-              <li key={folder.id}>{folder.name}</li>
-            ))}
-          </ul>
-        </div>
-      ) : (
-        <div>No Folders</div>
-      )}
+      <TypographyH2>Folders</TypographyH2>
       <div className="flex flex-row gap-4 flex-1">
         <AssetListView story={story} />
         <Flow story={story} />

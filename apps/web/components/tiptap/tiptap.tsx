@@ -23,6 +23,7 @@ import { useUploadImage } from "@/hooks/useUploadImage";
 import { LineNumbers } from "./extensions/line-number";
 import { PageBreak } from "./extensions/page-break";
 import { CharacterCountDisplay } from "./characterCount/characterCount";
+import { GenerateText } from "./extensions/generateText";
 
 const content = `
 # Character Profile: Tony Soprano
@@ -77,6 +78,8 @@ const editorProps: EditorProps = {
   },
 };
 
+type ReplacementFunction = (inputText: string) => string;
+
 const Tiptap = ({
   onChange,
   user,
@@ -86,6 +89,14 @@ const Tiptap = ({
   user: User | null;
   contentId?: string;
 }) => {
+  const getReplacementText: ReplacementFunction = (inputText) => {
+    const replacements: Record<string, string> = {
+      hello: "hi",
+      world: "earth",
+    };
+    return replacements[inputText.toLowerCase()] || inputText;
+  };
+
   const extensions = React.useMemo(() => {
     const baseExtensions = [
       StarterKit.configure({
@@ -119,6 +130,9 @@ const Tiptap = ({
       PageBreak,
       Markdown,
       CharacterCount,
+      GenerateText.configure({
+        getReplacementText: (inputText) => "test", // Example: convert to uppercase
+      }),
     ];
 
     // Conditionally add the Image extension if contentId is available
