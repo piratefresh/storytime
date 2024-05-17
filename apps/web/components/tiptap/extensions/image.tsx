@@ -137,7 +137,11 @@ export const Component = (props: NodeViewWrapperProps) => {
     setAspectRatio(image.naturalWidth / image.naturalHeight);
   };
 
-  const handleResize = (direction, movementX, movementY) => {
+  const handleResize = (
+    direction: string,
+    movementX: number,
+    movementY: number
+  ) => {
     const pos = props.getPos();
     props.editor.commands.setNodeSelection(pos);
     const panel = imageRef.current;
@@ -368,7 +372,7 @@ export const CustomImage = TiptapImage.extend<CustomImageOptions>({
                     return false;
                   }
                   const src = url;
-                  img.src = src;
+                  img.src = src as unknown as string;
                   img.onload = () => {
                     const { schema } = view.state;
                     const imageNode = schema.nodes.image;

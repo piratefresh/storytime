@@ -22,8 +22,9 @@ import { User } from "lucia";
 import { useUploadImage } from "@/hooks/useUploadImage";
 import { LineNumbers } from "./extensions/line-number";
 import { PageBreak } from "./extensions/page-break";
-import { CharacterCountDisplay } from "./characterCount/characterCount";
+import { CharacterCountDisplay } from "./extensions/characterCountDisplay/characterCountDisplay";
 import { GenerateText } from "./extensions/generateText";
+import { Toolbar } from "../ui/toolbar";
 
 const content = `
 # Character Profile: Tony Soprano
@@ -78,7 +79,13 @@ const editorProps: EditorProps = {
   },
 };
 
-type ReplacementFunction = (inputText: string) => string;
+// We memorize the button so each button is not rerendered
+// on every editor state change
+const MemoButton = React.memo(Toolbar.Button);
+// const MemoColorPicker = React.memo(ColorPicker)
+// const MemoFontFamilyPicker = React.memo(FontFamilyPicker)
+// const MemoFontSizePicker = React.memo(FontSizePicker)
+// const MemoContentTypePicker = React.memo(ContentTypePicker)
 
 const Tiptap = ({
   onChange,
@@ -89,14 +96,6 @@ const Tiptap = ({
   user: User | null;
   contentId?: string;
 }) => {
-  const getReplacementText: ReplacementFunction = (inputText) => {
-    const replacements: Record<string, string> = {
-      hello: "hi",
-      world: "earth",
-    };
-    return replacements[inputText.toLowerCase()] || inputText;
-  };
-
   const extensions = React.useMemo(() => {
     const baseExtensions = [
       StarterKit.configure({
@@ -172,7 +171,25 @@ const Tiptap = ({
             onChange(value);
           }}
         >
-          <BubbleMenu>This is the bubble menu</BubbleMenu>
+          <BubbleMenu
+            tippyOptions={{ popperOptions: { placement: "top-start" } }}
+            editor={editor}
+            pluginKey="textMenu"
+            shouldShow={states.shouldShow}
+            updateDelay={100}
+          >
+            <Toolbar.Wrapper>
+              <MemoButton
+                tooltip="Bold"
+                tooltipShortcut={["Mod", "B"]}
+                onClick={commands.onBold}
+                active={states.isBold}
+              >
+                <Icon name="Bold" />
+              </MemoButton>
+              <Toolbar.Divider />
+            </Toolbar.Wrapper>
+          </BubbleMenu>
         </EditorProvider>
       </div>
     </div>

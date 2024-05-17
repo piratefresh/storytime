@@ -51,7 +51,9 @@ export const GenerateText = Extension.create<GenerateTextOptions>({
             )
           );
 
-          dispatch(transaction);
+          if (dispatch) {
+            dispatch(transaction);
+          }
           return true;
         },
     };

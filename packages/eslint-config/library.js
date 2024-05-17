@@ -1,12 +1,30 @@
 const { resolve } = require("node:path");
-const eslintPluginUnicorn = require("eslint-plugin-unicorn");
 
 const project = resolve(process.cwd(), "tsconfig.json");
 
 /** @type {import("eslint").Linter.Config} */
 module.exports = {
   extends: ["eslint:recommended", "prettier", "eslint-config-turbo"],
-  plugins: ["only-warn", eslintPluginUnicorn],
+  plugins: ["only-warn", "unicorn"],
+  rules: {
+    "no-unused-vars": [
+      "error",
+      {
+        args: "after-used",
+        caughtErrors: "none",
+        ignoreRestSiblings: true,
+        vars: "all",
+      },
+    ],
+    "prefer-const": "error",
+    "react-hooks/exhaustive-deps": "error",
+    "unicorn/filename-case": [
+      "error",
+      {
+        case: "kebabCase",
+      },
+    ],
+  },
   globals: {
     React: true,
     JSX: true,
