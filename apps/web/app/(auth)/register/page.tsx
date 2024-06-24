@@ -4,16 +4,10 @@ import {
   TypographyH2,
 } from "@/components/ui/typography";
 import { UserAuthForm } from "@/components/user-auth-form";
-import { validateRequest } from "@/lib/auth";
-import { redirect } from "next/navigation";
 
-async function RegisterPage() {
-  const { user } = await validateRequest();
-  if (user) {
-    return redirect("/");
-  }
+function RegisterPage(): JSX.Element {
   return (
-    <div className="grid place-content-center min-h-screen">
+    <div className="grid place-content-center w-full min-h-screen">
       <div className="flex flex-col gap-4">
         <TypographyH1>Storytime</TypographyH1>
         <TypographyP>Create stories</TypographyP>

@@ -3,7 +3,6 @@
 import { lucia } from "@/lib/auth";
 import db from "@/lib/db";
 import { ActionResult } from "@/lib/form";
-import { Genre } from "@repo/db";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -12,6 +11,7 @@ const storySchema = z.object({
   title: z.string(),
   description: z.string().min(2),
   genre: z.array(z.string()),
+  content: z.string(),
 });
 type FormData = z.infer<typeof storySchema>;
 
@@ -59,6 +59,7 @@ export async function createStory(formData: FormData): Promise<ActionResult> {
       genre: formData.genre,
       ownerId: user.id,
       status: "PLANNING",
+      content: formData.content,
     },
   });
 

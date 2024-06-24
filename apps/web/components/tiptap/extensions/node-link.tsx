@@ -6,11 +6,7 @@ import {
   mergeAttributes,
   Editor,
 } from "@tiptap/core";
-import Suggestion, {
-  SuggestionMatch,
-  SuggestionOptions,
-  Trigger,
-} from "@tiptap/suggestion";
+import Suggestion, { SuggestionOptions } from "@tiptap/suggestion";
 import { PluginKey, TextSelection } from "@tiptap/pm/state";
 import type { Node as ModelNode } from "@tiptap/pm/model";
 import {
@@ -21,7 +17,6 @@ import {
 } from "@tiptap/react";
 import tippy, { type Instance as TippyInstance } from "tippy.js";
 import type { ComponentPropsWithoutRef } from "react";
-
 import React from "react";
 import {
   Command,
@@ -36,6 +31,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { findSuggestionMatch } from "@/lib/editor/findSuggestionMatch";
 
 const DOM_RECT_FALLBACK: DOMRect = {
   bottom: 0,
@@ -53,7 +49,7 @@ const DOM_RECT_FALLBACK: DOMRect = {
 
 export const LinkPluginKey = new PluginKey("LinkPluginKey");
 
-export type SlashCommandOptions = {
+export type LinkCommandOptions = {
   suggestion: Omit<SuggestionOptions, "editor">;
 };
 
@@ -77,11 +73,12 @@ const insertDoubleBracketsInputRule = () => {
   });
 };
 
-export const Link = Extension.create<SlashCommandOptions>({
+export const Link = Extension.create<LinkCommandOptions>({
   name: "NodeLink",
   inline: true,
-  selectable: false,
+  selectable: true,
   atom: true,
+
   addOptions() {
     return {
       suggestion: {
@@ -155,7 +152,7 @@ export const Link = Extension.create<SlashCommandOptions>({
   parseHTML() {
     return [
       {
-        tag: `span[data-type="${this.name}"]`,
+        tag: `span[data-state="${this.name}"]`,
       },
     ];
   },
@@ -170,7 +167,7 @@ export const Link = Extension.create<SlashCommandOptions>({
     return [
       "span",
       mergeAttributes(
-        { "data-type": this.name },
+        { "data-state": this.name },
         this.options.HTMLAttributes,
         HTMLAttributes
       ),
@@ -187,33 +184,7 @@ export const Link = Extension.create<SlashCommandOptions>({
     return [
       Suggestion({
         editor: this.editor,
-        findSuggestionMatch: (config: Trigger): SuggestionMatch => {
-          const { $position } = config;
-
-          // Ensure textBeforeCursor is a string, using an empty string as fallback
-          const textBeforeCursor = $position.nodeBefore?.isText
-            ? $position.nodeBefore.text
-            : "";
-
-          // Directly use a regex pattern that matches `[[` at the end of a text segment
-          const regexp = /\[\[$/;
-
-          // Execute the regex match on the text before the cursor, ensuring it's always a string
-          const match = regexp.exec(textBeforeCursor || "");
-
-          if (match) {
-            const from = $position.pos - match[0].length;
-            const to = $position.pos;
-
-            return {
-              range: { from, to },
-              query: "", // Query is empty since you're triggering on `[[` without additional text
-              text: match[0],
-            };
-          }
-
-          return null;
-        },
+        findSuggestionMatch,
         ...this.options.suggestion,
       }),
     ];
@@ -240,12 +211,14 @@ const NodeLinkList = React.forwardRef<NodeLinkListRef, NodeLinkListProps>(
   ({ children, className, query, editor, itemScope, range, ...rest }, ref) => {
     const commandListRef = React.useRef<HTMLDivElement>(null);
 
+    // const [searchQuery, setSearchQuery] = React.useState<string>("");
+
     React.useEffect(() => {
       const navigationKeys = ["ArrowUp", "ArrowDown", "Enter"];
       const onKeyDown = (e: KeyboardEvent) => {
         if (navigationKeys.includes(e.key)) {
           e.preventDefault();
-          const commandRef = document.querySelector("#slash-command");
+          const commandRef = document.querySelector("#node-command");
 
           if (commandRef)
             commandRef.dispatchEvent(
@@ -268,11 +241,10 @@ const NodeLinkList = React.forwardRef<NodeLinkListRef, NodeLinkListProps>(
     return (
       <Command
         onKeyDown={(e) => {
-          console.log("e: ", e);
           e.stopPropagation();
         }}
-        id="slash-command"
-        className={cn("border rounded-md", className)}
+        id="node-command"
+        className={cn("border rounded-md min-w-60", className)}
         {...rest}
       >
         <CommandInput value={query} style={{ display: "none" }} />
@@ -280,8 +252,8 @@ const NodeLinkList = React.forwardRef<NodeLinkListRef, NodeLinkListProps>(
           <CommandGroup>
             {rest.items?.map((item) => (
               <CommandItem
-                key={item}
-                value={item}
+                key={item.name}
+                value={item.name}
                 onSelect={() => {
                   range.to += 2;
                   editor
@@ -290,12 +262,12 @@ const NodeLinkList = React.forwardRef<NodeLinkListRef, NodeLinkListProps>(
                     .deleteRange(range)
                     .insertContentAt(
                       range.from,
-                      `<span data-tooltip="${item}">${item}</span>`
+                      `<span data-tooltip="${item.name}" data-meta="${item.text}">${item.name}</span>`
                     )
                     .run();
                 }}
               >
-                {item}
+                {item.name}
               </CommandItem>
             ))}
           </CommandGroup>
@@ -309,8 +281,13 @@ const TooltipComponent = (props: NodeViewWrapperProps) => {
   return (
     <NodeViewWrapper as="span">
       <Tooltip>
-        <TooltipTrigger>{props.node.attrs.label}</TooltipTrigger>
-        <TooltipContent>{props.node.attrs.label}</TooltipContent>
+        <TooltipTrigger className="text-neutral-400 underline">
+          {props.node.attrs.label}
+        </TooltipTrigger>
+        <TooltipContent className="max-w-96">
+          <p className="font-semibold !mt-0">{props.node.attrs.label}</p>
+          {props.node.attrs.metaData}
+        </TooltipContent>
       </Tooltip>
     </NodeViewWrapper>
   );
@@ -320,13 +297,24 @@ export const CustomTooltipNode = Node.create({
   name: "customTooltip",
   group: "inline",
   inline: true,
-  selectable: false,
+  selectable: true,
   atom: true,
 
   addAttributes() {
     return {
       label: {
-        parseHTML: (element) => element.getAttribute("data-tooltip"),
+        default: null,
+        parseHTML: (element) =>
+          element instanceof HTMLElement
+            ? element.getAttribute("data-tooltip")
+            : null,
+      },
+      metaData: {
+        default: null,
+        parseHTML: (element) =>
+          element instanceof HTMLElement
+            ? element.getAttribute("data-meta")
+            : null,
       },
     };
   },
@@ -335,12 +323,23 @@ export const CustomTooltipNode = Node.create({
     return [
       {
         tag: "span[data-tooltip]",
+        getAttrs: (element) =>
+          element instanceof HTMLElement
+            ? {
+                label: element.getAttribute("data-tooltip"),
+                metaData: element.getAttribute("data-meta"),
+              }
+            : {},
       },
     ];
   },
 
   renderHTML({ node }) {
-    return ["span", { "data-tooltip": node.attrs.label }, node.attrs.label];
+    return [
+      "span",
+      { "data-tooltip": node.attrs.label, "data-meta": node.attrs.metaData },
+      node.attrs.label,
+    ];
   },
 
   addNodeView() {

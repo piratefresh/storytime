@@ -1,6 +1,6 @@
 "use client";
 
-import { Session, User } from "lucia";
+import { type Session, type User } from "lucia";
 import { createContext, useContext } from "react";
 
 interface SessionProviderProps {
@@ -12,17 +12,17 @@ const SessionContext = createContext<SessionProviderProps>(
   {} as SessionProviderProps
 );
 
-export const SessionProvider = ({
+export function SessionProvider({
   children,
   value,
 }: {
   children: React.ReactNode;
   value: SessionProviderProps;
-}) => {
+}) {
   return (
     <SessionContext.Provider value={value}>{children}</SessionContext.Provider>
   );
-};
+}
 
 export const useSession = () => {
   const sessionContext = useContext(SessionContext);

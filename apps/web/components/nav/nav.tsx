@@ -20,9 +20,9 @@ import {
   CollapsibleContent,
   CollapsibleTrigger,
 } from "../ui/collapsible";
-import { TypographyH1 } from "../ui/typography";
-import { UserInfo } from "./user-info";
+import { TypographyH1, TypographyH3, TypographySmall } from "../ui/typography";
 import { useSession } from "../session-provider";
+import { Icon } from "../ui/icon";
 
 interface NavProps {
   isCollapsed: boolean;
@@ -47,19 +47,24 @@ function NavItems({ items }: { items: SidebarNavItem[] }) {
 
 export function Nav({ links, isCollapsed }: NavProps) {
   const { user } = useSession();
-  console.log(user);
+
   return (
     <div
       data-collapsed={isCollapsed}
-      className="group flex flex-col gap-4 py-2 data-[collapsed=true]:py-2 min-h-screen min-w-[220px] border-r"
+      className="group flex flex-col gap-4 py-2 data-[collapsed=true]:py-2 min-h-screen min-w-5 bg-neutral-800"
     >
       <nav className="grid gap-1 px-2 group-[[data-collapsed=true]]:justify-center group-[[data-collapsed=true]]:px-2">
-        <div className="inline-flex flex-col items-start gap-8">
-          <TypographyH1>Storytime</TypographyH1>
+        <div className="inline-flex flex-col items-center gap-8">
+          <TypographyH3>ST</TypographyH3>
           <DropdownMenu>
-            <DropdownMenuTrigger>{user.email}</DropdownMenuTrigger>
+            <DropdownMenuTrigger>
+              <Icon name="UserRound" />
+            </DropdownMenuTrigger>
             <DropdownMenuContent className="w-56">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuLabel>
+                My Account <TypographySmall>{user?.email}</TypographySmall>
+              </DropdownMenuLabel>
+
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
                 <DropdownMenuItem>
@@ -79,13 +84,12 @@ export function Nav({ links, isCollapsed }: NavProps) {
             </DropdownMenuContent>
           </DropdownMenu>
         </div>
-        <div className="flex flex-col gap-4">
+        <div className="flex flex-col items-center gap-4">
           {links.map((link, index) => (
             <Collapsible key={`${link.href}-${index}`}>
               <Link href={link.href as string}>
                 <div className="flex items-center gap-4">
                   <link.icon className="h-6 w-6" />
-                  <span>{link.title}</span>
                 </div>
               </Link>
               {link.items ? (
@@ -97,7 +101,7 @@ export function Nav({ links, isCollapsed }: NavProps) {
                       className="p-0 items-center"
                     >
                       <ChevronsUpDown className="h-4 w-4" />
-                      <span className="sr-only">Toggle</span>
+                      <span>Toggle</span>
                     </Button>
                   </CollapsibleTrigger>
                   <CollapsibleContent>

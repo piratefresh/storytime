@@ -1,6 +1,6 @@
 import { LucideIcon } from "lucide-react";
 
-export type SiteConfig = {
+export interface SiteConfig {
   name: string;
   description: string;
   url: string;
@@ -9,13 +9,13 @@ export type SiteConfig = {
     twitter: string;
     github: string;
   };
-};
+}
 
-export type NavItem = {
+export interface NavItem {
   title: string;
   href: string;
   disabled?: boolean;
-};
+}
 
 export type MainNavItem = NavItem;
 
@@ -37,7 +37,31 @@ export type SidebarNavItem = {
     }
 );
 
-export type DocsConfig = {
+export interface DocsConfig {
   mainNav: MainNavItem[];
   sidebarNav: SidebarNavItem[];
-};
+}
+
+export type FormResponse =
+  | {
+      status: "success";
+      message: string;
+    }
+  | {
+      status: "error";
+      message: string;
+      errors?: {
+        path: string;
+        message: string;
+      }[];
+    }
+  | null;
+
+export type FormState = {
+  message: string;
+  status: "success" | "error";
+  errors?: {
+    path: string;
+    message: string;
+  }[];
+} | null;

@@ -16,30 +16,17 @@ declare module "@tiptap/core" {
   }
 }
 
-export const GenerateText = Extension.create<GenerateTextOptions>({
+export const GenerateText = Extension.create({
   name: "generateText",
-
-  addOptions() {
-    return {
-      getReplacementText: (inputText: string) => inputText, // Default implementation
-    };
-  },
 
   addCommands() {
     return {
       generateText:
-        (text: string) =>
+        (replacementText: string) =>
         ({ state, dispatch }) => {
-          if (state.selection.empty) return false;
-
           const { from, to } = state.selection;
-          const textToReplace = state.doc.textBetween(from, to, " ");
-          const replacementText =
-            this.options.getReplacementText(textToReplace);
 
-          console.log("state: ", state);
-          console.log("text: ", textToReplace);
-          console.log("replacementText: ", replacementText);
+          if (state.selection.empty || !replacementText) return false;
 
           const transaction = state.tr;
           transaction.replaceWith(from, to, state.schema.text(replacementText));

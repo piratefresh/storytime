@@ -7,6 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SessionProvider } from "@/components/session-provider";
 import { validateRequest } from "@/lib/auth";
+import { SideMenu } from "@/components/side-menu";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,7 +22,7 @@ export default async function RootLayout({
   children: React.ReactNode;
 }): Promise<JSX.Element> {
   const sessionData = await validateRequest();
-  console.log(sessionData);
+
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
@@ -33,7 +34,10 @@ export default async function RootLayout({
         >
           <TooltipProvider>
             <SessionProvider value={sessionData}>
-              <main className="">{children}</main>
+              <div className="flex">
+                <SideMenu user={sessionData.user} />
+                <main className="flex w-full">{children}</main>
+              </div>
             </SessionProvider>
           </TooltipProvider>
           <Toaster />

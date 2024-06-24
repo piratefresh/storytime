@@ -2,13 +2,19 @@ import { Lucia } from "lucia";
 import { PrismaAdapter } from "@lucia-auth/adapter-prisma";
 import type { Session, User } from "lucia";
 import { cookies } from "next/headers";
-import { cache } from "react";
-import { db } from "./db";
 import { TimeSpan, createDate } from "oslo";
 import { generateRandomString, alphabet } from "oslo/crypto";
 import { GitHub, Google } from "arctic";
+import { db } from "./db";
 
 const adapter = new PrismaAdapter(db.session, db.user);
+
+// const sql = postgres(process.env.DATABASE_URL!);
+
+// const adapter = new PostgresJsAdapter(sql, {
+//   user: "User",
+//   session: "Session",
+// });
 
 export const lucia = new Lucia(adapter, {
   sessionCookie: {
@@ -30,57 +36,57 @@ export const lucia = new Lucia(adapter, {
 });
 
 export const github = new GitHub(
-  process.env.GITHUB_CLIENT_ID!,
-  process.env.GITHUB_SECRET!
+  process.env.GITHUB_CLIENT_ID ?? "",
+  process.env.GITHUB_SECRET ?? ""
 );
 
 export const google = new Google(
-  process.env.GOOGLE_CLIENT_ID!,
-  process.env.GOOGLE_SECRET!,
-  process.env.GOOGLE_REDIRECT_URI!
+  process.env.GOOGLE_CLIENT_ID ?? "",
+  process.env.GOOGLE_SECRET ?? "",
+  process.env.GOOGLE_REDIRECT_URI ?? ""
 );
 
-export const validateRequest = cache(
-  async (): Promise<
-    { user: User; session: Session } | { user: null; session: null }
-  > => {
-    const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
-    if (!sessionId) {
-      return {
-        user: null,
-        session: null,
-      };
-    }
-
-    const result = await lucia.validateSession(sessionId);
-    // next.js throws when you attempt to set cookie when rendering page
-    try {
-      if (result.session && result.session.fresh) {
-        const sessionCookie = lucia.createSessionCookie(result.session.id);
-        cookies().set(
-          sessionCookie.name,
-          sessionCookie.value,
-          sessionCookie.attributes
-        );
-      }
-      if (!result.session) {
-        const sessionCookie = lucia.createBlankSessionCookie();
-        cookies().set(
-          sessionCookie.name,
-          sessionCookie.value,
-          sessionCookie.attributes
-        );
-      }
-    } catch {}
-    return result;
+export const validateRequest = async (): Promise<
+  { user: User; session: Session } | { user: null; session: null }
+> => {
+  const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
+  if (!sessionId) {
+    return {
+      user: null,
+      session: null,
+    };
   }
-);
+
+  const result = await lucia.validateSession(sessionId);
+  // next.js throws when you attempt to set cookie when rendering page
+  try {
+    if (result.session?.fresh) {
+      const sessionCookie = lucia.createSessionCookie(result.session.id);
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes
+      );
+    }
+    if (!result.session) {
+      const sessionCookie = lucia.createBlankSessionCookie();
+      cookies().set(
+        sessionCookie.name,
+        sessionCookie.value,
+        sessionCookie.attributes
+      );
+    }
+  } catch {
+    /* empty */
+  }
+  return result;
+};
 
 export async function generateEmailVerificationCode(
   userId: string,
   email: string
 ): Promise<string> {
-  db.emailVerificationCode.deleteMany({
+  await db.emailVerificationCode.deleteMany({
     where: {
       userId,
     },

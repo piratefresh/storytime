@@ -1,5 +1,4 @@
 import { createMedia } from "@/app/(main)/assets/media/actions/create-media";
-import db from "@/lib/db";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
 import crypto from "crypto";
@@ -86,7 +85,13 @@ export async function useUploadImage({
         return { error: "Couldn't connect image to media library" };
       }
       if (createMediaResponse?.success) {
-        return publicUrl;
+        return {
+          url: publicUrl,
+          bucket: process.env.NEXT_PUBLIC_AWS_BUCKET_NAME!,
+          key: fileName,
+          name: file.name,
+          size: file.size,
+        };
       }
     } else {
       console.error("Upload failed:", response.statusText);

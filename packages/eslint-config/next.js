@@ -2,43 +2,32 @@ const { resolve } = require("node:path");
 
 const project = resolve(process.cwd(), "tsconfig.json");
 
-/** @type {import("eslint").Linter.Config} */
+/*
+ * This is a custom ESLint configuration for use with
+ * Next.js apps.
+ *
+ * This config extends the Vercel Engineering Style Guide.
+ * For more information, see https://github.com/vercel/style-guide
+ *
+ */
+
 module.exports = {
   extends: [
-    "eslint:recommended",
-    "prettier",
-    require.resolve("@vercel/style-guide/eslint/next"),
+    "@vercel/style-guide/eslint/node",
+    "@vercel/style-guide/eslint/typescript",
+    "@vercel/style-guide/eslint/browser",
+    "@vercel/style-guide/eslint/react",
+    "@vercel/style-guide/eslint/next",
+    // Turborepo custom eslint configuration configures the following rules:
+    //  - https://github.com/vercel/turbo/blob/main/packages/eslint-plugin-turbo/docs/rules/no-undeclared-env-vars.md
     "eslint-config-turbo",
-    "plugin:tailwindcss/recommended",
-    require.resolve("eslint-plugin-unicorn"),
-  ],
+  ].map(require.resolve),
+  parserOptions: {
+    project,
+  },
   globals: {
     React: true,
     JSX: true,
-  },
-  env: {
-    node: true,
-    browser: true,
-  },
-  plugins: ["only-warn", "unicorn"],
-  rules: {
-    "no-unused-vars": [
-      "error",
-      {
-        args: "after-used",
-        caughtErrors: "none",
-        ignoreRestSiblings: true,
-        vars: "all",
-      },
-    ],
-    "prefer-const": "error",
-    "react-hooks/exhaustive-deps": "error",
-    "unicorn/filename-case": [
-      "error",
-      {
-        case: "kebabCase",
-      },
-    ],
   },
   settings: {
     "import/resolver": {
@@ -47,10 +36,9 @@ module.exports = {
       },
     },
   },
-  ignorePatterns: [
-    // Ignore dotfiles
-    ".*.js",
-    "node_modules/",
-  ],
-  overrides: [{ files: ["*.js?(x)", "*.ts?(x)"] }],
+  ignorePatterns: ["node_modules/", "dist/"],
+  // add rules configurations here
+  rules: {
+    "import/no-default-export": "off",
+  },
 };

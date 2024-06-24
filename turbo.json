@@ -2,6 +2,9 @@
   "$schema": "https://turbo.build/schema.json",
   "globalDependencies": ["**/.env.*local"],
   "pipeline": {
+    "topo": {
+      "dependsOn": ["^topo"]
+    },
     "build": {
       "dependsOn": ["^build"],
       "outputs": [".next/**", "!.next/cache/**"]
@@ -55,6 +58,7 @@
     "AWS_ACCESS_KEY",
     "AWS_SECRET_KEY",
     "AWS_BUCKET_NAME",
-    "AWS_BUCKET_REGION"
+    "AWS_BUCKET_REGION",
+    "NODE_ENV"
   ]
 }

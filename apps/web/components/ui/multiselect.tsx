@@ -37,17 +37,21 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
       onChange(selected.filter((i) => i !== item));
     };
 
+    const [search, setSearch] = React.useState("");
+    console.log("open: ", open);
     // Use useImperativeHandle here if you need to expose any methods to the parent component
 
     return (
-      <Popover open={open} onOpenChange={setOpen} {...props}>
+      <Popover open={open} onOpenChange={setOpen} modal {...props}>
         <PopoverTrigger asChild>
           <Button
             variant="outline"
             role="combobox"
             aria-expanded={open}
             className={`w-full justify-between ${selected.length > 1 ? "h-full" : "h-10"}`}
-            onClick={() => setOpen(!open)}
+            onClick={() => {
+              setOpen(!open);
+            }}
             // ref={ref} // Assign the ref here
           >
             <div className="flex gap-1 flex-wrap">
@@ -60,6 +64,7 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
                 >
                   {item}
                   <button
+                    type="button"
                     className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                     onKeyDown={(e) => {
                       if (e.key === "Enter") {
@@ -82,13 +87,18 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
         </PopoverTrigger>
         <PopoverContent className="p-0 w-[var(--radix-popover-trigger-width)]">
           <Command className={className}>
-            <CommandInput placeholder="Search ..." />
+            <CommandInput
+              value={search}
+              onValueChange={setSearch}
+              placeholder="Search ..."
+            />
             <CommandEmpty>No item found.</CommandEmpty>
             <CommandGroup className="max-h-64 overflow-auto">
               {options.map((option) => (
                 <CommandItem
                   key={option.value}
                   onSelect={() => {
+                    setSearch("");
                     onChange(
                       selected.includes(option.value)
                         ? selected.filter((item) => item !== option.value)
@@ -115,5 +125,7 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
     );
   }
 );
+
+MultiSelect.displayName = "MultiSelect";
 
 export { MultiSelect };

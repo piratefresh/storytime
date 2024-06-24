@@ -12,6 +12,7 @@
     "tailwindcss": "^3.4.0"
   },
   "dependencies": {
+    "mini-svg-data-uri": "^1.4.4",
     "tailwindcss-animate": "^1.0.7"
   }
 }

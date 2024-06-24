@@ -7,6 +7,7 @@
     "lint": "turbo lint",
     "format": "prettier --write \"**/*.{ts,tsx,md}\"",
     "db:update": "dotenv -- turbo db:push db:generate",
+    "db:push": "dotenv -- turbo db:push db:push",
     "db:drop": "dotenv -- turbo db:drop",
     "db:studio": "dotenv -- turbo db:studio",
     "web:dev": "dotenv -- turbo web:dev",

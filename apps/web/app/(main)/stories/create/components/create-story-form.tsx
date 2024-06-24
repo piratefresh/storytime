@@ -1,5 +1,11 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { z } from "zod";
+import { useFormState, useFormStatus } from "react-dom";
+import { type User } from "lucia";
+import React from "react";
 import {
   Form,
   FormControl,
@@ -9,22 +15,12 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { TypographyH1 } from "@/components/ui/typography";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { Input } from "@/components/ui/input";
-import { useFormState, useFormStatus } from "react-dom";
 import { createStory } from "@/app/(main)/stories/create/actions/create-story";
-import { User } from "lucia";
 import { Textarea } from "@/components/ui/textarea";
 import { MultiSelect } from "@/components/ui/multiselect";
 import { Genres } from "@/app/constants/genres";
-
-import React from "react";
-import * as Popover from "@radix-ui/react-popover";
-import { MixerHorizontalIcon, Cross2Icon } from "@radix-ui/react-icons";
 
 const genreOptions = Object.entries(Genres).map(([key, value]) => ({
   value,
@@ -41,7 +37,7 @@ const formSchema = z.object({
   genre: z.array(z.string()),
 });
 
-export function CreateStoryForm({ user }: { user: User | null }) {
+export function CreateStoryForm(): JSX.Element {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -56,15 +52,12 @@ export function CreateStoryForm({ user }: { user: User | null }) {
   const onAction = async () => {
     const valid = await form.trigger();
     if (valid) {
-      const response = await createStory(form.getValues());
+      const response = await createStory({ ...form.getValues(), content: "" });
       console.log("response: ", response);
-      if (response.error) {
+      if (response?.error) {
         form.setError("root.serverError", {
-          type: `${response.error}`,
+          type: response.error,
         });
-      }
-
-      if (response) {
       }
     }
   };
@@ -73,7 +66,6 @@ export function CreateStoryForm({ user }: { user: User | null }) {
   return (
     <Form {...form}>
       <form action={dispatch} className="space-y-8 w-full max-w-screen-md">
-        <TypographyH1>Create a Story</TypographyH1>
         <FormField
           control={form.control}
           name="title"
@@ -138,7 +130,7 @@ export function CreateStoryForm({ user }: { user: User | null }) {
   );
 }
 
-const SubmitButton = () => {
+function SubmitButton(): JSX.Element {
   const status = useFormStatus();
 
   return (
@@ -146,4 +138,4 @@ const SubmitButton = () => {
       Submit
     </Button>
   );
-};
+}

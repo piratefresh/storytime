@@ -25,7 +25,7 @@ export async function GET(request: Request): Promise<Response> {
     const githubUser: GitHubUser = await githubUserResponse.json();
     const existingUser = await db.user.findFirst({
       where: {
-        OAuthAccount: {
+        oAuthAccount: {
           some: {
             providerId: githubUser.id.toString(),
           },
@@ -57,7 +57,7 @@ export async function GET(request: Request): Promise<Response> {
       data: {
         id: userId,
         email: githubUser?.email ? githubUser.email : githubUser.login,
-        OAuthAccount: {
+        oAuthAccount: {
           create: {
             providerId: githubUser.id.toString(),
             providerUserId: userId,

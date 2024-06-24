@@ -1,13 +1,22 @@
 {
   "name": "@repo/prettier-config",
   "version": "0.0.0",
+    "type": "module",
+  "exports": {
+    ".": "./index.js"
+  },
   "main": "index.js",
   "license": "MIT",
-  "dependencies": {},
-  "devDependencies": {
-    "prettier": "^3.2.4",
-    "prettier-plugin-tailwindcss": "^0.5.12"
+  "dependencies": {
+    "@ianvs/prettier-plugin-sort-imports": "^4.2.1",
+    "prettier": "^3.2.5",
+    "prettier-plugin-tailwindcss": "^0.5.14"
   },
+  "devDependencies": {
+    "@repo/typescript-config": "workspace:*",
+    "typescript": "^5.4.5"
+  },
+    "prettier": "@repo/prettier-config",
   "publishConfig": {
     "access": "public"
   }

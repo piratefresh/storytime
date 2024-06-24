@@ -84,17 +84,13 @@ export function TypographyLead({ children }: { children: React.ReactNode }) {
 }
 
 export function TypographyLarge({ children }: { children: React.ReactNode }) {
-  return <div className="text-lg font-semibold">Are you absolutely sure?</div>;
+  return <div className="text-lg font-semibold">{children}</div>;
 }
 
 export function TypographySmall({ children }: { children: React.ReactNode }) {
-  return (
-    <small className="text-sm font-medium leading-none">Email address</small>
-  );
+  return <small className="text-sm font-medium leading-none">{children}</small>;
 }
 
 export function TypographyMuted({ children }: { children: React.ReactNode }) {
-  return (
-    <p className="text-sm text-muted-foreground">Enter your email address.</p>
-  );
+  return <p className="text-sm text-muted-foreground">{children}</p>;
 }

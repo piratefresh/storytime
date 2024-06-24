@@ -20,6 +20,16 @@ export const Direction = {
   Left: "left",
 };
 
+// declare module "@tiptap/core" {
+//   interface Commands<ReturnType> {
+//     imageBlock: {
+//       setImageBlockAlign: (align: "left" | "center" | "right") => ReturnType;
+//       setImageBlockWidth: (width: number) => ReturnType;
+//       setImageBlockFloat: (float: "left" | "right" | "none") => ReturnType;
+//     };
+//   }
+// }
+
 interface IResizer {
   onResize: (direction: string, x: number, y: number) => void;
   selected: boolean;
@@ -191,11 +201,16 @@ export const Component = (props: NodeViewWrapperProps) => {
         break;
     }
   };
-
+  console.log("attrs: ", props.node);
   return (
     <NodeViewWrapper
       as="figure"
-      className="relative inline-block"
+      className={cn("relative flex node-imageBlock", {
+        "has-focus": props.selected,
+        "mr-auto": props.node?.attrs.align === "left",
+        "mx-auto": props.node?.attrs.align === "center",
+        "ml-auto": props.node?.attrs.align === "right",
+      })}
       style={{ float: props.node?.attrs.float ?? "none" }}
       height={props.node?.attrs.height}
       width={props.node?.attrs.width}
@@ -203,7 +218,9 @@ export const Component = (props: NodeViewWrapperProps) => {
       <Resizer onResize={handleResize} selected={props.selected} />
 
       <img
-        className={cn({ "border-2 border-blue-500 z-10": props.selected })}
+        className={cn({
+          "border-2 border-blue-500 z-10": props.selected,
+        })}
         ref={imageRef}
         src={props.node?.attrs.src}
         height={props.node?.attrs.height}
@@ -231,8 +248,27 @@ export function formatBytes(bytes: number, decimals = 2) {
 }
 
 export const CustomImage = TiptapImage.extend<CustomImageOptions>({
+  name: "imageBlock",
   selectable: true,
   draggable: true,
+  addCommands() {
+    return {
+      setImageBlockAlign:
+        (align) =>
+        ({ state, commands }) =>
+          commands.updateAttributes("imageBlock", { align }),
+      setImageBlockWidth:
+        (width) =>
+        ({ commands }) =>
+          commands.updateAttributes("imageBlock", {
+            width: `${Math.max(0, Math.min(100, width))}%`,
+          }),
+      setImageBlockFloat:
+        (float) =>
+        ({ commands }) =>
+          commands.updateAttributes("imageBlock", { float }),
+    };
+  },
   addAttributes() {
     return {
       // Inherit all the attrs of the Image extension
@@ -248,7 +284,6 @@ export const CustomImage = TiptapImage.extend<CustomImageOptions>({
           };
         },
       },
-
       height: {
         default: "auto",
         renderHTML: (attributes) => {
@@ -256,6 +291,33 @@ export const CustomImage = TiptapImage.extend<CustomImageOptions>({
             height: attributes.height,
           };
         },
+      },
+      align: {
+        default: "center",
+        parseHTML: (element) => element.getAttribute("data-align"),
+        renderHTML: (attributes) => {
+          console.log("attributes: ", attributes);
+          return {
+            "data-align": attributes.align,
+          };
+        },
+      },
+      float: {
+        default: "none",
+        parseHTML: (element) => element.getAttribute("data-float"),
+        renderHTML: (attributes) => {
+          console.log("attributes: ", attributes);
+          return {
+            "data-float": attributes.float,
+          };
+        },
+      },
+      alt: {
+        default: undefined,
+        parseHTML: (element) => element.getAttribute("alt"),
+        renderHTML: (attributes) => ({
+          alt: attributes.alt,
+        }),
       },
 
       // We'll use this to tell if we are going to drag the image
@@ -271,7 +333,10 @@ export const CustomImage = TiptapImage.extend<CustomImageOptions>({
   },
 
   addNodeView() {
-    return ReactNodeViewRenderer(Component);
+    return ReactNodeViewRenderer(Component, {
+      className: cn("flex"),
+      // attrs
+    });
   },
 
   addOptions() {
@@ -383,8 +448,28 @@ export const CustomImage = TiptapImage.extend<CustomImageOptions>({
                       return false;
                     }
                     const image = imageNode.create({ src });
+
+                    console.log(image); // Check the output here
+                    if (!imageNode) {
+                      console.error(
+                        "Image node type is not defined in the schema."
+                      );
+                      return false;
+                    }
+
                     const transaction =
                       view.state.tr.replaceSelectionWith(image);
+                    if (
+                      typeof view.state.tr.replaceSelectionWith !== "function"
+                    ) {
+                      console.error("replaceSelectionWith is not a function");
+                      return false;
+                    }
+                    if (!transaction) {
+                      console.error("Failed to create a transaction.");
+                      return false;
+                    }
+                    console.log("transaction", transaction);
                     return view.dispatch(transaction);
                   };
                 })
