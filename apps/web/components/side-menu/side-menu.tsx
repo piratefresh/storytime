@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { type User } from "lucia";
+import { type Folder } from "@repo/db";
 import { CreateStoryForm } from "@/app/(main)/stories/create/components/create-story-form";
 import { db } from "@/lib/db";
 import { type StoryWithFolder } from "@/app/(main)/stories/[title]/page";
@@ -14,7 +15,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../ui/dialog";
-import { type Folder, TreeView } from "../tree-view/tree-view";
+import { TreeView } from "../tree-view/tree-view";
 import { AddFolderForm } from "./add-folder-form";
 
 interface SideMenuProps {
@@ -27,7 +28,8 @@ function constructFolderStructure(stories: StoryWithFolder[]): Folder {
   // Function to build folder and file hierarchy
   const buildHierarchy = (
     parentId: string | null,
-    storyId: string
+    storyId: string,
+    storyTitle: string
   ): (Folder | File)[] => {
     const childFolders = allFolders
       .filter(
@@ -39,14 +41,16 @@ function constructFolderStructure(stories: StoryWithFolder[]): Folder {
           id: folder.id,
           metadata: {
             storyId,
+            storyTitle,
             isRoot: false,
             type: "folder",
           },
-          children: buildHierarchy(folder.id, storyId).concat(
+          children: buildHierarchy(folder.id, storyId, storyTitle).concat(
             (folder.file || []).map((file) => ({
               ...file,
               metadata: {
                 storyId,
+                storyTitle,
                 isRoot: false,
                 type: "file",
               },
@@ -63,8 +67,9 @@ function constructFolderStructure(stories: StoryWithFolder[]): Folder {
     children: stories.map((story, index) => {
       return {
         name: story.title,
+        id: story.id,
         children: [
-          ...buildHierarchy(null, story.id), // Build hierarchy for root-level folders
+          ...buildHierarchy(null, story.id, story.title), // Build hierarchy for root-level folders
           ...story.file
             .filter((file) => !file.folderId)
             .map((file) => ({
@@ -76,12 +81,14 @@ function constructFolderStructure(stories: StoryWithFolder[]): Folder {
               url: file.url,
               metadata: {
                 storyId: story.id,
+                storyTitle: story.title,
                 type: "file",
               },
             })),
         ],
         metadata: {
           storyId: story.id,
+          storyTitle: story.title,
           isRoot: true,
           type: "story",
         },
@@ -98,14 +105,30 @@ export async function SideMenu({ user }: SideMenuProps): Promise<JSX.Element> {
     include: {
       folder: {
         include: {
-          file: true,
+          file: {
+            orderBy: {
+              name: "asc",
+            },
+          },
+        },
+        orderBy: {
+          name: "asc",
         },
       },
-      file: true,
+      file: {
+        orderBy: {
+          name: "asc",
+        },
+      },
+    },
+    orderBy: {
+      title: "asc",
     },
   });
 
   const treeData = constructFolderStructure(stories);
+
+  console.log("treeData: ", treeData);
 
   return (
     <div className="min-h-screen min-w-80 bg-neutral-800 border border-border">

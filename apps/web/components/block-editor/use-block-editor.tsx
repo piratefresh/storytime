@@ -1,10 +1,10 @@
-import { JSONContent, useEditor } from "@tiptap/react";
+import { type JSONContent, useEditor } from "@tiptap/react";
+import { type EditorProps } from "@tiptap/pm/view";
+import { useDebounce } from "use-debounce";
+import { type User } from "lucia";
+import React from "react";
 import { useSidebar } from "@/hooks/useSidebar";
 import { Extensions } from "../tiptap/extensions/extensions";
-import { EditorProps } from "@tiptap/pm/view";
-import { useDebounce } from "use-debounce";
-import { User } from "lucia";
-import React from "react";
 
 interface BlockEditorProps {
   onChange: (content: string) => void;
@@ -20,7 +20,7 @@ const INITIAL_CONTENT = `
 const editorProps: EditorProps = {
   attributes: {
     class:
-      "mt-8 prose prose-sm prose-slate mx-auto pl-20 max-w-none flex-1 lg:prose-sm focus:outline-none dark:prose-invert",
+      "prose prose-sm prose-slate mx-auto pl-20 max-w-none min-h-full flex-1 bg-neutral-900 lg:prose-sm focus:outline-none dark:prose-invert",
   },
   handleDOMEvents: {
     keydown: (_view, event) => {

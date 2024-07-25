@@ -102,6 +102,7 @@ model File {
   fileCharacterReference FileCharacterReference[]
   fileSettingReference   FileSettingReference[]
   setting                Setting[]
+  Media                  Media[]
 }
 
 model Asset {
@@ -152,6 +153,8 @@ model Media {
   url       String
   userId    String
   storyId   String?
+  file      File?     @relation(fields: [fileId], references: [id])
+  fileId    String?
   createdAt DateTime  @default(now())
   story     Story?    @relation(fields: [storyId], references: [id])
   user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)

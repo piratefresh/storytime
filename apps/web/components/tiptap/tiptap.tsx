@@ -19,7 +19,7 @@ import { MenuBar } from "./menubar";
 import { EditorProps } from "@tiptap/pm/view";
 import { CustomTooltipNode, Link } from "./extensions/node-link";
 import { User } from "lucia";
-import { useUploadImage } from "@/hooks/useUploadImage";
+import { useUploadImage } from "@/hooks/use-upload-image";
 import { LineNumbers } from "./extensions/line-number";
 import { PageBreak } from "./extensions/page-break";
 import { CharacterCountDisplay } from "./extensions/characterCountDisplay/characterCountDisplay";

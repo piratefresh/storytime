@@ -1,13 +1,13 @@
 import type { Metadata } from "next";
 import "./globals.css";
 import { Inter } from "next/font/google";
-
 import { Toaster } from "@/components/toast";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
 import { SessionProvider } from "@/components/session-provider";
 import { validateRequest } from "@/lib/auth";
 import { SideMenu } from "@/components/side-menu";
+import { TabsStoreProvider } from "./stores/tabs-provider";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -26,22 +26,24 @@ export default async function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={inter.className}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="dark"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <TooltipProvider>
-            <SessionProvider value={sessionData}>
-              <div className="flex">
-                <SideMenu user={sessionData.user} />
-                <main className="flex w-full">{children}</main>
-              </div>
-            </SessionProvider>
-          </TooltipProvider>
-          <Toaster />
-        </ThemeProvider>
+        <TabsStoreProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <TooltipProvider>
+              <SessionProvider value={sessionData}>
+                <div className="flex">
+                  <SideMenu user={sessionData.user} />
+                  <main className="flex w-full h-full">{children}</main>
+                </div>
+              </SessionProvider>
+            </TooltipProvider>
+            <Toaster />
+          </ThemeProvider>
+        </TabsStoreProvider>
       </body>
     </html>
   );

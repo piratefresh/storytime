@@ -70,7 +70,7 @@ export async function createFile(
       ]);
     }
 
-    revalidatePath(`/stories/${story.title}`);
+    revalidatePath("/");
 
     return { message: `File created successfully.`, status: "success" };
   } catch (error) {

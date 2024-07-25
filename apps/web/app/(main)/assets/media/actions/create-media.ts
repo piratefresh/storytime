@@ -1,14 +1,15 @@
 "use server";
 
-import { lucia } from "@/lib/auth";
-import db from "@/lib/db";
 import { cookies } from "next/headers";
+import { lucia } from "@/lib/auth";
+import { db } from "@/lib/db";
 
 export async function createMedia({
   url,
-  contentId,
+  fileId,
+  storyId,
 }: {
-  contentId: string;
+  fileId: string;
   url: string;
 }): Promise<{ error: string } | { success: string } | undefined> {
   const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
@@ -24,20 +25,22 @@ export async function createMedia({
     };
   }
 
-  if (!contentId) {
+  if (!fileId) {
     return { error: "id not valid" };
   }
 
   if (!url) {
     return { error: "url not valid or found" };
   }
+  console.log("storyId: ", fileId);
 
   await db.media.create({
     data: {
       url,
+      fileId,
       storyId: contentId,
       type: "image",
-      userId: user?.id,
+      userId: user.id,
     },
   });
 

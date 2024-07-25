@@ -16,14 +16,13 @@ import {
 } from "@dnd-kit/core";
 import {
   SortableContext,
-  arrayMove,
   horizontalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { nanoid } from "nanoid";
+import { type Story } from "@repo/db";
 import { cn } from "@/lib/utils";
+import { useTabsStore } from "@/app/stores/tabs-provider";
+import { useUpdateStoryUrl } from "@/hooks/use-update-story-url";
 import { Tabs, TabsContent, TabsList } from "../ui/tabs";
-import { Button } from "../ui/button";
-import { Icon } from "../ui/icon";
 import { BlockEditor } from "../block-editor/block-editor";
 import { FileTab } from "./file-tab";
 import { SortableItem } from "./sortable-item";
@@ -34,21 +33,24 @@ export interface Tab {
   id: UniqueIdentifier;
 }
 
-const DUMMY_TABS: Tab[] = [
-  { label: "Account", content: "Account details here.", id: nanoid() },
-  { label: "Password", content: "Change your password here.", id: nanoid() },
-];
-
 interface FileTabsProps {
   user: User | null;
+  story: Story;
 }
-
+// https://docs.pmnd.rs/zustand/integrations/persisting-store-data#usage-in-next.js
+// In case ssr problems arise
 export function FileTabs({ user }: FileTabsProps): JSX.Element {
-  const [tabs, setTabs] = useState(DUMMY_TABS);
-  const [activeTabId, setActiveTabId] = useState<UniqueIdentifier | undefined>(
-    tabs[0].id
+  const activeTabId = useTabsStore((state) => state.activeTabId);
+  const tabs = useTabsStore((state) =>
+    state.tabs.filter((tab) => tab.type !== "folder")
   );
-  const [activeId, setActiveId] = useState<UniqueIdentifier | null>(null);
+  const removeTab = useTabsStore((state) => state.removeTab);
+  const setActiveTab = useTabsStore((state) => state.setActiveTab);
+  const reorderTabs = useTabsStore((state) => state.reorderTabs);
+
+  const updateStoryUrl = useUpdateStoryUrl();
+
+  const [activeId, setActiveId] = useState<string | number | null>(null);
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
     useSensor(TouchSensor)
@@ -62,46 +64,21 @@ export function FileTabs({ user }: FileTabsProps): JSX.Element {
     const { active, over } = event;
 
     if (over && active.id !== over.id) {
-      setTabs((currentTabs) => {
-        // Renamed from 'tabs' to 'currentTabs' to avoid shadowing
-        const oldIndex = currentTabs.findIndex((tab) => tab.id === active.id);
-        const newIndex = currentTabs.findIndex((tab) => tab.id === over.id);
-        return arrayMove(currentTabs, oldIndex, newIndex);
-      });
+      const oldIndex = tabs.findIndex((tab: Tab) => tab.id === active.id);
+      const newIndex = tabs.findIndex((tab: Tab) => tab.id === over.id);
+      reorderTabs(oldIndex, newIndex);
     }
   };
 
-  const addTab = (): void => {
-    setTabs([
-      ...tabs,
-      {
-        label: `NewTab ${(tabs.length / 2 + 1).toString()}`,
-        content: `Content for new tab ${(tabs.length / 2 + 1).toString()}.`,
-        id: nanoid(),
-      },
-    ]);
-  };
-
-  const removeTab = (index: number): void => {
-    const currentTabs = [...tabs]; // Create a copy of the current tabs
-    const isRemovedTabActive = currentTabs[index]?.id === activeTabId; // Check if the removed tab is active
-
-    // Remove the tab
-    currentTabs.splice(index, 1);
-    setTabs(currentTabs);
-
-    if (isRemovedTabActive) {
-      if (currentTabs.length === 0) {
-        setActiveTabId(null); // No tabs left
-      } else if (index === currentTabs.length) {
-        // If the last tab was removed
-        // Set the new last tab as active
-        setActiveTabId(currentTabs[currentTabs.length - 1].id);
-      } else {
-        // Set the next tab as active
-        setActiveTabId(currentTabs[index].id);
-      }
-    }
+  const handleOnTabChange = ({
+    tabId,
+    storyTitle,
+  }: {
+    tabId: string;
+    storyTitle: string;
+  }) => {
+    setActiveTab(tabId);
+    updateStoryUrl({ fileId: tabId, title: storyTitle, fileName: storyTitle });
   };
 
   return (
@@ -112,9 +89,17 @@ export function FileTabs({ user }: FileTabsProps): JSX.Element {
       onDragEnd={handleDragEnd}
     >
       <Tabs
-        value={activeTabId.toString()}
-        onValueChange={setActiveTabId}
-        className="w-screen"
+        className="relative flex flex-col flex-1 min-h-screen w-full overflow-hidden"
+        value={activeTabId?.toString()}
+        onValueChange={(tabId) => {
+          const tab = tabs.find((tab) => tab.id === tabId);
+          if (tab) {
+            handleOnTabChange({
+              tabId,
+              storyTitle: tab.storyTitle,
+            });
+          }
+        }}
       >
         <SortableContext
           items={tabs.map((tab) => tab.id)}
@@ -127,17 +112,13 @@ export function FileTabs({ user }: FileTabsProps): JSX.Element {
                   tab={tab}
                   key={tab.id}
                   onClose={() => {
-                    removeTab(index);
+                    removeTab(tab.id);
                   }}
                 />
               </SortableItem>
             ))}
-            <Button variant="ghost" onClick={addTab}>
-              <Icon name="Plus" />
-            </Button>
           </TabsList>
         </SortableContext>
-
         <DragOverlay>
           {activeId ? (
             <div
@@ -151,25 +132,20 @@ export function FileTabs({ user }: FileTabsProps): JSX.Element {
           ) : null}
         </DragOverlay>
 
-        {tabs.map((tab) => (
-          <TabsContent
-            key={tab.id}
-            value={tab.label.toLowerCase().replace(/\s/g, "")}
-          >
-            {tab.content}
-            {/* {tab.label === "Account" ? (
+        <div className="grid flex-1 max-h-screen overflow-y-auto">
+          {tabs.map((tab) => (
+            <TabsContent className="flex-1" key={tab.id} value={String(tab.id)}>
               <BlockEditor
                 user={user}
                 onChange={(content: string) => {
                   console.log("Change Detected:", content);
                 }}
-                content={null}
+                content={tab.content || ""}
+                contentId={tab.id}
               />
-            ) : (
-              tab.content
-            )} */}
-          </TabsContent>
-        ))}
+            </TabsContent>
+          ))}
+        </div>
       </Tabs>
     </DndContext>
   );

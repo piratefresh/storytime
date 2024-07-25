@@ -3,21 +3,21 @@
 import { useCallback } from "react";
 import ReactFlow, {
   addEdge,
-  Edge,
-  EdgeTypes,
+  type Edge,
+  type EdgeTypes,
   Handle,
   MarkerType,
-  Node,
-  NodeProps,
-  OnConnect,
+  type Node,
+  type NodeProps,
+  type OnConnect,
   Position,
   useEdgesState,
   useNodesState,
 } from "reactflow";
 import "reactflow/dist/style.css";
+import { type StoryWithFolder } from "@/app/(main)/stories/[title]/page";
 import FloatingEdge from "./floating-edge";
 import FloatingConnectionLine from "./floating-connection-line";
-import { StoryWithFolder } from "@/app/(main)/stories/[title]/page";
 
 interface FlowProps {
   story: StoryWithFolder;

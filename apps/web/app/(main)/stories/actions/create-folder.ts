@@ -17,6 +17,8 @@ export async function createFolder(
     parentId: data.get("parentId"),
   });
   const { session } = await validateRequest();
+
+  console.log("storyId: ", storyId, "name: ", name, "parentId: ", parentId);
   if (!session) {
     throw new ZodError([
       {
@@ -29,15 +31,7 @@ export async function createFolder(
 
   // Check if the folder name already exists
   let newName = name ?? "Untitled";
-  let counter = 0;
-  console.log(
-    "parentId: ",
-    parentId,
-    "storyId: ",
-    storyId,
-    "newName: ",
-    newName
-  );
+  let counter = 1;
   while (
     await db.folder.findFirst({
       where: {
@@ -48,7 +42,9 @@ export async function createFolder(
     })
   ) {
     counter++;
-    newName = `${newName} ${counter.toString()}`;
+    newName = name
+      ? `${name} ${counter.toString()}`
+      : `Untitled ${counter.toString()}`;
   }
   try {
     await db.folder.create({

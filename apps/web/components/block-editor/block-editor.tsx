@@ -1,15 +1,13 @@
 "use client";
 
-import { EditorContent, EditorContext, JSONContent } from "@tiptap/react";
-import { useBlockEditor } from "./use-block-editor";
-
+import { EditorContent, EditorContext, type JSONContent } from "@tiptap/react";
 import React from "react";
-import { TextMenu } from "../tiptap/text-menu";
-import { ContentItemMenu } from "../tiptap/components/content-item-menu";
+import { type User } from "lucia";
 import ImageBlockMenu from "../tiptap/extensions/image-block/components/image-block-menu";
-import { User } from "lucia";
-import { Sidebar } from "../sidebar";
+import { ContentItemMenu } from "../tiptap/components/content-item-menu";
+import { TextMenu } from "../tiptap/text-menu";
 import { CharacterCountDisplay } from "../tiptap/extensions/characterCountDisplay";
+import { useBlockEditor } from "./use-block-editor";
 
 interface BlockEditorProps {
   onChange: (content: string) => void;
@@ -18,12 +16,12 @@ interface BlockEditorProps {
   content: JSONContent | string | null;
 }
 
-export const BlockEditor = ({
+export function BlockEditor({
   user,
   onChange: handleOnChange,
   content,
   contentId,
-}: BlockEditorProps) => {
+}: BlockEditorProps): JSX.Element | null {
   const { editor, tocSidebar } = useBlockEditor({
     onChange: (content: string) => {
       if (handleOnChange) {
@@ -48,29 +46,26 @@ export const BlockEditor = ({
 
   return (
     <EditorContext.Provider value={providerValue}>
-      <div className="flex flex-row border bg-neutral-900 h-full">
-        <Sidebar
+      <div className="flex flex-row h-full">
+        {/* <Sidebar
           isOpen={tocSidebar.isOpen}
           onClose={tocSidebar.close}
           editor={editor}
-        />
+        /> */}
 
-        <div
-          className="relative flex flex-col flex-1 h-full"
-          ref={menuContainerRef}
-        >
+        <div className="flex flex-col h-full w-full" ref={menuContainerRef}>
           <EditorContent
+            className="flex-1 overflow-y-auto"
             editor={editor}
             ref={editorRef}
-            className="flex-1 overflow-y-auto"
           />
           <ContentItemMenu editor={editor} />
           <TextMenu editor={editor} />
 
           <ImageBlockMenu editor={editor} appendTo={menuContainerRef} />
-          <CharacterCountDisplay />
+          <CharacterCountDisplay editor={editor} />
         </div>
       </div>
     </EditorContext.Provider>
   );
-};
+}

@@ -1,15 +1,17 @@
 import { cache } from "react";
+import { type Prisma } from "@repo/db";
+import { redirect } from "next/navigation";
 import db from "@/lib/db";
 import { validateRequest } from "@/lib/auth";
-import { redirect } from "next/navigation";
 import Flow from "@/components/graph-view/graph-view";
-import { Prisma } from "@repo/db";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { StoryEditor } from "./components/story-editor";
+import { FileTab } from "@/components/file-tabs/file-tab";
+import { FileTabs } from "@/components/file-tabs/file-tabs";
 
 export type StoryWithFolder = Prisma.StoryGetPayload<{
   include: { folder: true; file: true };
@@ -41,7 +43,7 @@ export default async function StoryPage({
   params: { title },
 }: {
   params: { title: string };
-}) {
+}): Promise<JSX.Element> {
   const { user } = await validateRequest();
 
   if (!user) {
@@ -58,20 +60,10 @@ export default async function StoryPage({
   }
 
   return (
-    <div className="grid align-end flex-1 min-h-screen max-h-screen overflow-y-auto">
-      <ResizablePanelGroup direction="horizontal">
-        <ResizablePanel>
-          <StoryEditor
-            storyId={story?.id}
-            user={user}
-            content={story.content}
-          />
-        </ResizablePanel>
-        <ResizableHandle withHandle />
-        <ResizablePanel>
-          <Flow story={story} />
-        </ResizablePanel>
-      </ResizablePanelGroup>
-    </div>
+    <ResizablePanelGroup direction="horizontal">
+      <ResizablePanel>
+        <FileTabs user={user} story={story} />
+      </ResizablePanel>
+    </ResizablePanelGroup>
   );
 }

@@ -36,7 +36,7 @@ import { Image } from "./image/image";
 import { FileHandler } from "@tiptap-pro/extension-file-handler";
 import ImageUpload from "./document/image-upload/image-upload";
 import ImageBlock from "./image-block/image-block";
-import { useUploadImage } from "@/hooks/useUploadImage";
+import { useUploadImage } from "@/hooks/use-upload-image";
 import { SuggestionMatch, Trigger } from "@tiptap/suggestion";
 import { findSuggestionMatch } from "@/lib/editor/findSuggestionMatch";
 
@@ -117,7 +117,7 @@ export const Extensions = ({
     onDrop: (currentEditor, files, pos) => {
       files.forEach(async () => {
         const file = files[0];
-
+        console.log("file", file);
         if (file && contentId) {
           const image = await useUploadImage({ file, contentId });
 

@@ -5,27 +5,44 @@ import { useEffect, useRef } from "react";
 import { useFormState } from "react-dom";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { type z } from "zod";
-import { type FormResponse } from "@/types";
+import { useParams } from "next/navigation";
 import { createFolder } from "@/app/(main)/stories/actions/create-folder";
 import { createFolderSchema } from "@/schemas";
+import { useTabsStore } from "@/app/stores/tabs-provider";
 import { Button } from "../ui/button";
 import { Icon } from "../ui/icon";
 
 export function AddFolderForm(): JSX.Element {
   const formRef = useRef<HTMLFormElement>(null);
-
+  const params = useParams<{ title: string }>();
+  console.log("params: ", params);
   const {
-    register,
     formState: { errors },
     setError,
-    clearErrors,
   } = useForm<z.infer<typeof createFolderSchema>>({
     resolver: zodResolver(createFolderSchema),
   });
 
-  const [state, formAction] = useFormState<FormResponse, FormData>(
-    createFolder,
-    null
+  const activeTabId = useTabsStore((state) => state.activeTabId);
+  const tabs = useTabsStore((state) => state.tabs);
+
+  const initialState = null;
+  const [state, formAction, isPending] = useFormState(
+    async (state: string | null, formData: FormData) => {
+      if (params.title) {
+        const activeTab = tabs.find((tab) => tab.id === activeTabId);
+        console.log("activeTab: ", activeTab);
+        if (activeTab) {
+          formData.append("storyId", activeTab.storyId);
+          if (!activeTab.isRoot) {
+            formData.append("parentId", activeTab.id);
+          }
+        }
+      }
+
+      const result = await createFolder(null, formData);
+    },
+    initialState
   );
 
   useEffect(() => {
@@ -41,6 +58,7 @@ export function AddFolderForm(): JSX.Element {
       });
     }
   }, [setError, state]);
+
   return (
     <form action={formAction} ref={formRef}>
       <Button type="submit" variant="ghost">

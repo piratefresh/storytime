@@ -8,13 +8,13 @@ type SignedURLResponse = Promise<
   | { error: string; success?: undefined }
 >;
 
-type UploadResult = {
+interface UploadResult {
   url: string | null;
   bucket: string;
   key: string;
   name?: string;
   size?: number;
-};
+}
 
 type GetSignedURLParams = {
   file: File;

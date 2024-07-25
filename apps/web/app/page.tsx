@@ -1,7 +1,5 @@
 import { FileTabs } from "@/components/file-tabs/file-tabs";
 import { validateRequest } from "@/lib/auth";
-import db from "@/lib/db";
-import { isErrored } from "stream";
 
 export default async function Page(): Promise<JSX.Element> {
   const { user } = await validateRequest();
@@ -9,5 +7,8 @@ export default async function Page(): Promise<JSX.Element> {
     return <div>Unauthorized</div>;
   }
 
-  return <FileTabs />;
+  return (
+    // <TestEditor />
+    <FileTabs user={user} />
+  );
 }
