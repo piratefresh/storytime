@@ -9,7 +9,6 @@ import {
   TouchSensor,
   useSensor,
   useSensors,
-  type UniqueIdentifier,
   type DragEndEvent,
   DragOverlay,
   type DragStartEvent,
@@ -18,36 +17,56 @@ import {
   SortableContext,
   horizontalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { type Story } from "@repo/db";
+import { SplitSquareHorizontal } from "lucide-react";
+import { ReactFlowProvider, useReactFlow } from "reactflow";
 import { cn } from "@/lib/utils";
-import { useTabsStore } from "@/app/stores/tabs-provider";
 import { useUpdateStoryUrl } from "@/hooks/use-update-story-url";
+import { type Tab } from "@/app/stores/tabs-store";
+import { type StoryWithFolder } from "@/app/(main)/stories/[title]/page";
+import { createFile } from "@/app/(main)/stories/actions/create-file";
+import { createFolder } from "@/app/(main)/stories/actions/create-folder";
 import { Tabs, TabsContent, TabsList } from "../ui/tabs";
 import { BlockEditor } from "../block-editor/block-editor";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "../ui/dropdown-menu";
+import Flow from "../graph-view/graph-view";
 import { FileTab } from "./file-tab";
 import { SortableItem } from "./sortable-item";
 
-export interface Tab {
-  label: string;
-  content: string;
-  id: UniqueIdentifier;
-}
-
 interface FileTabsProps {
   user: User | null;
-  story: Story;
+  tabs: Tab[];
+  story: StoryWithFolder;
+  groupId: string;
+  activeTabId: string | null;
+  isActiveGroup: boolean;
+  onSetActiveTab: (groupId: string, tabId: string) => void;
+  onReorderTabs: (groupId: string, oldIndex: number, newIndex: number) => void;
+  onRemoveTab: (groupId: string, tabId: string) => void;
+  onSplitTab: () => void;
+  onAddGraphTab: () => void;
 }
 // https://docs.pmnd.rs/zustand/integrations/persisting-store-data#usage-in-next.js
 // In case ssr problems arise
-export function FileTabs({ user }: FileTabsProps): JSX.Element {
-  const activeTabId = useTabsStore((state) => state.activeTabId);
-  const tabs = useTabsStore((state) =>
-    state.tabs.filter((tab) => tab.type !== "folder")
-  );
-  const removeTab = useTabsStore((state) => state.removeTab);
-  const setActiveTab = useTabsStore((state) => state.setActiveTab);
-  const reorderTabs = useTabsStore((state) => state.reorderTabs);
-
+export function FileTabs({
+  activeTabId,
+  isActiveGroup,
+  groupId,
+  user,
+  onReorderTabs,
+  onRemoveTab,
+  onSetActiveTab,
+  onSplitTab,
+  onAddGraphTab,
+  tabs,
+  story,
+}: FileTabsProps): JSX.Element {
   const updateStoryUrl = useUpdateStoryUrl();
 
   const [activeId, setActiveId] = useState<string | number | null>(null);
@@ -66,7 +85,7 @@ export function FileTabs({ user }: FileTabsProps): JSX.Element {
     if (over && active.id !== over.id) {
       const oldIndex = tabs.findIndex((tab: Tab) => tab.id === active.id);
       const newIndex = tabs.findIndex((tab: Tab) => tab.id === over.id);
-      reorderTabs(oldIndex, newIndex);
+      onReorderTabs(groupId, oldIndex, newIndex);
     }
   };
 
@@ -77,7 +96,7 @@ export function FileTabs({ user }: FileTabsProps): JSX.Element {
     tabId: string;
     storyTitle: string;
   }) => {
-    setActiveTab(tabId);
+    onSetActiveTab(groupId, tabId);
     updateStoryUrl({ fileId: tabId, title: storyTitle, fileName: storyTitle });
   };
 
@@ -105,19 +124,41 @@ export function FileTabs({ user }: FileTabsProps): JSX.Element {
           items={tabs.map((tab) => tab.id)}
           strategy={horizontalListSortingStrategy}
         >
-          <TabsList className="flex w-full overflow-hidden items-start">
-            {tabs.map((tab, index) => (
-              <SortableItem key={tab.id} id={tab.id}>
-                <FileTab
-                  tab={tab}
-                  key={tab.id}
-                  onClose={() => {
-                    removeTab(tab.id);
-                  }}
-                />
-              </SortableItem>
-            ))}
-          </TabsList>
+          <div className="flex flex-row">
+            <TabsList className="flex w-full overflow-hidden items-start">
+              {tabs.map((tab) => {
+                const isActive = isActiveGroup && tab.id === activeTabId;
+                return (
+                  <SortableItem key={tab.id} id={tab.id}>
+                    <FileTab
+                      active={isActive}
+                      tab={tab}
+                      key={tab.id}
+                      onClose={() => {
+                        onRemoveTab(groupId, tab.id);
+                      }}
+                    />
+                  </SortableItem>
+                );
+              })}
+            </TabsList>
+            <DropdownMenu>
+              <DropdownMenuTrigger>Open</DropdownMenuTrigger>
+              <DropdownMenuContent>
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+
+                <DropdownMenuItem onClick={onSplitTab}>
+                  <SplitSquareHorizontal />
+                  Split Tab
+                </DropdownMenuItem>
+                <DropdownMenuItem onClick={onAddGraphTab}>
+                  <SplitSquareHorizontal />
+                  Open Flow Tab
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </SortableContext>
         <DragOverlay>
           {activeId ? (
@@ -134,19 +175,125 @@ export function FileTabs({ user }: FileTabsProps): JSX.Element {
 
         <div className="grid flex-1 max-h-screen overflow-y-auto">
           {tabs.map((tab) => (
-            <TabsContent className="flex-1" key={tab.id} value={String(tab.id)}>
-              <BlockEditor
-                user={user}
-                onChange={(content: string) => {
-                  console.log("Change Detected:", content);
-                }}
-                content={tab.content || ""}
-                contentId={tab.id}
-              />
+            <TabsContent
+              className="flex-1"
+              onFocus={() => {
+                onSetActiveTab(groupId, tab.id);
+              }}
+              key={tab.id}
+              value={String(tab.id)}
+            >
+              {tab.type === "flow" ? (
+                <ReactFlowProvider>
+                  <FlowTab id={tab.id} story={story} />
+                </ReactFlowProvider>
+              ) : (
+                <BlockEditor
+                  user={user}
+                  onChange={(content: string) => {
+                    console.log("Change Detected:", content);
+                  }}
+                  content={tab.content || ""}
+                  contentId={tab.id}
+                />
+              )}
             </TabsContent>
           ))}
         </div>
       </Tabs>
     </DndContext>
+  );
+}
+
+interface FlowTabProps {
+  story: StoryWithFolder;
+  id: string;
+}
+
+export function FlowTab({ story, id }: FlowTabProps): JSX.Element {
+  const { addNodes, addEdges } = useReactFlow();
+  const handleAddFile = async (folderId: string): Promise<void> => {
+    const formData = new FormData();
+
+    if (story.id) {
+      formData.append("storyId", story.id);
+    }
+
+    if (folderId) {
+      formData.append("folderId", folderId);
+    }
+
+    const response = await createFile(null, formData);
+    if (response?.data) {
+      const file = response.data;
+      addNodes({
+        id: file.id,
+        type: "file",
+        data: {
+          label: file.name,
+          folderId: file.folderId,
+          id: file.id,
+          type: "file",
+        },
+        position: { x: 0, y: 0 },
+      });
+      if (file.folderId) {
+        addEdges({
+          id: `e-${file.folderId}-${file.id}`,
+          source: file.folderId,
+          target: file.id,
+          type: "smoothstep",
+          animated: true,
+          style: { stroke: "#fff" },
+        });
+      }
+    }
+  };
+
+  const handleAddFolder = async (parentId: string): Promise<void> => {
+    const formData = new FormData();
+
+    if (story.id) {
+      formData.append("storyId", story.id);
+    }
+
+    if (parentId) {
+      formData.append("parentId", parentId);
+    }
+    const response = await createFolder(null, formData);
+
+    if (response?.data) {
+      const folder = response.data;
+      addNodes({
+        id: folder.id,
+        type: "folder",
+        data: {
+          label: folder.name,
+          parentId: folder.parentId,
+          id: folder.id,
+          type: "folder",
+        },
+        position: { x: 0, y: 0 },
+      });
+
+      // Create edge to parent or to the top node if no parent
+      const sourceId = folder.parentId ?? `story-${story.id}`;
+      addEdges({
+        id: `e-${sourceId}-${folder.id}`,
+        source: sourceId,
+        target: folder.id,
+        type: "smoothstep",
+        animated: true,
+        style: { stroke: "#fff" },
+      });
+    }
+  };
+  return (
+    <Flow
+      id={id}
+      onAddFile={handleAddFile}
+      onAddFolder={handleAddFolder}
+      story={story}
+    />
   );
 }

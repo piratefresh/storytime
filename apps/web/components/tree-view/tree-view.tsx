@@ -22,7 +22,7 @@ import {
   type DraggableAttributes,
   DragOverlay,
   type DragStartEvent,
-  DragOverEvent,
+  type DragOverEvent,
 } from "@dnd-kit/core";
 import {
   SortableContext,
@@ -45,7 +45,7 @@ import { createFile } from "@/app/(main)/stories/actions/create-file";
 import { useTabsStore } from "@/app/stores/tabs-provider";
 import { useUpdateStoryUrl } from "@/hooks/use-update-story-url";
 import { deleteFileFolder } from "@/app/(main)/stories/actions/delete-file-folder";
-import { type TabTypes } from "@/app/stores/tabs-store";
+import { type Tab, type TabTypes } from "@/app/stores/tabs-store";
 import { updateFileFolder } from "@/app/(main)/stories/actions/update-file-folder";
 import { Input } from "../ui/input";
 
@@ -93,7 +93,6 @@ function TreeNode({
   dispatch,
   isExpanded,
   isBranch,
-  isOver,
   isDraggingOverFolder,
   isSelected = false,
   dragAttributes,
@@ -101,7 +100,9 @@ function TreeNode({
   setDragNodeRef,
 }: TreeNodeProps): JSX.Element {
   const updateTabLabel = useTabsStore((state) => state.updateTabLabel);
-  const removeTab = useTabsStore((state) => state.removeTab);
+  const removeTabFromAllGroups = useTabsStore(
+    (state) => state.removeTabFromAllGroups
+  );
   const updateStoryUrl = useUpdateStoryUrl();
   const [renaming, setRenaming] = useState(false);
 
@@ -146,7 +147,7 @@ function TreeNode({
           startTransition(async () => {
             const response = await deleteFileFolder(null, formData);
             if (response?.status) {
-              removeTab(element.id);
+              removeTabFromAllGroups(element.id);
             }
           });
         },
@@ -158,19 +159,17 @@ function TreeNode({
       baseItems.push({
         label: "New File",
         onClick: (info: Node) => {
+          const formData = new FormData();
+
+          if (info.metadata.storyId) {
+            formData.append("storyId", info.metadata.storyId);
+          }
+
+          if ("id" in info && typeof info.id === "string") {
+            formData.append("folderId", info.id);
+          }
           startTransition(async () => {
-            const formData = new FormData();
-
-            if (info.metadata.storyId) {
-              formData.append("storyId", info.metadata.storyId);
-            }
-
-            if ("id" in info && typeof info.id === "string") {
-              formData.append("folderId", info.id);
-            }
-            startTransition(async () => {
-              await createFile(null, formData);
-            });
+            await createFile(null, formData);
           });
         },
       });
@@ -265,12 +264,10 @@ function TreeNode({
         "aria-selected:!bg-selection",
         "group",
         "h-[28px]",
-        "hover:bg-control",
-        { "bg-white/20": isDraggingOverFolder ?? isSelected }
+        "hover:bg-control"
       )}
       style={{
         marginLeft: 10 * (level - 1),
-        paddingLeft: 20,
       }}
       data-treeview-is-branch={isBranch}
       data-treeview-level={level}
@@ -353,7 +350,11 @@ function SortableTreeNode({
   }
 
   return (
-    <div ref={setNodeRef} style={style}>
+    <div
+      className={cn({ "bg-white/20": isDraggingOverFolder ?? isSelected })}
+      ref={setNodeRef}
+      style={style}
+    >
       <TreeNode
         element={element}
         level={level}
@@ -518,7 +519,6 @@ const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
             const response = await updateFileFolder(null, formData, true);
             if (response?.status === "error") {
               console.error("Failed to update file/folder:", response.message);
-              // You might want to show an error message to the user here
             }
           });
           setOverItem(null);
@@ -539,7 +539,6 @@ const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
           return;
         }
 
-        const childrenItems = items.filter((item) => item.parent === over.id);
         const allSelectedItems = [overItem, ...getAllChildren(overItem, items)];
         const allSelectedIds = allSelectedItems.map((item) => item.id);
 
@@ -584,15 +583,18 @@ const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
                   ? "story"
                   : node.element.metadata.type;
 
-                addTab({
+                const tab: Tab = {
                   label: fileName,
-                  fileId,
+                  content: "",
+                  id: fileId,
                   storyTitle,
                   storyId: node.element.metadata.storyId as string,
                   isRoot: Boolean(node.element.metadata.isRoot),
                   parentId: node.element.parent as string,
                   type: fileType as TabTypes,
-                });
+                };
+
+                addTab(tab);
 
                 if (fileType !== "folder") {
                   updateStoryUrl({ fileId, title: storyTitle, fileName });

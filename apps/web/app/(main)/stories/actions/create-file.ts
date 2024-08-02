@@ -2,6 +2,7 @@
 
 import { ZodError } from "zod";
 import { revalidatePath } from "next/cache";
+import { type File } from "@repo/db";
 import { validateRequest } from "@/lib/auth";
 import { type FormState, type FormResponse } from "@/types";
 import { db } from "@/lib/db";
@@ -10,7 +11,7 @@ import { createFileSchema } from "@/schemas";
 export async function createFile(
   state: FormState,
   data: FormData
-): Promise<FormResponse> {
+): Promise<FormResponse<File>> {
   const { storyId, name, folderId } = createFileSchema.parse({
     name: data.get("name"),
     storyId: data.get("storyId"),
@@ -30,7 +31,6 @@ export async function createFile(
   // Check if the folder name already exists
   let newName = name ?? "Untitled";
   let counter = 0;
-
   while (
     await db.file.findFirst({
       where: {
@@ -41,10 +41,10 @@ export async function createFile(
     })
   ) {
     counter++;
-    newName = `${newName} ${counter.toString()}`;
+    newName = `Untitled ${counter.toString()}`;
   }
   try {
-    await db.file.create({
+    const newFile = await db.file.create({
       data: {
         storyId,
         userId: session.userId,
@@ -72,7 +72,11 @@ export async function createFile(
 
     revalidatePath("/");
 
-    return { message: `File created successfully.`, status: "success" };
+    return {
+      message: `File created successfully.`,
+      status: "success",
+      data: newFile,
+    };
   } catch (error) {
     // Log the error for debugging; this is particularly useful during development
     console.error("Error during database operation:", error);

@@ -2,6 +2,7 @@
 
 import { ZodError } from "zod";
 import { revalidatePath } from "next/cache";
+import { type Folder } from "@repo/db";
 import { validateRequest } from "@/lib/auth";
 import { type FormState, type FormResponse } from "@/types";
 import { db } from "@/lib/db";
@@ -10,7 +11,7 @@ import { createFolderSchema } from "@/schemas";
 export async function createFolder(
   state: FormState,
   data: FormData
-): Promise<FormResponse> {
+): Promise<FormResponse<Folder>> {
   const { storyId, name, parentId } = createFolderSchema.parse({
     name: data.get("name"),
     storyId: data.get("storyId"),
@@ -47,7 +48,7 @@ export async function createFolder(
       : `Untitled ${counter.toString()}`;
   }
   try {
-    await db.folder.create({
+    const newFolder = await db.folder.create({
       data: {
         storyId,
         ownerId: session.userId,
@@ -75,7 +76,11 @@ export async function createFolder(
 
     revalidatePath(`/stories/${story.title}`);
 
-    return { message: `Folder created successfully.`, status: "success" };
+    return {
+      message: `Folder created successfully.`,
+      status: "success",
+      data: newFolder,
+    };
   } catch (error) {
     // Log the error for debugging; this is particularly useful during development
     console.error("Error during database operation:", error);

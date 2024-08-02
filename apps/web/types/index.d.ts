@@ -42,19 +42,24 @@ export interface DocsConfig {
   sidebarNav: SidebarNavItem[];
 }
 
-export type FormResponse =
-  | {
-      status: "success";
-      message: string;
-    }
-  | {
-      status: "error";
-      message: string;
-      errors?: {
-        path: string;
-        message: string;
-      }[];
-    }
+interface BaseFormResponse<T extends string, D = undefined> {
+  status: T;
+  message: string;
+  data?: D;
+}
+
+type SuccessFormResponse<D = undefined> = BaseFormResponse<"success", D>;
+
+type ErrorFormResponse<D = undefined> = BaseFormResponse<"error", D> & {
+  errors?: {
+    path: string;
+    message: string;
+  }[];
+};
+
+export type FormResponse<D = undefined> =
+  | SuccessFormResponse<D>
+  | ErrorFormResponse<D>
   | null;
 
 export type FormState = {

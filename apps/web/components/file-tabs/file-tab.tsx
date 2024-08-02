@@ -1,4 +1,5 @@
 import { XIcon } from "lucide-react";
+import { type Tab } from "@/app/stores/tabs-store";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -6,19 +7,26 @@ import {
   ContextMenuTrigger,
 } from "../ui/context-menu";
 import { TabsTrigger } from "../ui/tabs";
-import { type Tab } from "./file-tabs";
+import { cn } from "@/lib/utils";
 
 interface FileTabProps {
+  active: boolean;
   tab: Tab;
   onClose: () => void;
 }
 
-export function FileTab({ tab, onClose }: FileTabProps): JSX.Element {
+export function FileTab({
+  active = false,
+  tab,
+  onClose,
+}: FileTabProps): JSX.Element {
   return (
     <ContextMenu>
       <ContextMenuTrigger>
         <TabsTrigger
-          className="group hover:pr-1 flex flex-row items-center"
+          className={cn("group hover:pr-1 flex flex-row items-center", {
+            "border-blue-500": active,
+          })}
           value={tab.id.toString()}
         >
           {tab.label}

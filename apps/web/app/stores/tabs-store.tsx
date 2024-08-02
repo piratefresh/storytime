@@ -1,9 +1,10 @@
 import { arrayMove } from "@dnd-kit/sortable";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
+import { nanoid } from "@/lib/utils";
 
-export type TabTypes = "file" | "folder" | "story";
-interface Tab {
+export type TabTypes = "file" | "folder" | "story" | "flow";
+export interface Tab {
   label: string;
   content: string | null;
   id: string;
@@ -14,40 +15,34 @@ interface Tab {
   type: TabTypes;
 }
 
-export interface TabsState {
+interface Group {
+  id: string;
   tabs: Tab[];
   activeTabId: string | null;
 }
 
+interface TabsState {
+  groups: Group[];
+  activeGroupId?: string;
+}
+
 export interface TabsActions {
-  addTab: ({
-    label,
-    fileId,
-    storyTitle,
-    storyId,
-    isRoot,
-    parentId,
-    type,
-  }: {
-    label: string;
-    fileId: string;
-    storyTitle: string;
-    storyId: string;
-    isRoot?: boolean;
-    parentId?: string | null;
-    type: TabTypes;
-  }) => void;
-  removeTab: (id: string) => void;
-  setActiveTab: (id: string) => void;
-  reorderTabs: (oldIndex: number, newIndex: number) => void;
-  updateTabLabel: ({ id, label }: { id: string; label: string }) => void;
+  addGroup: (groupId: string, initialTab: Tab) => void;
+  closeGroup: (groupId: string) => void;
+  addTab: (tab: Tab) => void;
+  removeTab: (groupId: string, tabId: string) => void;
+  removeTabFromAllGroups: (tabId: string) => void;
+  setActiveTab: (groupId: string, tabId: string) => void;
+  reorderTabs: (groupId: string, oldIndex: number, newIndex: number) => void;
+  updateTabLabel: (groupId: string, tabId: string, label: string) => void;
+  splitTab: (groupId: string) => void;
+  setActiveGroup: (groupId: string) => void;
 }
 
 export type TabsStore = TabsState & TabsActions;
 
 export const defaultInitState: TabsState = {
-  tabs: [],
-  activeTabId: null,
+  groups: [],
 };
 
 export const createTabsStore = (initState: TabsState = defaultInitState) => {
@@ -56,64 +51,183 @@ export const createTabsStore = (initState: TabsState = defaultInitState) => {
       persist(
         (set) => ({
           ...initState,
-          addTab: ({
-            label,
-            fileId,
-            storyId,
-            storyTitle,
-            isRoot = false,
-            parentId,
-            type,
-          }) => {
-            set((state: TabsState & TabsActions) => {
-              const existingTab = state.tabs.find((tab) => tab.id === fileId);
-              if (existingTab) {
-                return { activeTabId: fileId };
+          addGroup: (groupId, initialTab) => {
+            set((state) => ({
+              groups: [
+                ...state.groups,
+                { id: groupId, tabs: [initialTab], activeTabId: initialTab.id },
+              ],
+            }));
+          },
+          closeGroup: (groupId) => {
+            set((state) => ({
+              groups: state.groups.filter((panel) => panel.id !== groupId),
+            }));
+          },
+          addTab: (tab) => {
+            set((state) => {
+              let groupId = state.activeGroupId ?? state.groups[0]?.id;
+              let newGroups = [...state.groups];
+
+              if (!groupId) {
+                // No group exists, create a new one
+                groupId = nanoid();
+                newGroups = [
+                  {
+                    id: groupId,
+                    tabs: [],
+                    activeTabId: null,
+                  },
+                ];
               }
-              const newTab: Tab = {
-                label,
-                content: null,
-                id: fileId,
-                storyId,
-                storyTitle,
-                isRoot,
-                parentId,
-                type,
-              };
+
               return {
-                tabs: [...state.tabs, newTab],
-                activeTabId: fileId,
-              };
-            });
-          },
-          removeTab: (id: string) => {
-            set((state: TabsState & TabsActions) => ({
-              tabs: state.tabs.filter((tab) => tab.id !== id),
-              activeTabId:
-                state.activeTabId === id
-                  ? state.tabs[0]?.id ?? null
-                  : state.activeTabId,
-            }));
-          },
-          updateTabLabel: ({ id, label }) => {
-            console.log("id: ", id);
-            console.log("label: ", label);
-            set((state: TabsState & TabsActions) => {
-              console.log("state: ", state);
-              return {
-                tabs: state.tabs.map((tab) =>
-                  tab.id === id ? { ...tab, label } : tab
+                groups: newGroups.map((group) =>
+                  group.id === groupId
+                    ? {
+                        ...group,
+                        tabs: [...group.tabs, tab],
+                        activeTabId: tab.id,
+                      }
+                    : group
                 ),
+                activeGroupId: groupId,
               };
             });
           },
-          setActiveTab: (id: string) => {
-            set({ activeTabId: id });
+          removeTab: (groupId, tabId) => {
+            set((state) => {
+              const updatedGroups = state.groups.map((panel) => {
+                if (panel.id !== groupId) return panel;
+
+                const updatedTabs = panel.tabs.filter(
+                  (tab) => tab.id !== tabId
+                );
+                return {
+                  ...panel,
+                  tabs: updatedTabs,
+                  activeTabId:
+                    panel.activeTabId === tabId
+                      ? updatedTabs[0]?.id ?? null
+                      : panel.activeTabId,
+                };
+              });
+
+              // Remove empty groups
+              const filteredGroups = updatedGroups.filter(
+                (group) => group.tabs.length > 0
+              );
+
+              return {
+                groups: filteredGroups,
+                activeGroupId:
+                  filteredGroups.length > 0 ? state.activeGroupId : undefined,
+              };
+            });
           },
-          reorderTabs: (oldIndex: number, newIndex: number) => {
-            set((state: TabsState & TabsActions) => ({
-              tabs: arrayMove(state.tabs, oldIndex, newIndex),
+          removeTabFromAllGroups: (tabId: string) => {
+            set((state) => {
+              const updatedGroups = state.groups.map((group) => {
+                const updatedTabs = group.tabs.filter(
+                  (tab) => tab.id !== tabId
+                );
+                return {
+                  ...group,
+                  tabs: updatedTabs,
+                  activeTabId:
+                    group.activeTabId === tabId
+                      ? updatedTabs[0]?.id ?? null
+                      : group.activeTabId,
+                };
+              });
+
+              // Remove empty groups
+              const filteredGroups = updatedGroups.filter(
+                (group) => group.tabs.length > 0
+              );
+
+              return {
+                groups: filteredGroups,
+                activeGroupId:
+                  filteredGroups.length > 0 ? state.activeGroupId : undefined,
+              };
+            });
+          },
+          setActiveTab: (groupId, tabId) => {
+            set((state) => ({
+              groups: state.groups.map((panel) =>
+                panel.id === groupId ? { ...panel, activeTabId: tabId } : panel
+              ),
+              activeGroupId: groupId,
             }));
+          },
+          updateTabLabel: (groupId, tabId, label) => {
+            set((state) => ({
+              groups: state.groups.map((panel) =>
+                panel.id === groupId
+                  ? {
+                      ...panel,
+                      tabs: panel.tabs.map((tab) =>
+                        tab.id === tabId ? { ...tab, label } : tab
+                      ),
+                    }
+                  : panel
+              ),
+            }));
+          },
+          reorderTabs: (
+            groupId: string,
+            oldIndex: number,
+            newIndex: number
+          ) => {
+            set((state: TabsState & TabsActions) => ({
+              groups: state.groups.map((panel) =>
+                panel.id === groupId
+                  ? {
+                      ...panel,
+                      tabs: arrayMove(panel.tabs, oldIndex, newIndex),
+                    }
+                  : panel
+              ),
+            }));
+          },
+          splitTab: (groupId: string) => {
+            set((state) => {
+              const sourceGroupIndex = state.groups.findIndex(
+                (group) => group.id === groupId
+              );
+              if (sourceGroupIndex === -1) return state;
+
+              const sourceGroup = state.groups[sourceGroupIndex];
+              if (sourceGroup) {
+                if (!sourceGroup.activeTabId) return state;
+
+                const activeTab = sourceGroup.tabs.find(
+                  (tab) => tab.id === sourceGroup.activeTabId
+                );
+                if (!activeTab) return state;
+
+                const newGroupId = nanoid();
+                const newGroup: Group = {
+                  id: newGroupId,
+                  tabs: [{ ...activeTab }],
+                  activeTabId: activeTab.id,
+                };
+
+                const newGroups = [...state.groups];
+                newGroups.splice(sourceGroupIndex + 1, 0, newGroup);
+
+                return {
+                  groups: newGroups,
+                  activeGroupId: newGroupId,
+                };
+              }
+
+              return state;
+            });
+          },
+          setActiveGroup: (groupId: string) => {
+            set({ activeGroupId: groupId });
           },
         }),
         {

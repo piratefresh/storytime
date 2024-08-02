@@ -85,9 +85,8 @@ const DropdownMenuContent = React.forwardRef<
           {content}
         </DropdownMenuPrimitive.Portal>
       );
-    } else {
-      return content;
     }
+    return content;
   }
 );
 

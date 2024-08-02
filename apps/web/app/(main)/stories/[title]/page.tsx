@@ -1,20 +1,25 @@
 import { cache } from "react";
 import { type Prisma } from "@repo/db";
 import { redirect } from "next/navigation";
-import db from "@/lib/db";
+import { db } from "@/lib/db";
 import { validateRequest } from "@/lib/auth";
-import Flow from "@/components/graph-view/graph-view";
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@/components/ui/resizable";
-import { StoryEditor } from "./components/story-editor";
-import { FileTab } from "@/components/file-tabs/file-tab";
-import { FileTabs } from "@/components/file-tabs/file-tabs";
+import { GroupPanel } from "./components/group-panel";
 
 export type StoryWithFolder = Prisma.StoryGetPayload<{
-  include: { folder: true; file: true };
+  include: {
+    folder: {
+      include: {
+        file: {
+          orderBy: {
+            name: "asc";
+          };
+        };
+      };
+      orderBy: {
+        name: "asc";
+      };
+    };
+  };
 }>;
 
 export const getStory = cache(
@@ -31,11 +36,21 @@ export const getStory = cache(
         title,
       },
       include: {
-        folder: true,
-        file: true,
+        folder: {
+          include: {
+            file: {
+              orderBy: {
+                name: "asc",
+              },
+            },
+          },
+          orderBy: {
+            name: "asc",
+          },
+        },
       },
     });
-    return story || null;
+    return story ?? null;
   }
 );
 
@@ -43,7 +58,7 @@ export default async function StoryPage({
   params: { title },
 }: {
   params: { title: string };
-}): Promise<JSX.Element> {
+}): Promise<JSX.Element | null> {
   const { user } = await validateRequest();
 
   if (!user) {
@@ -59,11 +74,5 @@ export default async function StoryPage({
     redirect("/stories");
   }
 
-  return (
-    <ResizablePanelGroup direction="horizontal">
-      <ResizablePanel>
-        <FileTabs user={user} story={story} />
-      </ResizablePanel>
-    </ResizablePanelGroup>
-  );
+  return <GroupPanel story={story} user={user} />;
 }
