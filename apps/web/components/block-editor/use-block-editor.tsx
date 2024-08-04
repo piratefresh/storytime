@@ -1,13 +1,14 @@
 import { type JSONContent, useEditor } from "@tiptap/react";
 import { type EditorProps } from "@tiptap/pm/view";
-import { useDebounce } from "use-debounce";
 import { type User } from "lucia";
-import React from "react";
 import { useSidebar } from "@/hooks/useSidebar";
 import { Extensions } from "../tiptap/extensions/extensions";
 
 interface BlockEditorProps {
-  onChange: (content: string) => void;
+  onChange: (
+    content: JSONContent | string | null,
+    plainTextContent: string
+  ) => void;
   user: User | null;
   contentId?: string;
   initialContent?: JSONContent | string | null;
@@ -42,9 +43,6 @@ export const useBlockEditor = ({
   contentId,
   initialContent,
 }: BlockEditorProps) => {
-  const [content, setContent] = React.useState<JSONContent | null>(null);
-  const [debouncedContent] = useDebounce(content, 1000);
-
   const tocSidebar = useSidebar();
 
   const editor = useEditor({
@@ -52,35 +50,14 @@ export const useBlockEditor = ({
     extensions: [...Extensions({ user, contentId })],
     content: initialContent ?? undefined,
     onUpdate: ({ editor }) => {
-      const newValue = editor.getJSON();
-      setContent((prevValue) => {
-        // Check if the new value actually differs from the old value
-        if (JSON.stringify(prevValue) !== JSON.stringify(newValue)) {
-          return newValue;
-        }
-        return prevValue;
-      });
-    },
-    onCreate: ({ editor }) => {
-      // const value = editor.getJSON();
-      // setContent(value);
+      onChange(editor.getJSON(), editor.getText());
     },
   });
 
-  const stableOnChange = React.useCallback(onChange, []);
-
-  React.useEffect(() => {
-    if (debouncedContent) {
-      if (stableOnChange) {
-        // Ensuring only plain objects are passed
-        const plainObjectContent = JSON.parse(JSON.stringify(debouncedContent));
-        console.log("Sending plain object to onChange:", plainObjectContent);
-        stableOnChange(plainObjectContent);
-      }
-    }
-  }, [debouncedContent, stableOnChange]);
-
-  const characterCount = editor?.storage.characterCount || {
+  const characterCount: {
+    characters: () => number;
+    words: () => number;
+  } = editor?.storage.characterCount || {
     characters: () => 0,
     words: () => 0,
   };

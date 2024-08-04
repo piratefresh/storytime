@@ -9,7 +9,8 @@ import {
 } from "react";
 import TreeViewPrimitive, {
   flattenTree,
-  type INode,
+  INode,
+  NodeId,
   type INodeRendererProps,
 } from "react-accessible-treeview";
 import {
@@ -19,7 +20,6 @@ import {
   PointerSensor,
   KeyboardSensor,
   type DragEndEvent,
-  type DraggableAttributes,
   DragOverlay,
   type DragStartEvent,
   type DragOverEvent,
@@ -29,292 +29,41 @@ import {
   verticalListSortingStrategy,
   useSortable,
 } from "@dnd-kit/sortable";
-import { ChevronDown, ChevronRight } from "lucide-react";
-import { type Folder } from "@repo/db";
-import { type SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
-import {
-  ContextMenu,
-  ContextMenuContent,
-  ContextMenuItem,
-  ContextMenuTrigger,
-} from "@/components/ui/context-menu";
 import { cn } from "@/lib/utils";
-import { createFolder } from "@/app/(main)/stories/actions/create-folder";
-import { rename } from "@/app/(main)/stories/actions/rename";
-import { createFile } from "@/app/(main)/stories/actions/create-file";
 import { useTabsStore } from "@/app/stores/tabs-provider";
 import { useUpdateStoryUrl } from "@/hooks/use-update-story-url";
-import { deleteFileFolder } from "@/app/(main)/stories/actions/delete-file-folder";
 import { type Tab, type TabTypes } from "@/app/stores/tabs-store";
 import { updateFileFolder } from "@/app/(main)/stories/actions/update-file-folder";
-import { Input } from "../ui/input";
+import { TreeNode } from "./tree-node";
 
 interface NodeMetadata {
   storyId: string;
   storyTitle: string;
-  isRoot: boolean;
-  type: "folder" | "file";
+  isRoot?: boolean;
+  type: "folder" | "file" | "story";
+  [key: string]: string | number | boolean | undefined | null; // Add any other metadata
 }
 
-export interface Node {
+export interface TreeItemNode {
   name: string;
   metadata: NodeMetadata;
-  children: Node[];
+  children?: TreeItemNode[];
   parent?: string;
   id: string;
 }
 
 interface ContextMenuItems {
   label: string;
-  onClick: (info: Node) => void;
+  onClick: (info: TreeItemNode) => void;
 }
 
 export interface TreeViewProps extends React.ComponentPropsWithoutRef<"div"> {
-  folder: Node;
+  folder: INode<NodeMetadata>;
   contextMenuItems: ContextMenuItems[];
-  onDoubleClick: (info: Node) => void;
-}
-
-interface TreeNodeProps extends INodeRendererProps {
-  onDoubleClick?: (info: Folder) => void;
-  isDragging?: boolean;
-  isOver?: boolean;
-  isDraggingOverFolder?: boolean;
-  dragAttributes?: DraggableAttributes;
-  dragListeners?: SyntheticListenerMap;
-  setDragNodeRef?: (element: HTMLElement | null) => void;
-  style?: React.CSSProperties;
-}
-
-function TreeNode({
-  getNodeProps,
-  element,
-  level,
-  dispatch,
-  isExpanded,
-  isBranch,
-  isDraggingOverFolder,
-  isSelected = false,
-  dragAttributes,
-  dragListeners,
-  setDragNodeRef,
-}: TreeNodeProps): JSX.Element {
-  const updateTabLabel = useTabsStore((state) => state.updateTabLabel);
-  const removeTabFromAllGroups = useTabsStore(
-    (state) => state.removeTabFromAllGroups
-  );
-  const updateStoryUrl = useUpdateStoryUrl();
-  const [renaming, setRenaming] = useState(false);
-
-  const getContextMenuItems = () => {
-    const baseItems = [
-      {
-        label: "New Story",
-        onClick: () => {
-          startTransition(async () => {});
-        },
-      },
-      {
-        label: "New Folder",
-        onClick: (info: Node) => {
-          const formData = new FormData();
-
-          formData.append("storyId", info.metadata.storyId);
-          if (info.metadata.isRoot && info.parent) {
-            formData.append("parentId", info.parent);
-          } else {
-            formData.append("parentId", info.id);
-          }
-          startTransition(async () => {
-            const response = await createFolder(null, formData);
-            console.log("response: ", response);
-          });
-        },
-      },
-      {
-        label: "Delete",
-        onClick: () => {
-          const formData = new FormData();
-          formData.append("storyId", element.metadata.storyId);
-          formData.append("name", element.name);
-          formData.append("type", element.metadata.type);
-          if (element.metadata.type === "file") {
-            formData.append("fileId", element.id);
-          } else {
-            formData.append("folderId", element.id);
-          }
-
-          startTransition(async () => {
-            const response = await deleteFileFolder(null, formData);
-            if (response?.status) {
-              removeTabFromAllGroups(element.id);
-            }
-          });
-        },
-      },
-    ];
-
-    // Only add the "New File" option if the element is not a file
-    if (element.metadata?.type !== "file") {
-      baseItems.push({
-        label: "New File",
-        onClick: (info: Node) => {
-          const formData = new FormData();
-
-          if (info.metadata.storyId) {
-            formData.append("storyId", info.metadata.storyId);
-          }
-
-          if ("id" in info && typeof info.id === "string") {
-            formData.append("folderId", info.id);
-          }
-          startTransition(async () => {
-            await createFile(null, formData);
-          });
-        },
-      });
-    }
-
-    return baseItems;
-  };
-
-  const handleClick = (
-    e: React.MouseEvent<HTMLDivElement> | React.KeyboardEvent<HTMLDivElement>
-  ) => {
-    if (renaming) {
-      // Don't propagate click when renaming
-      e.stopPropagation();
-      return;
-    }
-
-    const nodeProps = getNodeProps();
-    if (nodeProps.onClick) {
-      nodeProps.onClick(e as any);
-    }
-  };
-
-  const handleDoubleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    e.stopPropagation();
-    setRenaming(true);
-  };
-
-  const handleRenameBlur = () => {
-    setRenaming(false);
-  };
-
-  const handleRenameKeyUp = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    e.preventDefault();
-    if (e.key === "Enter") {
-      const formData = new FormData();
-      const label = e.currentTarget.value;
-      const fileId = element.id;
-      const title = element.metadata.storyTitle;
-      formData.append("storyId", element.metadata.storyId);
-      formData.append("name", label);
-      formData.append("type", element.metadata.type);
-      if (element.metadata.type === "file") {
-        formData.append("fileId", element.id);
-      } else {
-        formData.append("folderId", element.id);
-      }
-
-      startTransition(async () => {
-        const resp = await rename(null, formData);
-        if (resp?.status) {
-          updateTabLabel({ id: element.id, label });
-          updateStoryUrl({ fileId, title, fileName: label });
-        }
-        dispatch({
-          type: "ENABLE",
-          id: element.id,
-        });
-        setRenaming(false);
-      });
-    } else if (e.key === "Escape") {
-      setRenaming(false);
-    }
-  };
-
-  const nodeProps = getNodeProps({
-    onClick: handleClick,
-  });
-
-  if (isDraggingOverFolder) {
-    console.log("Dragging over folder: ", isDraggingOverFolder);
-  }
-
-  const defaultNode = (
-    <div
-      {...nodeProps}
-      ref={setDragNodeRef}
-      {...(renaming ? {} : { ...dragAttributes, ...dragListeners })}
-      onDoubleClick={handleDoubleClick}
-      aria-selected={isSelected}
-      aria-expanded={isExpanded}
-      className={cn(
-        "relative",
-        "transition-colors",
-        "flex items-center gap-1",
-        "text-xs",
-        "cursor-pointer",
-        "select-none",
-        "text-foreground-light",
-        "aria-selected:text-foreground",
-        "aria-expanded:bg-control",
-        "aria-selected:!bg-selection",
-        "group",
-        "h-[28px]",
-        "hover:bg-control"
-      )}
-      style={{
-        marginLeft: 10 * (level - 1),
-      }}
-      data-treeview-is-branch={isBranch}
-      data-treeview-level={level}
-    >
-      {element.metadata?.type === "folder" ? (
-        <ArrowIcon isOpen={isExpanded!} />
-      ) : (
-        <div style={{ width: 16 }} />
-      )}
-      {renaming ? (
-        <Input
-          defaultValue={element.name}
-          onBlur={handleRenameBlur}
-          onKeyUp={handleRenameKeyUp}
-          onClick={(e) => e.stopPropagation()}
-        />
-      ) : (
-        element.name
-      )}
-    </div>
-  );
-
-  const contextMenuItems = getContextMenuItems();
-
-  return contextMenuItems ? (
-    <ContextMenu>
-      <ContextMenuTrigger>{defaultNode}</ContextMenuTrigger>
-      <ContextMenuContent>
-        {contextMenuItems.map((item) => (
-          <ContextMenuItem
-            key={item.label}
-            onClick={() => {
-              item.onClick(element);
-            }}
-          >
-            {item.label}
-          </ContextMenuItem>
-        ))}
-      </ContextMenuContent>
-    </ContextMenu>
-  ) : (
-    defaultNode
-  );
 }
 
 interface SortableTreeNodeProps extends INodeRendererProps {
-  overItem: Array<string>;
+  overItem?: NodeId[] | null;
 }
 
 function SortableTreeNode({
@@ -329,6 +78,8 @@ function SortableTreeNode({
   overItem,
   ...props
 }: SortableTreeNodeProps): JSX.Element {
+  const [isEditing, setIsEditing] = useState(false);
+
   const { attributes, listeners, setNodeRef, transition, isDragging, isOver } =
     useSortable({
       id: element.id,
@@ -351,7 +102,7 @@ function SortableTreeNode({
 
   return (
     <div
-      className={cn({ "bg-white/20": isDraggingOverFolder ?? isSelected })}
+      className={cn({ "bg-white/20": isDraggingOverFolder || isSelected })}
       ref={setNodeRef}
       style={style}
     >
@@ -362,6 +113,8 @@ function SortableTreeNode({
         isBranch={isBranch}
         isDisabled={isDisabled}
         isSelected={isSelected}
+        isEditing={isEditing}
+        onEditing={setIsEditing}
         dispatch={dispatch}
         getNodeProps={getNodeProps}
         isDragging={isDragging}
@@ -377,12 +130,12 @@ function SortableTreeNode({
   );
 }
 
-export function sortTreeItems(items: INode[]): INode[] {
+export function sortTreeItems(items: TreeItemNode[]): TreeItemNode[] {
   return items.map((item) => {
     if (item.metadata?.type === "folder" && item.children) {
       const sortedChildren = [...item.children].sort((a, b) => {
-        const childA = items.find((i) => i.id === a);
-        const childB = items.find((i) => i.id === b);
+        const childA = items.find((i) => i.id === a.id);
+        const childB = items.find((i) => i.id === b.id);
         return childA && childB ? childA.name.localeCompare(childB.name) : 0;
       });
       return { ...item, children: sortedChildren };
@@ -391,7 +144,10 @@ export function sortTreeItems(items: INode[]): INode[] {
   });
 }
 
-const getAllChildren = (item: INode, items: INode[]): INode[] => {
+const getAllChildren = (
+  item: INode<NodeMetadata>,
+  items: INode<NodeMetadata>[]
+): INode<NodeMetadata>[] => {
   let children = items.filter((child) => child.parent === item.id);
 
   children.forEach((child) => {
@@ -403,13 +159,15 @@ const getAllChildren = (item: INode, items: INode[]): INode[] => {
   return children;
 };
 
-const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
+const TreeView = forwardRef<HTMLUListElement, TreeViewProps>(
   ({ folder }, ref) => {
     const addTab = useTabsStore((state) => state.addTab);
-
-    const [items, setItems] = useState(flattenTree(folder));
-    const [activeItem, setActiveItem] = useState<INode | null>(null);
-    const [overItem, setOverItem] = useState<string | null>(null);
+    const activeGroupTabs = useTabsStore((state) => state.getActiveGroupTabs());
+    const [items, setItems] = useState(() => flattenTree(folder));
+    const [activeItem, setActiveItem] = useState<INode<NodeMetadata> | null>(
+      null
+    );
+    const [overItem, setOverItem] = useState<NodeId[] | null>(null);
 
     useEffect(() => {
       setItems(flattenTree(folder));
@@ -418,16 +176,16 @@ const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
     const sensors = useSensors(
       useSensor(PointerSensor, {
         activationConstraint: {
-          distance: 0.1,
+          distance: 5,
         },
       }),
       useSensor(KeyboardSensor)
     );
 
     const handleDragStart = (event: DragStartEvent) => {
-      const activeItem = items.find((item) => item.id === event.active.id);
-      if (activeItem) {
-        setActiveItem(activeItem);
+      const draggedItem = items.find((item) => item.id === event.active.id);
+      if (draggedItem) {
+        setActiveItem(draggedItem);
       }
     };
 
@@ -445,22 +203,27 @@ const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
             return prevItems; // No change if items not found
           }
 
-          const activeItem = prevItems[activeIndex];
-          const overItem = prevItems[overIndex];
+          const draggedItem = prevItems[activeIndex];
+          const draggedOverItem = prevItems[overIndex];
+
+          // Add a check to ensure draggedOverItem is defined
+          if (!draggedOverItem || !draggedItem) {
+            return prevItems; // No change if draggedOverItem is undefined
+          }
 
           // Determine the new parent ID
           const newParentId =
-            overItem.metadata?.type === "folder"
-              ? overItem.id
-              : overItem.parent;
+            draggedOverItem.metadata?.type === "folder"
+              ? draggedOverItem.id
+              : draggedOverItem.parent;
 
           // If it's the same parent, do nothing
-          if (newParentId === activeItem.parent) {
+          if (newParentId === draggedItem.parent || !newParentId) {
             return prevItems;
           }
 
           // If it's a folder, check it's not being moved into its own descendant
-          if (activeItem.metadata?.type === "folder") {
+          if (draggedItem.metadata?.type === "folder") {
             const isDescendant = (
               parentId: string,
               childId: string
@@ -468,33 +231,31 @@ const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
               const child = prevItems.find((item) => item.id === childId);
               if (!child) return false;
               if (child.parent === parentId) return true;
-              if (child.parent) return isDescendant(parentId, child.parent);
+              if (child.parent && typeof child.parent === "string")
+                return isDescendant(parentId, child.parent);
               return false;
             };
 
-            if (isDescendant(activeItem.id, newParentId)) {
+            if (isDescendant(draggedItem.id, newParentId)) {
               return prevItems; // Cannot move a folder into its own descendant
             }
           }
 
           // Create a new array with all the updates
           const updatedItems = prevItems.map((item) => {
-            if (item.id === activeItem.id) {
+            if (item.id === draggedItem.id) {
               // Update the moved item
               return { ...item, parent: newParentId };
             } else if (item.id === newParentId) {
               // Update the new parent folder
               return {
                 ...item,
-                children: [...(item.children || []), activeItem.id],
+                children: [...item.children, draggedItem.id],
               };
-            } else if (item.id === activeItem.parent) {
-              // Update the old parent
+            } else if (item.id === draggedItem.parent) {
               return {
                 ...item,
-                children: (item.children || []).filter(
-                  (id) => id !== activeItem.id
-                ),
+                children: item.children.filter((id) => id !== draggedItem.id),
               };
             }
             return item;
@@ -503,17 +264,21 @@ const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
           // Sort the updated items
           const sortedItems = sortTreeItems(updatedItems);
 
+          activeGroupTabs;
+
           // Trigger the server update
           startTransition(async () => {
             const formData = new FormData();
-            formData.append("storyId", activeItem.metadata.storyId);
-            formData.append("type", activeItem.metadata.type);
-            formData.append("parentId", newParentId);
+            if (activeItem?.metadata) {
+              formData.append("storyId", activeItem.metadata.storyId);
+              formData.append("type", activeItem.metadata.type);
+              formData.append("parentId", newParentId as string);
 
-            if (activeItem.metadata.type === "file") {
-              formData.append("fileId", activeItem.id);
-            } else {
-              formData.append("folderId", activeItem.id);
+              if (activeItem.metadata.type === "file") {
+                formData.append("fileId", activeItem.id as string);
+              } else {
+                formData.append("folderId", activeItem.id as string);
+              }
             }
 
             const response = await updateFileFolder(null, formData, true);
@@ -530,21 +295,26 @@ const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
     const handleDragOver = (event: DragOverEvent) => {
       const { active, over } = event;
       if (over) {
-        const activeItem = items.find((item) => item.id === active.id);
-        const overItem = items.find((item) => item.id === over.id);
+        const draggedItem = items.find((item) => item.id === active.id);
+        const draggedOverItem = items.find((item) => item.id === over.id);
 
-        if (activeItem && overItem && activeItem.parent === overItem.id) {
-          // Same parent, no need to set overItem
+        if (!draggedItem || !draggedOverItem) {
+          return;
+        }
+
+        if (draggedItem.parent === draggedOverItem.id) {
+          // Same parent, no need to set draggedOverItem
           setOverItem(null);
           return;
         }
 
-        const allSelectedItems = [overItem, ...getAllChildren(overItem, items)];
+        const allSelectedItems = [
+          draggedOverItem,
+          ...getAllChildren(draggedOverItem, items),
+        ];
         const allSelectedIds = allSelectedItems.map((item) => item.id);
 
-        if (allSelectedIds) {
-          setOverItem(allSelectedIds);
-        }
+        setOverItem(allSelectedIds);
       } else {
         setOverItem(null);
       }
@@ -559,8 +329,6 @@ const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
       [overItem]
     );
 
-    console.log("overItem: ", overItem);
-
     return (
       <DndContext
         sensors={sensors}
@@ -570,6 +338,7 @@ const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
       >
         <SortableContext items={items} strategy={verticalListSortingStrategy}>
           <TreeViewPrimitive
+            ref={ref}
             data={items}
             className="basic"
             aria-label="Tree view List"
@@ -615,9 +384,5 @@ const TreeView = forwardRef<HTMLDivElement, TreeViewProps>(
 );
 
 TreeView.displayName = "TreeView";
-
-function ArrowIcon({ isOpen }: { isOpen: boolean }): JSX.Element {
-  return isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />;
-}
 
 export { TreeView };

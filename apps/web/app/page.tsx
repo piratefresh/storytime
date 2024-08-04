@@ -9,6 +9,6 @@ export default async function Page(): Promise<JSX.Element> {
 
   return (
     // <TestEditor />
-    <FileTabs user={user} />
+    <FileTabs user={user} tabs={[]} />
   );
 }

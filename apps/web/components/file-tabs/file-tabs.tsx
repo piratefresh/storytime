@@ -25,6 +25,7 @@ import { type Tab } from "@/app/stores/tabs-store";
 import { type StoryWithFolder } from "@/app/(main)/stories/[title]/page";
 import { createFile } from "@/app/(main)/stories/actions/create-file";
 import { createFolder } from "@/app/(main)/stories/actions/create-folder";
+import { saveFile } from "@/app/(main)/stories/actions/file/save-file";
 import { Tabs, TabsContent, TabsList } from "../ui/tabs";
 import { BlockEditor } from "../block-editor/block-editor";
 import {
@@ -95,9 +96,26 @@ export function FileTabs({
   }: {
     tabId: string;
     storyTitle: string;
-  }) => {
+  }): void => {
     onSetActiveTab(groupId, tabId);
     updateStoryUrl({ fileId: tabId, title: storyTitle, fileName: storyTitle });
+  };
+
+  const handleSaveChange = async ({
+    content,
+    tab,
+  }: {
+    content: string;
+    tab: Tab;
+  }): Promise<void> => {
+    if (tab.type === "file") {
+      const formData = new FormData();
+      formData.append("content", JSON.stringify(content));
+      formData.append("text");
+      formData.append("fileId", tab.id);
+      formData.append("storyId", story.id);
+      await saveFile(null, formData);
+    }
   };
 
   return (
@@ -121,7 +139,7 @@ export function FileTabs({
         }}
       >
         <SortableContext
-          items={tabs.map((tab) => tab.id)}
+          items={tabs?.map((tab) => tab.id)}
           strategy={horizontalListSortingStrategy}
         >
           <div className="flex flex-row">
@@ -190,10 +208,10 @@ export function FileTabs({
               ) : (
                 <BlockEditor
                   user={user}
-                  onChange={(content: string) => {
-                    console.log("Change Detected:", content);
-                  }}
-                  content={tab.content || ""}
+                  onChange={(content: string) =>
+                    void handleSaveChange({ content, tab })
+                  }
+                  content={tab.content ?? ""}
                   contentId={tab.id}
                 />
               )}

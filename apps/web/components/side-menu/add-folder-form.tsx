@@ -15,16 +15,19 @@ import { Icon } from "../ui/icon";
 export function AddFolderForm(): JSX.Element {
   const formRef = useRef<HTMLFormElement>(null);
   const params = useParams<{ title: string }>();
-  console.log("params: ", params);
+
   const {
     formState: { errors },
     setError,
   } = useForm<z.infer<typeof createFolderSchema>>({
     resolver: zodResolver(createFolderSchema),
   });
+  const activeGroupId = useTabsStore((state) => state.activeGroupId);
+  const group = useTabsStore((state) =>
+    state.groups.find((g) => g.id === activeGroupId)
+  );
 
-  const activeTabId = useTabsStore((state) => state.activeTabId);
-  const tabs = useTabsStore((state) => state.tabs);
+  if (!group) return null;
 
   const initialState = null;
   const [state, formAction, isPending] = useFormState(

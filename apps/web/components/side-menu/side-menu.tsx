@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { type User } from "lucia";
-import { type Folder } from "@repo/db";
+import { type Folder, type File as StoryFile } from "@repo/db";
 import { CreateStoryForm } from "@/app/(main)/stories/create/components/create-story-form";
 import { db } from "@/lib/db";
 import { type StoryWithFolder } from "@/app/(main)/stories/[title]/page";
@@ -16,13 +16,13 @@ import {
   DialogTrigger,
 } from "../ui/dialog";
 import { TreeView } from "../tree-view/tree-view";
-import { AddFolderForm } from "./add-folder-form";
+import { type TreeItemNode } from "../tree-view/tree-view";
 
 interface SideMenuProps {
   user: User | null;
 }
 
-function constructFolderStructure(stories: StoryWithFolder[]): Folder {
+function constructFolderStructure(stories: StoryWithFolder[]): TreeItemNode {
   const allFolders = stories.flatMap((story) => story.folder);
 
   // Function to build folder and file hierarchy
@@ -30,12 +30,28 @@ function constructFolderStructure(stories: StoryWithFolder[]): Folder {
     parentId: string | null,
     storyId: string,
     storyTitle: string
-  ): (Folder | File)[] => {
+  ): (Folder | StoryFile)[] => {
     const childFolders = allFolders
       .filter(
         (folder) => folder.parentId === parentId && folder.storyId === storyId
       )
       .map((folder) => {
+        const folderFiles: StoryFile[] = folder.file.map((file) => ({
+          ...file,
+          metadata: {
+            storyId,
+            storyTitle,
+            isRoot: false,
+            type: "file",
+          },
+          // Add missing properties to match File type
+          description: null,
+          tags: [],
+          folderView: "list", // Or appropriate default value
+          ownerId: folder.ownerId, // Assuming folder has ownerId
+          parentId: folder.id,
+        }));
+
         return {
           ...folder,
           id: folder.id,
@@ -43,28 +59,26 @@ function constructFolderStructure(stories: StoryWithFolder[]): Folder {
             storyId,
             storyTitle,
             isRoot: false,
-            type: "folder",
+            type: "folder" as const,
           },
-          children: buildHierarchy(folder.id, storyId, storyTitle).concat(
-            (folder.file || []).map((file) => ({
-              ...file,
-              metadata: {
-                storyId,
-                storyTitle,
-                isRoot: false,
-                type: "file",
-              },
-            }))
-          ),
+          children: [
+            ...buildHierarchy(folder.id, storyId, storyTitle),
+            ...folderFiles,
+          ],
         };
       });
-
     return childFolders;
   };
 
   return {
+    id: "root",
     name: "Root",
-    children: stories.map((story, index) => {
+    metadata: {
+      storyId: "root",
+      storyTitle: "root",
+      type: "story" as const,
+    },
+    children: stories.map((story) => {
       return {
         name: story.title,
         id: story.id,
@@ -79,10 +93,11 @@ function constructFolderStructure(stories: StoryWithFolder[]): Folder {
               parentId: story.id,
               type: file.type,
               url: file.url,
+              children: [],
               metadata: {
                 storyId: story.id,
                 storyTitle: story.title,
-                type: "file",
+                type: "file" as const,
               },
             })),
         ],
@@ -90,7 +105,7 @@ function constructFolderStructure(stories: StoryWithFolder[]): Folder {
           storyId: story.id,
           storyTitle: story.title,
           isRoot: true,
-          type: "story",
+          type: "story" as const,
         },
       };
     }),
@@ -128,12 +143,10 @@ export async function SideMenu({ user }: SideMenuProps): Promise<JSX.Element> {
 
   const treeData = constructFolderStructure(stories);
 
-  console.log("treeData: ", treeData);
-
   return (
     <div className="min-h-screen min-w-80 bg-neutral-800 border border-border">
       <div className="flex gap-4 items-center justify-center">
-        <AddFolderForm />
+        {/* <AddFolderForm /> */}
         <Button variant="ghost">
           <Icon name="FilePen" />
         </Button>

@@ -74,6 +74,22 @@ export async function updateFileFolder(
   } else {
     const { fileId, storyId, parentId } = parsedData;
 
+    const oldFile = await db.file.findUnique({
+      where: {
+        id: fileId,
+      },
+    });
+
+    if (!oldFile) {
+      throw new ZodError([
+        {
+          path: ["file"],
+          code: "custom",
+          message: "File does not exist.",
+        },
+      ]);
+    }
+
     try {
       const file = await db.file.update({
         where: {

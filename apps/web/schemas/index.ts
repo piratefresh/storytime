@@ -87,3 +87,13 @@ export const updateSchema = z.discriminatedUnion("type", [
     }),
   }),
 ]);
+
+export const saveFileSchema = z.object({
+  fileId: z.string().min(1, {
+    message: "File ID is required when type is file.",
+  }),
+  storyId: z.string().trim().min(1, {
+    message: "Story ID is required.",
+  }),
+  content: z.string().nullable().optional(),
+});

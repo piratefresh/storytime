@@ -19,6 +19,11 @@ export type StoryWithFolder = Prisma.StoryGetPayload<{
         name: "asc";
       };
     };
+    file: {
+      orderBy: {
+        name: "asc";
+      };
+    };
   };
 }>;
 

@@ -34,9 +34,10 @@ export interface TabsActions {
   removeTabFromAllGroups: (tabId: string) => void;
   setActiveTab: (groupId: string, tabId: string) => void;
   reorderTabs: (groupId: string, oldIndex: number, newIndex: number) => void;
-  updateTabLabel: (groupId: string, tabId: string, label: string) => void;
+  updateTabLabel: ({ tabId, label }: { tabId: string; label: string }) => void;
   splitTab: (groupId: string) => void;
   setActiveGroup: (groupId: string) => void;
+  getActiveGroupTabs: () => Tab[] | null;
 }
 
 export type TabsStore = TabsState & TabsActions;
@@ -49,7 +50,7 @@ export const createTabsStore = (initState: TabsState = defaultInitState) => {
   return create<TabsStore>()(
     devtools(
       persist(
-        (set) => ({
+        (set, get) => ({
           ...initState,
           addGroup: (groupId, initialTab) => {
             set((state) => ({
@@ -64,11 +65,16 @@ export const createTabsStore = (initState: TabsState = defaultInitState) => {
               groups: state.groups.filter((panel) => panel.id !== groupId),
             }));
           },
+          getActiveGroupTabs: () => {
+            const activeGroup = get().groups.find(
+              (group) => group.id === get().activeGroupId
+            );
+            return activeGroup ? activeGroup.tabs : [];
+          },
           addTab: (tab) => {
             set((state) => {
               let groupId = state.activeGroupId ?? state.groups[0]?.id;
               let newGroups = [...state.groups];
-
               if (!groupId) {
                 // No group exists, create a new one
                 groupId = nanoid();
@@ -80,17 +86,28 @@ export const createTabsStore = (initState: TabsState = defaultInitState) => {
                   },
                 ];
               }
-
               return {
-                groups: newGroups.map((group) =>
-                  group.id === groupId
-                    ? {
+                groups: newGroups.map((group) => {
+                  if (group.id === groupId) {
+                    const existingTabIndex = group.tabs.findIndex(
+                      (t) => t.id === tab.id
+                    );
+                    if (existingTabIndex !== -1) {
+                      // Tab already exists, just set it as active
+                      return {
                         ...group,
-                        tabs: [...group.tabs, tab],
                         activeTabId: tab.id,
-                      }
-                    : group
-                ),
+                      };
+                    }
+                    // Tab doesn't exist, add it to the group
+                    return {
+                      ...group,
+                      tabs: [...group.tabs, tab],
+                      activeTabId: tab.id,
+                    };
+                  }
+                  return group;
+                }),
                 activeGroupId: groupId,
               };
             });
@@ -161,18 +178,14 @@ export const createTabsStore = (initState: TabsState = defaultInitState) => {
               activeGroupId: groupId,
             }));
           },
-          updateTabLabel: (groupId, tabId, label) => {
+          updateTabLabel: ({ tabId, label }) => {
             set((state) => ({
-              groups: state.groups.map((panel) =>
-                panel.id === groupId
-                  ? {
-                      ...panel,
-                      tabs: panel.tabs.map((tab) =>
-                        tab.id === tabId ? { ...tab, label } : tab
-                      ),
-                    }
-                  : panel
-              ),
+              groups: state.groups.map((group) => ({
+                ...group,
+                tabs: group.tabs.map((tab) =>
+                  tab.id === tabId ? { ...tab, label } : tab
+                ),
+              })),
             }));
           },
           reorderTabs: (

@@ -70,7 +70,7 @@ export async function rename(
     }
   } else {
     const { name, fileId, storyId } = parsedData;
-
+    const uniqueName = await getUniqueFileName(name, storyId);
     try {
       const file = await db.file.update({
         where: {
@@ -78,7 +78,7 @@ export async function rename(
           storyId,
         },
         data: {
-          name,
+          name: uniqueName,
         },
         include: {
           story: true,
@@ -107,5 +107,27 @@ export async function rename(
         message: "Failed to rename file",
       };
     }
+  }
+}
+
+async function getUniqueFileName(
+  name: string,
+  storyId: string
+): Promise<string> {
+  let uniqueName = name;
+  let counter = 1;
+
+  // while loop will always run at least once
+  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+  while (true) {
+    const existingFile = await db.file.findFirst({
+      where: {
+        name: uniqueName,
+        storyId,
+      },
+    });
+    if (!existingFile) return uniqueName;
+    uniqueName = `${name} (${counter.toString()})`;
+    counter++;
   }
 }

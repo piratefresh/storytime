@@ -10,7 +10,10 @@ import { CharacterCountDisplay } from "../tiptap/extensions/characterCountDispla
 import { useBlockEditor } from "./use-block-editor";
 
 interface BlockEditorProps {
-  onChange: (content: string) => void;
+  onChange: (
+    content: JSONContent | string | null,
+    plainTextContent: string
+  ) => void;
   user: User | null;
   contentId?: string;
   content: JSONContent | string | null;
@@ -23,10 +26,8 @@ export function BlockEditor({
   contentId,
 }: BlockEditorProps): JSX.Element | null {
   const { editor, tocSidebar } = useBlockEditor({
-    onChange: (content: string) => {
-      if (handleOnChange) {
-        handleOnChange(content);
-      }
+    onChange: (jsonContent, plainText) => {
+      handleOnChange(jsonContent, plainText);
     },
     user,
     contentId,

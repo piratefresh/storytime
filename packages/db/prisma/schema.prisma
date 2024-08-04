@@ -92,6 +92,7 @@ model File {
   folderId               String?
   storyId                String?
   content                Json?
+  plainContent           String?
   userId                 String
   asset                  Asset[]
   character              Character[]
