@@ -9,8 +9,8 @@ import {
 } from "react";
 import TreeViewPrimitive, {
   flattenTree,
-  INode,
-  NodeId,
+  type INode,
+  type NodeId,
   type INodeRendererProps,
 } from "react-accessible-treeview";
 import {
@@ -41,15 +41,24 @@ interface NodeMetadata {
   storyTitle: string;
   isRoot?: boolean;
   type: "folder" | "file" | "story";
-  [key: string]: string | number | boolean | undefined | null; // Add any other metadata
+  [key: string]: string | number | boolean | undefined | null;
 }
 
 export interface TreeItemNode {
+  id: NodeId;
   name: string;
-  metadata: NodeMetadata;
-  children?: TreeItemNode[];
-  parent?: string;
-  id: string;
+  isBranch?: boolean;
+  metadata?: NodeMetadata;
+  children?: NodeId[];
+  parent?: NodeId;
+}
+
+interface TreeNodeData<M extends NodeMetadata> {
+  id?: NodeId;
+  name: string;
+  isBranch?: boolean;
+  children?: TreeNodeData<M>[];
+  metadata?: M;
 }
 
 interface ContextMenuItems {
@@ -58,7 +67,7 @@ interface ContextMenuItems {
 }
 
 export interface TreeViewProps extends React.ComponentPropsWithoutRef<"div"> {
-  folder: INode<NodeMetadata>;
+  folder: TreeNodeData<NodeMetadata>;
   contextMenuItems: ContextMenuItems[];
 }
 
@@ -102,6 +111,7 @@ function SortableTreeNode({
 
   return (
     <div
+      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- OR is correct here for boolean logic
       className={cn({ "bg-white/20": isDraggingOverFolder || isSelected })}
       ref={setNodeRef}
       style={style}
@@ -130,12 +140,14 @@ function SortableTreeNode({
   );
 }
 
-export function sortTreeItems(items: TreeItemNode[]): TreeItemNode[] {
+export function sortTreeItems(
+  items: INode<NodeMetadata>[]
+): INode<NodeMetadata>[] {
   return items.map((item) => {
-    if (item.metadata?.type === "folder" && item.children) {
+    if (item.metadata?.type === "folder") {
       const sortedChildren = [...item.children].sort((a, b) => {
-        const childA = items.find((i) => i.id === a.id);
-        const childB = items.find((i) => i.id === b.id);
+        const childA = items.find((i) => i.id === a);
+        const childB = items.find((i) => i.id === b);
         return childA && childB ? childA.name.localeCompare(childB.name) : 0;
       });
       return { ...item, children: sortedChildren };
@@ -182,14 +194,14 @@ const TreeView = forwardRef<HTMLUListElement, TreeViewProps>(
       useSensor(KeyboardSensor)
     );
 
-    const handleDragStart = (event: DragStartEvent) => {
+    const handleDragStart = (event: DragStartEvent): void => {
       const draggedItem = items.find((item) => item.id === event.active.id);
       if (draggedItem) {
         setActiveItem(draggedItem);
       }
     };
 
-    const handleDragEnd = (event: DragEndEvent) => {
+    const handleDragEnd = (event: DragEndEvent): void => {
       const { active, over } = event;
 
       if (active.id !== over?.id && over) {
@@ -225,8 +237,8 @@ const TreeView = forwardRef<HTMLUListElement, TreeViewProps>(
           // If it's a folder, check it's not being moved into its own descendant
           if (draggedItem.metadata?.type === "folder") {
             const isDescendant = (
-              parentId: string,
-              childId: string
+              parentId: NodeId,
+              childId: NodeId
             ): boolean => {
               const child = prevItems.find((item) => item.id === childId);
               if (!child) return false;
@@ -292,7 +304,7 @@ const TreeView = forwardRef<HTMLUListElement, TreeViewProps>(
       }
     };
 
-    const handleDragOver = (event: DragOverEvent) => {
+    const handleDragOver = (event: DragOverEvent): void => {
       const { active, over } = event;
       if (over) {
         const draggedItem = items.find((item) => item.id === active.id);

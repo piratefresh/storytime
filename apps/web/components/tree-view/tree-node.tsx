@@ -2,6 +2,7 @@ import { type DraggableAttributes } from "@dnd-kit/core";
 import { type SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
 import { type Folder } from "@repo/db";
 import {
+  Fragment,
   startTransition,
   useCallback,
   useEffect,
@@ -22,9 +23,15 @@ import {
   ContextMenu,
   ContextMenuContent,
   ContextMenuItem,
+  ContextMenuSeparator,
+  ContextMenuSub,
+  ContextMenuSubContent,
+  ContextMenuSubTrigger,
   ContextMenuTrigger,
 } from "../ui/context-menu";
 import { type TreeItemNode } from "./tree-view";
+import { DropdownMenuLabel } from "../ui/dropdown-menu";
+import { Context } from "@dnd-kit/sortable/dist/components";
 
 interface TreeNodeProps extends INodeRendererProps {
   onDoubleClick?: (info: Folder) => void;
@@ -37,7 +44,16 @@ interface TreeNodeProps extends INodeRendererProps {
   style?: React.CSSProperties;
   isEditing: boolean;
   onEditing: (isEditing: boolean) => void;
-  //   onEditingChange: (value: string) => void;
+}
+
+interface MenuItem {
+  label: string;
+  onClick?: (info: TreeItemNode) => void;
+  subMenu?: MenuItem[];
+}
+
+interface MenuSection {
+  items: MenuItem[];
 }
 
 function ArrowIcon({ isOpen }: { isOpen: boolean }): JSX.Element {
@@ -45,6 +61,7 @@ function ArrowIcon({ isOpen }: { isOpen: boolean }): JSX.Element {
 }
 
 export function TreeNode({
+  getNodeProps,
   element,
   level,
   dispatch,
@@ -141,96 +158,128 @@ export function TreeNode({
     }
   }, [isEditing]);
 
-  const getContextMenuItems = (): {
-    label: string;
-    onClick: (info: TreeItemNode) => void;
-  }[] => {
-    const baseItems = [
+  const getContextMenuItems = (): MenuSection[] => {
+    return [
       {
-        label: "New Story",
-        onClick: () => {
-          console.log("new story - in wip");
-        },
+        items: [
+          {
+            label: "Create file",
+            onClick: (info: TreeItemNode) => {
+              const formData = new FormData();
+              if (info.metadata.storyId) {
+                formData.append("storyId", info.metadata.storyId);
+              }
+              if (
+                "id" in info &&
+                typeof info.id === "string" &&
+                !info.metadata.isRoot
+              ) {
+                formData.append("folderId", info.id);
+              }
+              startTransition(async () => {
+                await createFile(null, formData);
+              });
+            },
+          },
+          {
+            label: "Create folder",
+            onClick: (info: TreeItemNode) => {
+              const formData = new FormData();
+              if (info.metadata.storyId) {
+                formData.append("storyId", info.metadata.storyId);
+              }
+              if (!info.metadata.isRoot && info.id) {
+                formData.append("parentId", info.id);
+              }
+              startTransition(async () => {
+                await createFolder(null, formData);
+              });
+            },
+          },
+        ],
       },
       {
-        label: "New Folder",
-        onClick: (info: TreeItemNode) => {
-          const formData = new FormData();
-          if (info.metadata.storyId) {
-            formData.append("storyId", info.metadata.storyId);
-          }
+        items: [
+          {
+            label: "Make a copy",
+            onClick: () => {
+              console.log("Make a copy - functionality to be implemented");
+            },
+          },
+          {
+            label: "Move file to",
+            subMenu: [
+              {
+                label: "Choose destination...",
+                onClick: () => {
+                  console.log(
+                    "Choose destination - functionality to be implemented"
+                  );
+                },
+              },
+            ],
+          },
+        ],
+      },
+      {
+        items: [
+          {
+            label: "Open in new tab",
+            onClick: () => {
+              console.log("Open in new tab - functionality to be implemented");
+            },
+          },
+        ],
+      },
+      {
+        items: [
+          {
+            label: "Delete",
+            onClick: (info: TreeItemNode) => {
+              const formData = new FormData();
+              formData.append("storyId", info.metadata.storyId);
+              formData.append("name", info.name);
+              formData.append("type", info.metadata.type);
+              if (info.metadata.type === "file") {
+                formData.append("fileId", info.id);
+              } else {
+                formData.append("folderId", info.id);
+              }
 
-          if (!info.metadata.isRoot && info.id) {
-            formData.append("parentId", info.id);
-          }
-          startTransition(async () => {
-            const response = await createFolder(null, formData);
-          });
-        },
-      },
-      {
-        label: "Delete",
-        onClick: (info: TreeItemNode) => {
-          const formData = new FormData();
-          formData.append("storyId", info.metadata.storyId);
-          formData.append("name", info.name);
-          formData.append("type", info.metadata.type);
-          if (info.metadata.type === "file") {
-            formData.append("fileId", info.id);
-          } else {
-            formData.append("folderId", info.id);
-          }
-
-          startTransition(async () => {
-            const response = await deleteFileFolder(null, formData);
-            if (response?.status) {
-              removeTabFromAllGroups(info.id);
-            }
-          });
-        },
-      },
-      {
-        label: "Rename",
-        onClick: () => {
-          onEditing(true);
-        },
+              startTransition(async () => {
+                const response = await deleteFileFolder(null, formData);
+                if (response?.status) {
+                  removeTabFromAllGroups(info.id);
+                }
+              });
+            },
+          },
+          {
+            label: "Rename",
+            onClick: () => {
+              onEditing(true);
+            },
+          },
+        ],
       },
     ];
-
-    // Only add the "New File" option if the element is not a file
-    if (element.metadata?.type !== "file") {
-      baseItems.push({
-        label: "New File",
-        onClick: (info: TreeItemNode) => {
-          const formData = new FormData();
-
-          if (info.metadata.storyId) {
-            formData.append("storyId", info.metadata.storyId);
-          }
-
-          if (
-            "id" in info &&
-            typeof info.id === "string" &&
-            !info.metadata.isRoot
-          ) {
-            formData.append("folderId", info.id);
-          }
-          startTransition(async () => {
-            await createFile(null, formData);
-          });
-        },
-      });
-    }
-
-    return baseItems;
   };
+
+  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    const nodeProps = getNodeProps();
+    if (nodeProps.onClick) {
+      nodeProps.onClick(e as any);
+    }
+  };
+
+  const nodeProps = getNodeProps();
 
   const nodeContent = (
     <>
       <span
         className={cn({
           hidden: isEditing,
-          "flex gap-2": !isEditing,
+          "flex gap-2 items-center": !isEditing,
         })}
       >
         {element.metadata?.type === "folder" ? (
@@ -266,6 +315,7 @@ export function TreeNode({
 
   const defaultNode = (
     <div
+      {...nodeProps}
       ref={setDragNodeRef}
       {...(isEditing ? {} : { ...dragAttributes, ...dragListeners })}
       aria-selected={isSelected}
@@ -306,15 +356,42 @@ export function TreeNode({
     <ContextMenu>
       <ContextMenuTrigger>{defaultNode}</ContextMenuTrigger>
       <ContextMenuContent>
-        {contextMenuItems.map((item) => (
-          <ContextMenuItem
-            key={item.label}
-            onClick={() => {
-              item.onClick(element as unknown as TreeItemNode);
-            }}
-          >
-            {item.label}
-          </ContextMenuItem>
+        <DropdownMenuLabel>{nodeContent}</DropdownMenuLabel>
+        <ContextMenuSeparator />
+        {getContextMenuItems().map((section, sectionIndex) => (
+          <Fragment key={sectionIndex}>
+            {sectionIndex > 0 && <ContextMenuSeparator />}
+            {section.items.map((item) =>
+              item.subMenu ? (
+                <ContextMenuSub key={item.label}>
+                  <ContextMenuSubTrigger>{item.label}</ContextMenuSubTrigger>
+                  <ContextMenuSubContent>
+                    {item.subMenu.map((subItem) => (
+                      <ContextMenuItem
+                        key={subItem.label}
+                        onClick={() => {
+                          subItem.onClick &&
+                            subItem.onClick(element as unknown as TreeItemNode);
+                        }}
+                      >
+                        {subItem.label}
+                      </ContextMenuItem>
+                    ))}
+                  </ContextMenuSubContent>
+                </ContextMenuSub>
+              ) : (
+                <ContextMenuItem
+                  key={item.label}
+                  onClick={() => {
+                    item.onClick &&
+                      item.onClick(element as unknown as TreeItemNode);
+                  }}
+                >
+                  {item.label}
+                </ContextMenuItem>
+              )
+            )}
+          </Fragment>
         ))}
       </ContextMenuContent>
     </ContextMenu>

@@ -1,53 +1,8 @@
 {
   "$schema": "https://turbo.build/schema.json",
-  "globalDependencies": ["**/.env.*local"],
-  "pipeline": {
-    "topo": {
-      "dependsOn": ["^topo"]
-    },
-    "build": {
-      "dependsOn": ["^build"],
-      "outputs": [".next/**", "!.next/cache/**"]
-    },
-    "lint": {
-      "dependsOn": ["^lint"]
-    },
-    "dev": {
-      "cache": false,
-      "persistent": true,
-      "dependsOn": ["^build"]
-    },
-    "db:generate": {
-      "cache": false,
-      "dotEnv": [".env"],
-      "dependsOn": ["^build"]
-    },
-    "db:push": {
-      "cache": false,
-      "dotEnv": [".env"],
-      "dependsOn": ["^build"]
-    },
-    "db:studio": {
-      "cache": false,
-      "dotEnv": [".env"],
-      "dependsOn": ["^build"]
-    },
-    "db:drop": {
-      "cache": false,
-      "dotEnv": [".env"],
-      "dependsOn": ["^build"]
-    },
-    "web:dev": {
-      "cache": false,
-      "dotEnv": [".env"],
-      "dependsOn": ["^build"]
-    },
-    "email:dev": {
-      "cache": false,
-      "dotEnv": [".env"],
-      "dependsOn": ["^build"]
-    }
-  },
+  "globalDependencies": [
+    "**/.env.*local"
+  ],
   "globalEnv": [
     "DATABASE_URL",
     "RESEND_API_KEY",
@@ -60,5 +15,93 @@
     "AWS_BUCKET_NAME",
     "AWS_BUCKET_REGION",
     "NODE_ENV"
-  ]
+  ],
+  "tasks": {
+    "topo": {
+      "dependsOn": [
+        "^topo"
+      ]
+    },
+    "build": {
+      "dependsOn": [
+        "^build"
+      ],
+      "outputs": [
+        ".next/**",
+        "!.next/cache/**"
+      ]
+    },
+    "lint": {
+      "dependsOn": [
+        "^lint"
+      ]
+    },
+    "dev": {
+      "cache": false,
+      "persistent": true,
+      "dependsOn": [
+        "^build"
+      ]
+    },
+    "db:generate": {
+      "cache": false,
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".env"
+      ]
+    },
+    "db:push": {
+      "cache": false,
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".env"
+      ]
+    },
+    "db:studio": {
+      "cache": false,
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".env"
+      ]
+    },
+    "db:drop": {
+      "cache": false,
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".env"
+      ]
+    },
+    "web:dev": {
+      "cache": false,
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".env"
+      ]
+    },
+    "email:dev": {
+      "cache": false,
+      "dependsOn": [
+        "^build"
+      ],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".env"
+      ]
+    }
+  }
 }
