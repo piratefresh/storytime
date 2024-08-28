@@ -11,6 +11,8 @@ export async function createMedia({
 }: {
   fileId: string;
   url: string;
+  storyId: string;
+  userId: string;
 }): Promise<{ error: string } | { success: string } | undefined> {
   const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
   if (!sessionId) {
@@ -38,7 +40,7 @@ export async function createMedia({
     data: {
       url,
       fileId,
-      storyId: contentId,
+      storyId,
       type: "image",
       userId: user.id,
     },

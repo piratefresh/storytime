@@ -357,6 +357,7 @@ const TreeView = forwardRef<HTMLUListElement, TreeViewProps>(
             nodeRenderer={nodeRenderer}
             onNodeSelect={(node) => {
               if (node.element.metadata?.storyTitle) {
+                console.log("node:", node);
                 const storyTitle = node.element.metadata.storyTitle as string;
                 const fileName = node.element.name;
                 const fileId = node.element.id as string;
@@ -364,9 +365,13 @@ const TreeView = forwardRef<HTMLUListElement, TreeViewProps>(
                   ? "story"
                   : node.element.metadata.type;
 
+                const content = JSON.parse(
+                  node.element.metadata.content
+                ) as string;
+                console.log("node.element.metadata: ", node.element.metadata);
                 const tab: Tab = {
                   label: fileName,
-                  content: "",
+                  content: content ?? "",
                   id: fileId,
                   storyTitle,
                   storyId: node.element.metadata.storyId as string,

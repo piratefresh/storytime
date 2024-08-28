@@ -1,16 +1,21 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
-
-import { Command, MenuListProps } from "./types";
-import { CommandButton } from "./command-button";
-import { DropdownMenu } from "@radix-ui/react-dropdown-menu";
-import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import {
+  DropdownMenuItem,
+  DropdownMenu,
+  DropdownMenuContent,
+} from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icon";
+import { type Command, type MenuListProps } from "./types";
+import { CommandButton } from "./command-button";
+import { cn } from "@/lib/utils";
 
 export const MenuList = React.forwardRef((props: MenuListProps, ref) => {
   const scrollContainer = useRef<HTMLDivElement>(null);
   const activeItem = useRef<HTMLButtonElement>(null);
   const [selectedGroupIndex, setSelectedGroupIndex] = useState(0);
   const [selectedCommandIndex, setSelectedCommandIndex] = useState(0);
+
+  console.log("group: ", props.items);
 
   // Anytime the groups change, i.e. the user types to narrow it down, we want to
   // reset the current selection to the first menu item
@@ -122,30 +127,37 @@ export const MenuList = React.forwardRef((props: MenuListProps, ref) => {
   return (
     <div
       ref={scrollContainer}
-      className="text-black max-h-[min(80vh,24rem)] overflow-auto flex-wrap mb-8 p-2"
+      className="text-black max-h-[min(80vh,24rem)] overflow-auto flex-wrap mb-8 p-2 bg-neutral-800"
     >
       <div className="grid grid-cols-1 gap-0.5">
         {props.items.map((group, groupIndex: number) => (
           <React.Fragment key={`${group.title}-wrapper`}>
             <div
               className="text-neutral-500 text-[0.65rem] col-[1/-1] mx-2 mt-4 font-semibold tracking-wider select-none uppercase first:mt-0.5"
-              key={`${group.title}`}
+              key={group.title}
             >
               {group.title}
             </div>
-            {group.commands.map((command: Command, commandIndex: number) => (
-              <DropdownMenuItem
-                key={`${command.label}`}
-                isActive={
-                  selectedGroupIndex === groupIndex &&
-                  selectedCommandIndex === commandIndex
-                }
-                onClick={createCommandClickHandler(groupIndex, commandIndex)}
-              >
-                <Icon name={command.iconName} className="mr-1" />
-                {command.label}
-              </DropdownMenuItem>
-            ))}
+
+            <div>
+              {group.commands.map((command: Command, commandIndex: number) => (
+                <div
+                  key={command.label}
+                  role="menuitem"
+                  isActive={
+                    selectedGroupIndex === groupIndex &&
+                    selectedCommandIndex === commandIndex
+                  }
+                  onClick={createCommandClickHandler(groupIndex, commandIndex)}
+                  className={cn(
+                    "relative flex cursor-default select-none items-center rounded-sm px-2 py-1.5 text-white text-sm outline-none transition-colors focus:bg-accent focus:text-accent-foreground data-[disabled]:pointer-events-none data-[disabled]:opacity-50"
+                  )}
+                >
+                  <Icon name={command.iconName} className="mr-1" />
+                  {command.label}
+                </div>
+              ))}
+            </div>
           </React.Fragment>
         ))}
       </div>

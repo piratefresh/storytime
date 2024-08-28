@@ -6,25 +6,25 @@ import TextStyle from "@tiptap/extension-text-style";
 import TextAlign from "@tiptap/extension-text-align";
 import { TaskItem } from "@tiptap/extension-task-item";
 import { TaskList } from "@tiptap/extension-task-list";
+import { Markdown } from "tiptap-markdown";
+import CharacterCount from "@tiptap/extension-character-count";
+import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
+import { common, createLowlight } from "lowlight";
+import { Underline } from "@tiptap/extension-underline";
+import { TableOfContents } from "@tiptap-pro/extension-table-of-contents";
+import Table from "@tiptap/extension-table";
+import FontFamily from "@tiptap/extension-font-family";
+import { User } from "lucia";
+import GlobalDragHandle from "tiptap-extension-global-drag-handle";
 import { Float } from "./float";
 import { CustomTooltipNode, Link } from "./node-link";
 import { LineNumbers } from "./line-number";
 import { PageBreak } from "./page-break";
-import { Markdown } from "tiptap-markdown";
-import CharacterCount from "@tiptap/extension-character-count";
 import { GenerateText } from "./generateText";
-import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
-import { common, createLowlight } from "lowlight";
-import { Underline } from "@tiptap/extension-underline";
 import { TableOfContentsNode } from "./tableOfContentsNode";
-import { TableOfContents } from "@tiptap-pro/extension-table-of-contents";
-import Table from "@tiptap/extension-table";
 import { TableCell, TableHeader, TableRow } from "./table";
 import { Heading } from "./heading";
 import { FontSize } from "./fontSize";
-import FontFamily from "@tiptap/extension-font-family";
-import { User } from "lucia";
-import GlobalDragHandle from "tiptap-extension-global-drag-handle";
 import AutoJoiner from "tiptap-extension-auto-joiner";
 import { Column, Columns } from "./multi-column";
 import { SlashCommand } from "./slash-command";
@@ -39,15 +39,16 @@ import ImageBlock from "./image-block/image-block";
 import { useUploadImage } from "@/hooks/use-upload-image";
 import { SuggestionMatch, Trigger } from "@tiptap/suggestion";
 import { findSuggestionMatch } from "@/lib/editor/findSuggestionMatch";
-
-const lowlight = createLowlight(common);
+import { CodeBlock } from "./code-block/code-block";
 
 export const Extensions = ({
   contentId,
-  user,
+  userId,
+  storyId,
 }: {
   contentId?: string;
-  user?: User | null;
+  userId: string;
+  storyId: string;
 }) => [
   StarterKit.configure({
     document: false,
@@ -59,10 +60,7 @@ export const Extensions = ({
   }),
   Document,
   Color,
-  CodeBlockLowlight.configure({
-    lowlight,
-    defaultLanguage: null,
-  }),
+  CodeBlock,
   Column,
   Columns,
   CustomTooltipNode,
@@ -119,7 +117,12 @@ export const Extensions = ({
         const file = files[0];
         console.log("file", file);
         if (file && contentId) {
-          const image = await useUploadImage({ file, contentId });
+          const image = await useUploadImage({
+            file,
+            contentId,
+            storyId,
+            userId,
+          });
 
           if (image.url) {
             currentEditor
@@ -135,7 +138,12 @@ export const Extensions = ({
       files.forEach(async () => {
         const file = files[0];
         if (file && contentId) {
-          const image = await useUploadImage({ file, contentId });
+          const image = await useUploadImage({
+            file,
+            contentId,
+            storyId,
+            userId,
+          });
           if (image.url) {
             return currentEditor
               .chain()
@@ -166,7 +174,7 @@ export const Extensions = ({
   TextStyle,
   Typography,
   // Selection,
-  // SlashCommand,
+  SlashCommand,
   // GlobalDragHandle,
   // AutoJoiner,
   Dropcursor.configure({

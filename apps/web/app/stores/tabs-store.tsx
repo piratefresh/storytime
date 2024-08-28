@@ -35,6 +35,13 @@ export interface TabsActions {
   setActiveTab: (groupId: string, tabId: string) => void;
   reorderTabs: (groupId: string, oldIndex: number, newIndex: number) => void;
   updateTabLabel: ({ tabId, label }: { tabId: string; label: string }) => void;
+  updateTabContent: ({
+    tabId,
+    content,
+  }: {
+    tabId: string;
+    content: string;
+  }) => void;
   splitTab: (groupId: string) => void;
   setActiveGroup: (groupId: string) => void;
   getActiveGroupTabs: () => Tab[] | null;
@@ -86,6 +93,7 @@ export const createTabsStore = (initState: TabsState = defaultInitState) => {
                   },
                 ];
               }
+              console.log("newGroups", newGroups);
               return {
                 groups: newGroups.map((group) => {
                   if (group.id === groupId) {
@@ -184,6 +192,18 @@ export const createTabsStore = (initState: TabsState = defaultInitState) => {
                 ...group,
                 tabs: group.tabs.map((tab) =>
                   tab.id === tabId ? { ...tab, label } : tab
+                ),
+              })),
+            }));
+          },
+          updateTabContent: ({ tabId, content }) => {
+            console.log("tabId", tabId);
+            console.log("content", content);
+            set((state) => ({
+              groups: state.groups.map((group) => ({
+                ...group,
+                tabs: group.tabs.map((tab) =>
+                  tab.id === tabId ? { ...tab, content } : tab
                 ),
               })),
             }));

@@ -1,10 +1,9 @@
-// @ts-nocheck
 import { findParentNode } from "@tiptap/core";
 import { Selection, Transaction } from "@tiptap/pm/state";
-import { CellSelection, TableMap } from "@tiptap/pm/tables";
+import { CellSelection, Rect, TableMap } from "@tiptap/pm/tables";
 import { Node, ResolvedPos } from "@tiptap/pm/model";
 
-export const isRectSelected = (rect: any) => (selection: CellSelection) => {
+export const isRectSelected = (rect: Rect) => (selection: CellSelection) => {
   const map = TableMap.get(selection.$anchorCell.node(-1));
   const start = selection.$anchorCell.start(-1);
   const cells = map.cellsInRect(rect);
@@ -29,25 +28,27 @@ export const findTable = (selection: Selection) =>
     (node) => node.type.spec.tableRole && node.type.spec.tableRole === "table"
   )(selection);
 
-export const isCellSelection = (selection: any) =>
-  selection instanceof CellSelection;
+export const isCellSelection = (
+  selection: Selection
+): selection is CellSelection => selection instanceof CellSelection;
 
-export const isColumnSelected = (columnIndex: number) => (selection: any) => {
-  if (isCellSelection(selection)) {
-    const map = TableMap.get(selection.$anchorCell.node(-1));
+export const isColumnSelected =
+  (columnIndex: number) => (selection: Selection) => {
+    if (isCellSelection(selection)) {
+      const map = TableMap.get(selection.$anchorCell.node(-1));
 
-    return isRectSelected({
-      left: columnIndex,
-      right: columnIndex + 1,
-      top: 0,
-      bottom: map.height,
-    })(selection);
-  }
+      return isRectSelected({
+        left: columnIndex,
+        right: columnIndex + 1,
+        top: 0,
+        bottom: map.height,
+      })(selection);
+    }
 
-  return false;
-};
+    return false;
+  };
 
-export const isRowSelected = (rowIndex: number) => (selection: any) => {
+export const isRowSelected = (rowIndex: number) => (selection: Selection) => {
   if (isCellSelection(selection)) {
     const map = TableMap.get(selection.$anchorCell.node(-1));
 
@@ -62,7 +63,7 @@ export const isRowSelected = (rowIndex: number) => (selection: any) => {
   return false;
 };
 
-export const isTableSelected = (selection: any) => {
+export const isTableSelected = (selection: Selection) => {
   if (isCellSelection(selection)) {
     const map = TableMap.get(selection.$anchorCell.node(-1));
 
@@ -239,7 +240,6 @@ const select =
         const $head = tr.doc.resolve(head);
         const $anchor = tr.doc.resolve(anchor);
 
-        // @ts-ignore
         return tr.setSelection(new CellSelection($anchor, $head));
       }
     }
@@ -262,7 +262,6 @@ export const selectTable = (tr: Transaction) => {
       const $head = tr.doc.resolve(head);
       const $anchor = tr.doc.resolve(anchor);
 
-      // @ts-ignore
       return tr.setSelection(new CellSelection($anchor, $head));
     }
   }

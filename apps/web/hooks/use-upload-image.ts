@@ -36,9 +36,13 @@ const generateFileName = (bytes = 32) =>
 export async function useUploadImage({
   file,
   contentId,
+  storyId,
+  userId,
 }: {
   file: File;
   contentId: string;
+  storyId: string;
+  userId: string;
 }): Promise<UploadResult> {
   const fileName = generateFileName();
 
@@ -77,8 +81,10 @@ export async function useUploadImage({
       // Construct the public URL of the uploaded file
       const publicUrl = `https://${process.env.NEXT_PUBLIC_AWS_BUCKET_NAME!}.s3.${process.env.NEXT_PUBLIC_AWS_BUCKET_REGION!}.amazonaws.com/${fileName}`;
       const createMediaResponse = await createMedia({
+        fileId: contentId,
         url: publicUrl,
-        contentId,
+        storyId,
+        userId,
       });
       console.log("createMediaResponse: ", createMediaResponse);
       if (createMediaResponse?.error) {

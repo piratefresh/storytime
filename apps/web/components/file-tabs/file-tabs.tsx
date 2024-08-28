@@ -111,7 +111,6 @@ export function FileTabs({
     if (tab.type === "file") {
       const formData = new FormData();
       formData.append("content", JSON.stringify(content));
-      formData.append("text");
       formData.append("fileId", tab.id);
       formData.append("storyId", story.id);
       await saveFile(null, formData);
@@ -201,6 +200,7 @@ export function FileTabs({
               key={tab.id}
               value={String(tab.id)}
             >
+              {console.log("tab: ", tab)}
               {tab.type === "flow" ? (
                 <ReactFlowProvider>
                   <FlowTab id={tab.id} story={story} />
@@ -213,6 +213,7 @@ export function FileTabs({
                   }
                   content={tab.content ?? ""}
                   contentId={tab.id}
+                  storyId={story.id}
                 />
               )}
             </TabsContent>
@@ -315,3 +316,4 @@ export function FlowTab({ story, id }: FlowTabProps): JSX.Element {
     />
   );
 }
+export { Tab };

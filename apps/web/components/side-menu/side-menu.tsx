@@ -43,6 +43,7 @@ function constructFolderStructure(stories: StoryWithFolder[]): TreeItemNode {
             storyTitle,
             isRoot: false,
             type: "file",
+            content: file.content,
           },
           // Add missing properties to match File type
           description: null,
@@ -51,7 +52,7 @@ function constructFolderStructure(stories: StoryWithFolder[]): TreeItemNode {
           ownerId: folder.ownerId, // Assuming folder has ownerId
           parentId: folder.id,
         }));
-
+        console.log("folderFiles: ", folderFiles);
         return {
           ...folder,
           id: folder.id,
@@ -98,6 +99,7 @@ function constructFolderStructure(stories: StoryWithFolder[]): TreeItemNode {
                 storyId: story.id,
                 storyTitle: story.title,
                 type: "file" as const,
+                content: file.content,
               },
             })),
         ],
@@ -142,7 +144,7 @@ export async function SideMenu({ user }: SideMenuProps): Promise<JSX.Element> {
   });
 
   const treeData = constructFolderStructure(stories);
-
+  console.log("treeData: ", treeData);
   return (
     <div className="min-h-screen min-w-80 bg-neutral-800 border border-border">
       <div className="flex gap-4 items-center justify-center">

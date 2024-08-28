@@ -12,6 +12,7 @@ export function fileTabContent({
   user,
   tab,
 }: FileTabContentProps): JSX.Element {
+  console.log("tab", tab);
   return (
     <div>
       <div className="grid align-end flex-1 min-h-screen max-h-screen overflow-y-auto">

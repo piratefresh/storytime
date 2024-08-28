@@ -75,6 +75,8 @@ export default async function StoryPage({
     userId: user.id,
   });
 
+  console.log("story: ", JSON.stringify(story));
+
   if (!story) {
     redirect("/stories");
   }

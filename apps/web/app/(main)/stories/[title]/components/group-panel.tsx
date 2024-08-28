@@ -21,7 +21,7 @@ export function GroupPanel({
   user: User;
 }): JSX.Element {
   const groups = useTabsStore((state) => state.groups);
-
+  console.log("story: ", story);
   return (
     <ResizablePanelGroup direction="horizontal">
       {groups.map((group, index) => (

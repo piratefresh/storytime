@@ -9,9 +9,10 @@ interface BlockEditorProps {
     content: JSONContent | string | null,
     plainTextContent: string
   ) => void;
-  user: User | null;
+  user: User;
   contentId?: string;
   initialContent?: JSONContent | string | null;
+  storyId: string;
 }
 
 const INITIAL_CONTENT = `
@@ -42,15 +43,16 @@ export const useBlockEditor = ({
   user,
   contentId,
   initialContent,
+  storyId,
 }: BlockEditorProps) => {
   const tocSidebar = useSidebar();
 
   const editor = useEditor({
     editorProps,
-    extensions: [...Extensions({ user, contentId })],
+    extensions: [...Extensions({ userId: user.id, contentId, storyId })],
     content: initialContent ?? undefined,
-    onUpdate: ({ editor }) => {
-      onChange(editor.getJSON(), editor.getText());
+    onUpdate: ({ editor: instanceEditor }) => {
+      onChange(instanceEditor.getJSON(), instanceEditor.getText());
     },
   });
 
