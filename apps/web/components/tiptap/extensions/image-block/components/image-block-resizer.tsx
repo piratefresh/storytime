@@ -1,5 +1,5 @@
-import { cn } from "@/lib/utils";
-import { useCallback, useEffect, useState } from "react";
+import { cn } from '@/lib/utils';
+import { useCallback, useEffect, useState } from 'react';
 
 type ResizableImageResizerProps = {
   className?: string;
@@ -36,25 +36,25 @@ export function ResizableImageResizer({
       // If the user is currently holding down the resize handle, we'll have mouse
       // movements fire the onResize callback (since the user would be "dragging" the
       // handle)
-      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener('mousemove', handleMouseMove);
     }
 
     return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener('mousemove', handleMouseMove);
     };
   }, [mouseDown, onResize]);
 
   useEffect(() => {
     const handleMouseUp = () => setMouseDown(false);
 
-    window.addEventListener("mouseup", handleMouseUp);
+    window.addEventListener('mouseup', handleMouseUp);
 
     return () => {
-      window.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener('mouseup', handleMouseUp);
     };
   }, []);
 
-  const handleMouseDown = useCallback((_event: React.MouseEvent) => {
+  const handleMouseDown = useCallback(() => {
     setMouseDown(true);
   }, []);
 

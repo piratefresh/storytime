@@ -1,33 +1,35 @@
 "use client";
 
 import { useState } from "react";
-import { type User } from "lucia";
+import { createFile } from "@/app/(main)/stories/actions/create-file";
+import { createFolder } from "@/app/(main)/stories/actions/create-folder";
+import { saveFile } from "@/app/(main)/stories/actions/file/save-file";
+import { StoryWithFolder } from "@/app/(main)/stories/actions/get-story";
+import { type Tab } from "@/app/stores/tabs-store";
+import { useUpdateStoryUrl } from "@/hooks/use-update-story-url";
+import { cn } from "@/lib/utils";
 import {
-  DndContext,
   closestCenter,
+  DndContext,
+  DragOverlay,
   MouseSensor,
   TouchSensor,
   useSensor,
   useSensors,
   type DragEndEvent,
-  DragOverlay,
   type DragStartEvent,
 } from "@dnd-kit/core";
 import {
-  SortableContext,
   horizontalListSortingStrategy,
+  SortableContext,
 } from "@dnd-kit/sortable";
+import { User } from "@repo/db";
+import { JSONContent } from "@tiptap/core";
 import { SplitSquareHorizontal } from "lucide-react";
 import { ReactFlowProvider, useReactFlow } from "reactflow";
-import { cn } from "@/lib/utils";
-import { useUpdateStoryUrl } from "@/hooks/use-update-story-url";
-import { type Tab } from "@/app/stores/tabs-store";
-import { type StoryWithFolder } from "@/app/(main)/stories/[title]/page";
-import { createFile } from "@/app/(main)/stories/actions/create-file";
-import { createFolder } from "@/app/(main)/stories/actions/create-folder";
-import { saveFile } from "@/app/(main)/stories/actions/file/save-file";
-import { Tabs, TabsContent, TabsList } from "../ui/tabs";
+
 import { BlockEditor } from "../block-editor/block-editor";
+import Flow from "../graph-view/graph-view";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -36,12 +38,13 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "../ui/dropdown-menu";
-import Flow from "../graph-view/graph-view";
+import { Tabs, TabsContent, TabsList } from "../ui/tabs";
+import { Folder } from "../views/folder/folder";
 import { FileTab } from "./file-tab";
 import { SortableItem } from "./sortable-item";
 
 interface FileTabsProps {
-  user: User | null;
+  user: User;
   tabs: Tab[];
   story: StoryWithFolder;
   groupId: string;
@@ -65,7 +68,7 @@ export function FileTabs({
   onSetActiveTab,
   onSplitTab,
   onAddGraphTab,
-  tabs,
+  tabs = [],
   story,
 }: FileTabsProps): JSX.Element {
   const updateStoryUrl = useUpdateStoryUrl();
@@ -73,7 +76,7 @@ export function FileTabs({
   const [activeId, setActiveId] = useState<string | number | null>(null);
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(TouchSensor)
+    useSensor(TouchSensor),
   );
 
   const handleDragStart = (event: DragStartEvent): void => {
@@ -105,7 +108,7 @@ export function FileTabs({
     content,
     tab,
   }: {
-    content: string;
+    content: JSONContent;
     tab: Tab;
   }): Promise<void> => {
     if (tab.type === "file") {
@@ -125,7 +128,8 @@ export function FileTabs({
       onDragEnd={handleDragEnd}
     >
       <Tabs
-        className="relative flex flex-col flex-1 min-h-screen w-full overflow-hidden"
+        className="relative flex h-full flex-col"
+        // className="relative flex min-h-screen w-full flex-1 flex-col overflow-hidden"
         value={activeTabId?.toString()}
         onValueChange={(tabId) => {
           const tab = tabs.find((tab) => tab.id === tabId);
@@ -142,15 +146,15 @@ export function FileTabs({
           strategy={horizontalListSortingStrategy}
         >
           <div className="flex flex-row">
-            <TabsList className="flex w-full overflow-hidden items-start">
+            <TabsList className="flex w-full items-start overflow-hidden">
               {tabs.map((tab) => {
                 const isActive = isActiveGroup && tab.id === activeTabId;
                 return (
                   <SortableItem key={tab.id} id={tab.id}>
                     <FileTab
+                      key={tab.id}
                       active={isActive}
                       tab={tab}
-                      key={tab.id}
                       onClose={() => {
                         onRemoveTab(groupId, tab.id);
                       }}
@@ -180,48 +184,94 @@ export function FileTabs({
         <DragOverlay>
           {activeId ? (
             <div
-              className={cn(
-                "inline-flex items-center justify-center whitespace-nowrap px-3 py-1.5 text-sm font-medium bg-neutral-800 border border-border ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
-              )}
               id={activeId.toString()}
+              className={cn(
+                "inline-flex items-center justify-center whitespace-nowrap border border-border bg-neutral-800 px-3 py-1.5 text-sm font-medium ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm",
+              )}
             >
               {tabs.find((tab) => tab.id === activeId)?.label}
             </div>
           ) : null}
         </DragOverlay>
 
-        <div className="grid flex-1 max-h-screen overflow-y-auto">
+        <div className="h-full">
           {tabs.map((tab) => (
             <TabsContent
-              className="flex-1"
+              className="h-full"
+              key={tab.id}
+              value={String(tab.id)}
               onFocus={() => {
                 onSetActiveTab(groupId, tab.id);
               }}
-              key={tab.id}
-              value={String(tab.id)}
             >
-              {console.log("tab: ", tab)}
-              {tab.type === "flow" ? (
-                <ReactFlowProvider>
-                  <FlowTab id={tab.id} story={story} />
-                </ReactFlowProvider>
-              ) : (
-                <BlockEditor
-                  user={user}
-                  onChange={(content: string) =>
-                    void handleSaveChange({ content, tab })
-                  }
-                  content={tab.content ?? ""}
-                  contentId={tab.id}
-                  storyId={story.id}
-                />
-              )}
+              <TabModule
+                tab={tab}
+                story={story}
+                user={user}
+                isActive={tab.id === activeTabId}
+              />
             </TabsContent>
           ))}
         </div>
       </Tabs>
     </DndContext>
   );
+}
+
+function TabModule({
+  tab,
+  story,
+  user,
+  isActive = false,
+}: {
+  tab: Tab;
+  story: StoryWithFolder;
+  user: User;
+  isActive?: boolean;
+}): JSX.Element | null {
+  const { type } = tab;
+
+  const handleSaveChange = async ({
+    content,
+    tab,
+  }: {
+    content: JSONContent;
+    tab: Tab;
+  }): Promise<void> => {
+    if (tab.type === "file") {
+      const formData = new FormData();
+      formData.append("content", JSON.stringify(content));
+      formData.append("fileId", tab.id);
+      formData.append("storyId", story.id);
+      await saveFile(null, formData);
+    }
+  };
+
+  switch (type) {
+    case "flow":
+      return (
+        <ReactFlowProvider>
+          <FlowTab id={tab.id} story={story} />
+        </ReactFlowProvider>
+      );
+    case "folder":
+      return <Folder />;
+
+    default:
+      return (
+        <BlockEditor
+          key={tab.id}
+          content={tab.content ?? ""}
+          contentId={tab.id}
+          isActive={isActive}
+          storyId={story.id}
+          user={user}
+          onChange={(content, plainText) => {
+            void handleSaveChange({ content, tab });
+          }}
+        />
+      );
+  }
 }
 
 interface FlowTabProps {
@@ -316,4 +366,4 @@ export function FlowTab({ story, id }: FlowTabProps): JSX.Element {
     />
   );
 }
-export { Tab };
+export type { Tab };

@@ -1,17 +1,18 @@
 "use client";
 
-import { Editor as CoreEditor } from "@tiptap/core";
 import { memo, useEffect, useState } from "react";
-import { TableOfContentsStorage } from "@tiptap-pro/extension-table-of-contents";
 import { cn } from "@/lib/utils";
+import { TableOfContentsStorage } from "@tiptap-pro/extension-table-of-contents";
+import { Editor as CoreEditor } from "@tiptap/core";
 
 export type TableOfContentsProps = {
+  contentId?: string;
   editor: CoreEditor;
   onItemClick?: () => void;
 };
 
 export const TableOfContents = memo(
-  ({ editor, onItemClick }: TableOfContentsProps) => {
+  ({ contentId, editor, onItemClick }: TableOfContentsProps) => {
     const [data, setData] = useState<TableOfContentsStorage | null>(null);
 
     useEffect(() => {
@@ -27,8 +28,11 @@ export const TableOfContents = memo(
       return () => {
         editor.off("update", handler);
         editor.off("selectionUpdate", handler);
+        setData(null);
       };
-    }, [editor]);
+    }, [contentId]);
+
+    console.log("contentId TOC: ", contentId);
 
     return (
       <>
@@ -42,12 +46,12 @@ export const TableOfContents = memo(
                 key={item.id}
                 href={`#${item.id}`}
                 style={{ marginLeft: `${String(Number(item.level) - 1)}rem` }}
-                onClick={onItemClick}
                 className={cn(
-                  "block font-medium text-neutral-500 dark:text-neutral-300 p-1 rounded bg-opacity-10 text-sm transition-all hover:bg-black hover:bg-opacity-5 truncate w-full",
+                  "block w-full truncate rounded bg-opacity-10 p-1 text-sm font-medium text-neutral-500 transition-all hover:bg-black hover:bg-opacity-5 dark:text-neutral-300",
                   item.isActive &&
-                    "text-neutral-800 bg-neutral-100 dark:text-neutral-100 dark:bg-neutral-900"
+                    "bg-neutral-100 text-neutral-800 dark:bg-neutral-900 dark:text-neutral-100",
                 )}
+                onClick={onItemClick}
               >
                 {item.itemIndex}. {item.textContent}
               </a>
@@ -60,7 +64,7 @@ export const TableOfContents = memo(
         )}
       </>
     );
-  }
+  },
 );
 
 TableOfContents.displayName = "TableOfContents";

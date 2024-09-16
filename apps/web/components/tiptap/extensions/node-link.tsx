@@ -1,37 +1,41 @@
 import {
+  Command,
+  CommandGroup,
+  CommandItem,
+  CommandList,
+} from '@/components/ui/command';
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from '@/components/ui/tooltip';
+import { findSuggestionMatch } from '@/lib/editor/findSuggestionMatch';
+import { cn } from '@/lib/utils';
+import {
+  Editor,
   Extension,
   InputRule,
+  mergeAttributes,
   Node,
   Range,
-  mergeAttributes,
-  Editor,
-} from "@tiptap/core";
-import Suggestion, { SuggestionOptions } from "@tiptap/suggestion";
-import { PluginKey, TextSelection } from "@tiptap/pm/state";
-import type { Node as ModelNode } from "@tiptap/pm/model";
+} from '@tiptap/core';
+import type { Node as ModelNode } from '@tiptap/pm/model';
+import { PluginKey, TextSelection } from '@tiptap/pm/state';
 import {
   NodeViewWrapper,
   NodeViewWrapperProps,
   ReactNodeViewRenderer,
   ReactRenderer,
-} from "@tiptap/react";
-import tippy, { type Instance as TippyInstance } from "tippy.js";
-import type { ComponentPropsWithoutRef } from "react";
-import React from "react";
-import {
-  Command,
-  CommandGroup,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import { CommandInput } from "cmdk";
-import { cn } from "@/lib/utils";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { findSuggestionMatch } from "@/lib/editor/findSuggestionMatch";
+} from '@tiptap/react';
+import Suggestion, { SuggestionOptions } from '@tiptap/suggestion';
+import { CommandInput } from 'cmdk';
+import React, {
+  forwardRef,
+  useEffect,
+  useRef,
+  type ComponentPropsWithoutRef,
+} from 'react';
+import tippy, { type Instance as TippyInstance } from 'tippy.js';
 
 const DOM_RECT_FALLBACK: DOMRect = {
   bottom: 0,
@@ -47,10 +51,10 @@ const DOM_RECT_FALLBACK: DOMRect = {
   },
 };
 
-export const LinkPluginKey = new PluginKey("LinkPluginKey");
+export const LinkPluginKey = new PluginKey('LinkPluginKey');
 
 export type LinkCommandOptions = {
-  suggestion: Omit<SuggestionOptions, "editor">;
+  suggestion: Omit<SuggestionOptions, 'editor'>;
 };
 
 export type SuggestionListRef = {
@@ -58,23 +62,37 @@ export type SuggestionListRef = {
   // mentionSuggestionOptions, we'll match the signature of SuggestionOptions's
   // `onKeyDown` returned in its `render` function
   onKeyDown: NonNullable<
-    ReturnType<NonNullable<SuggestionOptions<string>["render"]>>["onKeyDown"]
+    ReturnType<NonNullable<SuggestionOptions<string>['render']>>['onKeyDown']
   >;
 };
+
+declare module '@tiptap/core' {
+  interface Commands<ReturnType> {
+    nodeLink: {
+      setLink: ({
+        href,
+        target,
+      }: {
+        href: string;
+        target: string;
+      }) => ReturnType;
+    };
+  }
+}
 
 const insertDoubleBracketsInputRule = () => {
   return new InputRule({
     find: /\[\[$/,
     handler: ({ state, range }) => {
       const { tr } = state;
-      tr.insertText("[[]]", range.from - 1, range.to);
+      tr.insertText('[[]]', range.from - 1, range.to);
       tr.setSelection(TextSelection.create(tr.doc, range.from + 2));
     },
   });
 };
 
 export const Link = Extension.create<LinkCommandOptions>({
-  name: "NodeLink",
+  name: 'NodeLink',
   inline: true,
   selectable: true,
   atom: true,
@@ -82,7 +100,7 @@ export const Link = Extension.create<LinkCommandOptions>({
   addOptions() {
     return {
       suggestion: {
-        char: "[[]]",
+        char: '[[]]',
         command: ({
           editor,
           range,
@@ -107,15 +125,15 @@ export const Link = Extension.create<LinkCommandOptions>({
               });
               if (!props.clientRect) return;
 
-              popup = tippy("body", {
+              popup = tippy('body', {
                 getReferenceClientRect: () =>
                   props.clientRect?.() ?? DOM_RECT_FALLBACK,
                 appendTo: () => document.body,
                 content: component.element,
                 showOnCreate: true,
                 interactive: true,
-                trigger: "manual",
-                placement: "bottom-start",
+                trigger: 'manual',
+                placement: 'bottom-start',
               })[0];
             },
 
@@ -129,7 +147,7 @@ export const Link = Extension.create<LinkCommandOptions>({
             },
 
             onKeyDown(props) {
-              if (props.event.key === "Escape") {
+              if (props.event.key === 'Escape') {
                 popup?.hide();
                 return true;
               }
@@ -165,11 +183,11 @@ export const Link = Extension.create<LinkCommandOptions>({
     HTMLAttributes: Record<string, any>;
   }) {
     return [
-      "span",
+      'span',
       mergeAttributes(
-        { "data-state": this.name },
+        { 'data-state': this.name },
         this.options.HTMLAttributes,
-        HTMLAttributes
+        HTMLAttributes,
       ),
       this.options.renderLabel({
         options: this.options,
@@ -203,38 +221,38 @@ export type NodeLinkListRef = {
   // mentionSuggestionOptions, we'll match the signature of SuggestionOptions's
   // `onKeyDown` returned in its `render` function
   onKeyDown: NonNullable<
-    ReturnType<NonNullable<SuggestionOptions<string>["render"]>>["onKeyDown"]
+    ReturnType<NonNullable<SuggestionOptions<string>['render']>>['onKeyDown']
   >;
 };
 
-const NodeLinkList = React.forwardRef<NodeLinkListRef, NodeLinkListProps>(
+const NodeLinkList = forwardRef<NodeLinkListRef, NodeLinkListProps>(
   ({ children, className, query, editor, itemScope, range, ...rest }, ref) => {
-    const commandListRef = React.useRef<HTMLDivElement>(null);
+    const commandListRef = useRef<HTMLDivElement>(null);
 
-    // const [searchQuery, setSearchQuery] = React.useState<string>("");
+    // const [searchQuery, setSearchQuery] = useState<string>("");
 
-    React.useEffect(() => {
-      const navigationKeys = ["ArrowUp", "ArrowDown", "Enter"];
+    useEffect(() => {
+      const navigationKeys = ['ArrowUp', 'ArrowDown', 'Enter'];
       const onKeyDown = (e: KeyboardEvent) => {
         if (navigationKeys.includes(e.key)) {
           e.preventDefault();
-          const commandRef = document.querySelector("#node-command");
+          const commandRef = document.querySelector('#node-command');
 
           if (commandRef)
             commandRef.dispatchEvent(
-              new KeyboardEvent("keydown", {
+              new KeyboardEvent('keydown', {
                 key: e.key,
                 cancelable: true,
                 bubbles: true,
-              })
+              }),
             );
 
           return false;
         }
       };
-      document.addEventListener("keydown", onKeyDown);
+      document.addEventListener('keydown', onKeyDown);
       return () => {
-        document.removeEventListener("keydown", onKeyDown);
+        document.removeEventListener('keydown', onKeyDown);
       };
     }, []);
 
@@ -244,10 +262,10 @@ const NodeLinkList = React.forwardRef<NodeLinkListRef, NodeLinkListProps>(
           e.stopPropagation();
         }}
         id="node-command"
-        className={cn("border rounded-md min-w-60", className)}
+        className={cn('border rounded-md min-w-60', className)}
         {...rest}
       >
-        <CommandInput value={query} style={{ display: "none" }} />
+        <CommandInput value={query} style={{ display: 'none' }} />
         <CommandList ref={commandListRef}>
           <CommandGroup>
             {rest.items?.map((item) => (
@@ -262,7 +280,7 @@ const NodeLinkList = React.forwardRef<NodeLinkListRef, NodeLinkListProps>(
                     .deleteRange(range)
                     .insertContentAt(
                       range.from,
-                      `<span data-tooltip="${item.name}" data-meta="${item.text}">${item.name}</span>`
+                      `<span data-tooltip="${item.name}" data-meta="${item.text}">${item.name}</span>`,
                     )
                     .run();
                 }}
@@ -274,10 +292,12 @@ const NodeLinkList = React.forwardRef<NodeLinkListRef, NodeLinkListProps>(
         </CommandList>
       </Command>
     );
-  }
+  },
 );
 
-const TooltipComponent = (props: NodeViewWrapperProps) => {
+NodeLinkList.displayName = 'NodeLinkList';
+
+function TooltipComponent(props: NodeViewWrapperProps) {
   return (
     <NodeViewWrapper as="span">
       <Tooltip>
@@ -291,11 +311,11 @@ const TooltipComponent = (props: NodeViewWrapperProps) => {
       </Tooltip>
     </NodeViewWrapper>
   );
-};
+}
 
 export const CustomTooltipNode = Node.create({
-  name: "customTooltip",
-  group: "inline",
+  name: 'customTooltip',
+  group: 'inline',
   inline: true,
   selectable: true,
   atom: true,
@@ -306,14 +326,14 @@ export const CustomTooltipNode = Node.create({
         default: null,
         parseHTML: (element) =>
           element instanceof HTMLElement
-            ? element.getAttribute("data-tooltip")
+            ? element.getAttribute('data-tooltip')
             : null,
       },
       metaData: {
         default: null,
         parseHTML: (element) =>
           element instanceof HTMLElement
-            ? element.getAttribute("data-meta")
+            ? element.getAttribute('data-meta')
             : null,
       },
     };
@@ -322,12 +342,12 @@ export const CustomTooltipNode = Node.create({
   parseHTML() {
     return [
       {
-        tag: "span[data-tooltip]",
+        tag: 'span[data-tooltip]',
         getAttrs: (element) =>
           element instanceof HTMLElement
             ? {
-                label: element.getAttribute("data-tooltip"),
-                metaData: element.getAttribute("data-meta"),
+                label: element.getAttribute('data-tooltip'),
+                metaData: element.getAttribute('data-meta'),
               }
             : {},
       },
@@ -336,8 +356,8 @@ export const CustomTooltipNode = Node.create({
 
   renderHTML({ node }) {
     return [
-      "span",
-      { "data-tooltip": node.attrs.label, "data-meta": node.attrs.metaData },
+      'span',
+      { 'data-tooltip': node.attrs.label, 'data-meta': node.attrs.metaData },
       node.attrs.label,
     ];
   },

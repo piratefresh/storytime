@@ -1,5 +1,8 @@
-"use client";
+'use client';
 
+import { formSchema } from '@/app/schemas/create-folder-schema';
+import { Button } from '@/components/ui/button';
+import { FancyMultiSelect, Item } from '@/components/ui/fancy-box';
 import {
   Form,
   FormControl,
@@ -8,71 +11,62 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "@/components/ui/form";
-import { TypographyH1 } from "@/components/ui/typography";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { Button } from "@/components/ui/button";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-import { Input } from "@/components/ui/input";
-import { useFormState, useFormStatus } from "react-dom";
-import { User } from "lucia";
-import { Textarea } from "@/components/ui/textarea";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+} from '@/components/ui/form';
+import { Input } from '@/components/ui/input';
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
+import { Textarea } from '@/components/ui/textarea';
+import { TypographyH1 } from '@/components/ui/typography';
+import { zodResolver } from '@hookform/resolvers/zod';
+import { User } from '@repo/db';
+import React from 'react';
+import { useFormState, useFormStatus } from 'react-dom';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 
-import React from "react";
-import { FancyMultiSelect, Item } from "@/components/ui/fancy-box";
-import { formSchema } from "@/app/schemas/create-folder-schema";
-import { createFolder } from "../actions/create-folder";
+import { createFolder } from '../actions/create-folder';
 
 const FRAMEWORKS = [
   {
-    value: "next.js",
-    label: "Next.js",
+    value: 'next.js',
+    label: 'Next.js',
   },
   {
-    value: "sveltekit",
-    label: "SvelteKit",
+    value: 'sveltekit',
+    label: 'SvelteKit',
   },
   {
-    value: "nuxt.js",
-    label: "Nuxt.js",
+    value: 'nuxt.js',
+    label: 'Nuxt.js',
   },
   {
-    value: "remix",
-    label: "Remix",
+    value: 'remix',
+    label: 'Remix',
   },
   {
-    value: "astro",
-    label: "Astro",
+    value: 'astro',
+    label: 'Astro',
   },
   {
-    value: "wordpress",
-    label: "WordPress",
+    value: 'wordpress',
+    label: 'WordPress',
   },
   {
-    value: "express.js",
-    label: "Express.js",
+    value: 'express.js',
+    label: 'Express.js',
   },
   {
-    value: "nest.js",
-    label: "Nest.js",
+    value: 'nest.js',
+    label: 'Nest.js',
   },
 ] satisfies Item[];
 
-export function CreateFolderForm({
-  user,
-  id,
-}: {
-  user: User | null;
-  id: string;
-}) {
+export function CreateFolderForm({ user, id }: { user: User; id: string }) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      name: "",
-      description: "",
-      folderView: "list",
+      name: '',
+      description: '',
+      folderView: 'list',
       tags: [],
     },
   });
@@ -88,7 +82,7 @@ export function CreateFolderForm({
       });
 
       if (response.error) {
-        form.setError("root.serverError", {
+        form.setError('root.serverError', {
           type: `${response.error}`,
         });
       }
@@ -176,7 +170,6 @@ export function CreateFolderForm({
               <FormLabel>Tags</FormLabel>
               <FormControl>
                 <FancyMultiSelect
-                  value={field?.value ?? []}
                   onChange={field.onChange}
                   placeholder="Press enter to add a tag"
                   items={FRAMEWORKS}

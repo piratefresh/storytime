@@ -1,7 +1,7 @@
-import { createMedia } from "@/app/(main)/assets/media/actions/create-media";
-import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
-import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import crypto from "crypto";
+import crypto from 'crypto';
+import { createMedia } from '@/app/(main)/assets/media/actions/create-media';
+import { PutObjectCommand, S3Client } from '@aws-sdk/client-s3';
+import { getSignedUrl } from '@aws-sdk/s3-request-presigner';
 
 type SignedURLResponse = Promise<
   | { error?: undefined; success: { url: string; id: number } }
@@ -31,7 +31,7 @@ const s3Client = new S3Client({
 const maxFileSize = 1048576 * 10; // 1 MB
 
 const generateFileName = (bytes = 32) =>
-  crypto.randomBytes(bytes).toString("hex");
+  crypto.randomBytes(bytes).toString('hex');
 
 export async function useUploadImage({
   file,
@@ -43,7 +43,7 @@ export async function useUploadImage({
   contentId: string;
   storyId: string;
   userId: string;
-}): Promise<UploadResult> {
+}): Promise<UploadResult | { error: string }> {
   const fileName = generateFileName();
 
   const putObjectCommand = new PutObjectCommand({
@@ -60,19 +60,19 @@ export async function useUploadImage({
       expiresIn: 3600,
     });
 
-    const userResponse = await fetch("/session/get-user");
+    const userResponse = await fetch('/session/get-user');
     const { user } = await userResponse.json();
-    console.log("user: ", user);
+    console.log('user: ', user);
     if (!user) {
       return {
-        error: "User not found",
+        error: 'User not found',
       };
     }
 
     const response = await fetch(url, {
-      method: "PUT",
+      method: 'PUT',
       headers: {
-        "Content-Type": file.type,
+        'Content-Type': file.type,
       },
       body: file,
     });
@@ -86,26 +86,34 @@ export async function useUploadImage({
         storyId,
         userId,
       });
-      console.log("createMediaResponse: ", createMediaResponse);
-      if (createMediaResponse?.error) {
-        return { error: "Couldn't connect image to media library" };
-      }
-      if (createMediaResponse?.success) {
-        return {
-          url: publicUrl,
-          bucket: process.env.NEXT_PUBLIC_AWS_BUCKET_NAME!,
-          key: fileName,
-          name: file.name,
-          size: file.size,
-        };
+      console.log('createMediaResponse: ', createMediaResponse);
+      if (createMediaResponse) {
+        if ('error' in createMediaResponse) {
+          return { error: "Couldn't connect image to media library" };
+        }
+        if (createMediaResponse?.success) {
+          return {
+            url: publicUrl,
+            bucket: process.env.NEXT_PUBLIC_AWS_BUCKET_NAME!,
+            key: fileName,
+            name: file.name,
+            size: file.size,
+          };
+        }
       }
     } else {
-      console.error("Upload failed:", response.statusText);
-      return false;
+      console.error('Upload failed:', response.statusText);
+      return {
+        error: 'Upload failed',
+      };
     }
   } catch (error) {
-    console.error("Error generating signed URL:", error);
-
-    return false;
+    console.error('Error generating signed URL:', error);
+    return {
+      error: 'Error generating signed URL',
+    };
   }
+  return {
+    error: 'An unexpected error occurred',
+  };
 }

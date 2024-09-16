@@ -1,22 +1,22 @@
-import { Extension } from "@tiptap/core";
-import { Decoration, DecorationSet } from "@tiptap/pm/view";
-import { Node as ProsemirrorNode } from "@tiptap/pm/model";
-import { Plugin, PluginKey, TextSelection } from "@tiptap/pm/state";
+import { Extension } from '@tiptap/core';
+import { Node as ProsemirrorNode } from '@tiptap/pm/model';
+import { Plugin, PluginKey, TextSelection } from '@tiptap/pm/state';
+import { Decoration, DecorationSet } from '@tiptap/pm/view';
 
 function createLineNumberWidget(lineNumber: string) {
-  const lineNumberElement = document.createElement("div");
+  const lineNumberElement = document.createElement('div');
   lineNumberElement.textContent = lineNumber.toString();
   lineNumberElement.className =
-    "cursor-none select-none absolute left-0 z-index[-1] text-sm leading-none";
-  lineNumberElement.style.userSelect = "none";
-  lineNumberElement.style.marginTop = "10px";
+    'cursor-none select-none absolute left-0 z-index[-1] text-sm leading-none';
+  lineNumberElement.style.userSelect = 'none';
+  lineNumberElement.style.marginTop = '10px';
 
   return lineNumberElement;
 }
 
 function generateLineNumbers(
   doc: ProsemirrorNode,
-  shouldDisplayLineNumbers: boolean
+  shouldDisplayLineNumbers: boolean,
 ) {
   if (!shouldDisplayLineNumbers) {
     return DecorationSet.empty;
@@ -29,7 +29,7 @@ function generateLineNumbers(
     if (node.isTextblock) {
       // Calculate number of lines by counting newline characters
       const text = node.textContent;
-      const lines = text.split("\n");
+      const lines = text.split('\n');
       let linePos = pos;
 
       for (let i = 0; i < lines.length; i++) {
@@ -37,12 +37,13 @@ function generateLineNumbers(
         const widget = Decoration.widget(
           linePos,
           createLineNumberWidget(String(lineNumber++)),
-          { side: -1 }
+          { side: -1 },
         );
         decorations.push(widget);
 
         // Adjust linePos to the start of the next line
         if (i < lines.length - 1) {
+          // @ts-expect-error - fix later
           linePos += lines[i].length + 1; // +1 for the newline character
         }
       }
@@ -52,7 +53,7 @@ function generateLineNumbers(
         const widget = Decoration.widget(
           pos,
           createLineNumberWidget(String(lineNumber++)),
-          { side: -1 }
+          { side: -1 },
         );
         decorations.push(widget);
       }
@@ -62,10 +63,10 @@ function generateLineNumbers(
   return DecorationSet.create(doc, decorations);
 }
 
-const lineNumbersKey = new PluginKey("lineNumbers");
+const lineNumbersKey = new PluginKey('lineNumbers');
 
 export const LineNumbers = Extension.create({
-  name: "lineNumbers",
+  name: 'lineNumbers',
 
   addOptions() {
     return {
@@ -84,7 +85,7 @@ export const LineNumbers = Extension.create({
           },
           apply(transaction, oldState) {
             const newState =
-              transaction.getMeta("lineNumbers")?.showLineNumbers;
+              transaction.getMeta('lineNumbers')?.showLineNumbers;
 
             if (newState !== undefined) {
               extension.options.showLineNumbers = newState;

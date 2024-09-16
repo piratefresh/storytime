@@ -1,9 +1,9 @@
-import React from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
-} from "@/components/ui/dropdown-menu";
+} from '@/components/ui/dropdown-menu';
+import React from 'react';
 
 export interface ContextMenuProps {
   id: string;
@@ -19,7 +19,7 @@ export interface ContextMenuProps {
     label: string;
     folderId?: string;
     parentId?: string;
-    type?: "file" | "folder" | "story";
+    type?: 'file' | 'folder' | 'story';
     id: string;
   };
 }
@@ -49,26 +49,22 @@ export default function ContextMenu({
       >
         <DropdownMenuItem
           onClick={() => {
-            if (data?.type === "file" && data.folderId) {
+            if (data?.type === 'file' && data.folderId) {
               return void onAddFolder(data.folderId);
-            } else if (data?.type === "folder" && data.id) {
+            } else if (data?.type === 'folder' && data.id) {
               return void onAddFolder(data.id);
             }
-
-            return void onAddFolder();
           }}
         >
           Add Folder
         </DropdownMenuItem>
         <DropdownMenuItem
           onClick={() => {
-            if (data?.type === "file" && data.folderId) {
+            if (data?.type === 'file' && data.folderId) {
               return void onAddFile(data.folderId);
-            } else if (data?.type === "folder" && data.id) {
+            } else if (data?.type === 'folder' && data.id) {
               return void onAddFile(data.id);
             }
-
-            return void onAddFile();
           }}
         >
           Add File

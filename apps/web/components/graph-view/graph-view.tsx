@@ -1,24 +1,27 @@
-"use client";
+'use client';
 
-import { useCallback, useMemo, useRef, useState } from "react";
+import Dagre from '@dagrejs/dagre';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import ReactFlow, {
   addEdge,
-  type Edge,
-  type EdgeTypes,
   MarkerType,
   MiniMap,
-  type Node,
-  type OnConnect,
   useEdgesState,
   useNodesState,
-} from "reactflow";
-import Dagre from "@dagrejs/dagre";
-import "reactflow/dist/style.css";
-import { type StoryWithFolder } from "@/app/(main)/stories/[title]/page";
-import FloatingEdge from "./floating-edge";
-import FloatingConnectionLine from "./floating-connection-line";
-import ContextMenu, { type ContextMenuProps } from "./context-menu";
-import { FileNode, FolderNode } from "./nodes";
+  type Edge,
+  type EdgeTypes,
+  type Node,
+  type OnConnect,
+} from 'reactflow';
+
+import 'reactflow/dist/style.css';
+
+import { StoryWithFolder } from '@/app/(main)/stories/actions/get-story';
+
+import ContextMenu, { type ContextMenuProps } from './context-menu';
+import FloatingConnectionLine from './floating-connection-line';
+import FloatingEdge from './floating-edge';
+import { FileNode, FolderNode } from './nodes';
 
 interface FlowProps {
   id: string;
@@ -35,11 +38,11 @@ function generateReactFlowData(story: StoryWithFolder): {
   nodes: Node[];
   edges: Edge[];
 } {
-  console.log("story: ", story);
+  console.log('story: ', story);
   const topNode = {
     id: `story-${story.id}`,
-    type: "folder",
-    data: { label: story.title, id: story.id, type: "story" },
+    type: 'folder',
+    data: { label: story.title, id: story.id, type: 'story' },
     position: { x: 0, y: 0 }, // Top center position
   };
   if (!story.folder) return { nodes: [topNode], edges: [] };
@@ -52,12 +55,12 @@ function generateReactFlowData(story: StoryWithFolder): {
     folder.file.forEach((file) => {
       nodes.push({
         id: file.id,
-        type: "file",
+        type: 'file',
         data: {
           label: file.name,
           folderId: folder.id,
           id: file.id,
-          type: "file",
+          type: 'file',
         },
         position: { x: 0, y: 0 },
       });
@@ -66,20 +69,20 @@ function generateReactFlowData(story: StoryWithFolder): {
         id: `e-${folder.id}-${file.id}`,
         source: folder.id,
         target: file.id,
-        type: "smoothstep",
+        type: 'smoothstep',
         animated: true,
-        style: { stroke: "#fff" },
+        style: { stroke: '#fff' },
       });
     });
 
     nodes.push({
       id: folder.id,
-      type: "folder",
+      type: 'folder',
       data: {
         label: folder.name,
         parentId: folder.parentId,
         id: folder.id,
-        type: "folder",
+        type: 'folder',
       },
       position: { x: 0, y: 0 },
     });
@@ -95,9 +98,9 @@ function generateReactFlowData(story: StoryWithFolder): {
       id: `e-${sourceId}-${folder.id}`,
       source: sourceId,
       target: folder.id,
-      type: "smoothstep",
+      type: 'smoothstep',
       animated: true,
-      style: { stroke: "#fff" },
+      style: { stroke: '#fff' },
     });
   });
 
@@ -107,7 +110,7 @@ function generateReactFlowData(story: StoryWithFolder): {
 const getLayoutedElements = (
   nodes: Node[],
   edges: Edge[],
-  options: { direction: "TB" | "LR" }
+  options: { direction: 'TB' | 'LR' },
 ) => {
   const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
   g.setGraph({
@@ -121,9 +124,9 @@ const getLayoutedElements = (
   nodes.forEach((node) =>
     g.setNode(node.id, {
       ...node,
-      width: node.measured?.width ?? 0,
-      height: node.measured?.height ?? 0,
-    })
+      width: node.width ?? 0,
+      height: node.height ?? 0,
+    }),
   );
 
   Dagre.layout(g);
@@ -133,8 +136,8 @@ const getLayoutedElements = (
       const position = g.node(node.id);
       // We are shifting the dagre node position (anchor=center center) to the top left
       // so it matches the React Flow node anchor point (top left).
-      const x = position.x - (node.measured?.width ?? 0) / 2;
-      const y = position.y - (node.measured?.height ?? 0) / 2;
+      const x = position.x - (node.width ?? 0) / 2;
+      const y = position.y - (node.height ?? 0) / 2;
 
       return { ...node, position: { x, y } };
     }),
@@ -150,15 +153,13 @@ const nodeTypes = {
 function Flow({ id, story, onAddFolder, onAddFile }: FlowProps): JSX.Element {
   const { nodes: initialNodes, edges: initialEdges } = useMemo(() => {
     const { nodes, edges } = generateReactFlowData(story);
-    return getLayoutedElements(nodes, edges, { direction: "TB" });
+    return getLayoutedElements(nodes, edges, { direction: 'TB' });
   }, [story]);
 
   const [nodes, setNodes, onNodesChange] = useNodesState<Node[]>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [menu, setMenu] = useState<ContextMenuProps | null>(null);
-  const ref = useRef(null);
-
-  console.log("nodes: ", nodes);
+  const ref = useRef<HTMLDivElement | null>(null);
 
   const onConnect: OnConnect = useCallback(
     (params) => {
@@ -166,14 +167,14 @@ function Flow({ id, story, onAddFolder, onAddFile }: FlowProps): JSX.Element {
         addEdge(
           {
             ...params,
-            type: "floating",
+            type: 'floating',
             markerEnd: { type: MarkerType.Arrow },
           },
-          eds
-        )
+          eds,
+        ),
       );
     },
-    [setEdges]
+    [setEdges],
   );
 
   const onNodeContextMenu = useCallback(
@@ -183,21 +184,23 @@ function Flow({ id, story, onAddFolder, onAddFile }: FlowProps): JSX.Element {
 
       // Calculate position of the context menu. We want to make sure it
       // doesn't get positioned off-screen.
-      const pane = ref.current.getBoundingClientRect();
-      setMenu({
-        id: node.id,
-        top: event.clientY < pane.height - 200 && event.clientY,
-        left: event.clientX,
-        right: pane.width - event.clientX,
-        bottom:
-          event.clientY >= pane.height - 200 && pane.height - event.clientY,
-        open: true,
-        onAddFolder,
-        onAddFile,
-        data: node.data,
-      });
+      const pane = ref.current?.getBoundingClientRect();
+      if (pane) {
+        setMenu({
+          id: node.id,
+          top: event.clientY < pane.height - 200 && event.clientY,
+          left: event.clientX,
+          right: pane.width - event.clientX,
+          bottom:
+            event.clientY >= pane.height - 200 && pane.height - event.clientY,
+          open: true,
+          onAddFolder,
+          onAddFile,
+          data: node.data,
+        });
+      }
     },
-    [onAddFile, onAddFolder]
+    [onAddFile, onAddFolder],
   );
 
   const onPaneClick = useCallback(() => {

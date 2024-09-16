@@ -1,23 +1,23 @@
-import React from "react";
-import { cn } from "@/lib/utils";
-import TiptapImage, { ImageOptions } from "@tiptap/extension-image";
-import { Plugin, PluginKey } from "@tiptap/pm/state";
-import { EditorView } from "@tiptap/pm/view";
+import { cn } from '@/lib/utils';
+import TiptapImage, { ImageOptions } from '@tiptap/extension-image';
+import { Plugin, PluginKey } from '@tiptap/pm/state';
+import { EditorView } from '@tiptap/pm/view';
 import {
-  ReactNodeViewRenderer,
   NodeViewWrapper,
   NodeViewWrapperProps,
-} from "@tiptap/react";
+  ReactNodeViewRenderer,
+} from '@tiptap/react';
+import React from 'react';
 
 export const Direction = {
-  Top: "top",
-  TopLeft: "topLeft",
-  TopRight: "topRight",
-  Right: "right",
-  Bottom: "bottom",
-  BottomLeft: "bottomLeft",
-  BottomRight: "bottomRight",
-  Left: "left",
+  Top: 'top',
+  TopLeft: 'topLeft',
+  TopRight: 'topRight',
+  Right: 'right',
+  Bottom: 'bottom',
+  BottomLeft: 'bottomLeft',
+  BottomRight: 'bottomRight',
+  Left: 'left',
 };
 
 // declare module "@tiptap/core" {
@@ -51,8 +51,8 @@ type CustomImageOptions = ImageOptions & {
   onUploadEnd?: () => void;
 };
 
-export const Resizer = ({ onResize, selected }: IResizer) => {
-  const [direction, setDirection] = React.useState("");
+export function Resizer({ onResize, selected }: IResizer): JSX.Element {
+  const [direction, setDirection] = React.useState('');
   const [mouseDown, setMouseDown] = React.useState(false);
 
   React.useEffect(() => {
@@ -65,21 +65,21 @@ export const Resizer = ({ onResize, selected }: IResizer) => {
     };
 
     if (mouseDown) {
-      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener('mousemove', handleMouseMove);
     }
 
     return () => {
-      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener('mousemove', handleMouseMove);
     };
   }, [mouseDown, direction, onResize]);
 
   React.useEffect(() => {
     const handleMouseUp = () => setMouseDown(false);
 
-    window.addEventListener("mouseup", handleMouseUp);
+    window.addEventListener('mouseup', handleMouseUp);
 
     return () => {
-      window.removeEventListener("mouseup", handleMouseUp);
+      window.removeEventListener('mouseup', handleMouseUp);
     };
   }, []);
 
@@ -113,7 +113,7 @@ export const Resizer = ({ onResize, selected }: IResizer) => {
       ></div>
     </>
   );
-};
+}
 
 export const Component = (props: NodeViewWrapperProps) => {
   const imageRef = React.useRef<HTMLImageElement>(null);
@@ -140,7 +140,7 @@ export const Component = (props: NodeViewWrapperProps) => {
   }, [props.node?.attrs.src]);
 
   const handleAspectRatio = (
-    e: React.SyntheticEvent<HTMLImageElement, Event>
+    e: React.SyntheticEvent<HTMLImageElement, Event>,
   ) => {
     const image = imageRef.current;
     if (!image) return;
@@ -150,7 +150,7 @@ export const Component = (props: NodeViewWrapperProps) => {
   const handleResize = (
     direction: string,
     movementX: number,
-    movementY: number
+    movementY: number,
   ) => {
     const pos = props.getPos();
     props.editor.commands.setNodeSelection(pos);
@@ -201,17 +201,17 @@ export const Component = (props: NodeViewWrapperProps) => {
         break;
     }
   };
-  console.log("attrs: ", props.node);
+  console.log('attrs: ', props.node);
   return (
     <NodeViewWrapper
       as="figure"
-      className={cn("relative flex node-imageBlock", {
-        "has-focus": props.selected,
-        "mr-auto": props.node?.attrs.align === "left",
-        "mx-auto": props.node?.attrs.align === "center",
-        "ml-auto": props.node?.attrs.align === "right",
+      className={cn('relative flex node-imageBlock', {
+        'has-focus': props.selected,
+        'mr-auto': props.node?.attrs.align === 'left',
+        'mx-auto': props.node?.attrs.align === 'center',
+        'ml-auto': props.node?.attrs.align === 'right',
       })}
-      style={{ float: props.node?.attrs.float ?? "none" }}
+      style={{ float: props.node?.attrs.float ?? 'none' }}
       height={props.node?.attrs.height}
       width={props.node?.attrs.width}
     >
@@ -219,7 +219,7 @@ export const Component = (props: NodeViewWrapperProps) => {
 
       <img
         className={cn({
-          "border-2 border-blue-500 z-10": props.selected,
+          'border-2 border-blue-500 z-10': props.selected,
         })}
         ref={imageRef}
         src={props.node?.attrs.src}
@@ -237,18 +237,18 @@ export const Component = (props: NodeViewWrapperProps) => {
 export const KB = 1024 as const;
 
 export function formatBytes(bytes: number, decimals = 2) {
-  if (bytes <= 0) return "0 Bytes";
+  if (bytes <= 0) return '0 Bytes';
 
-  const sizes = ["B", "KB", "MB", "GB", "TB", "PB", "EB", "ZB", "YB"];
+  const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];
   const i = Math.floor(Math.log(bytes) / Math.log(KB));
 
   return (
-    parseFloat((bytes / Math.pow(KB, i)).toFixed(decimals)) + " " + sizes[i]
+    parseFloat((bytes / Math.pow(KB, i)).toFixed(decimals)) + ' ' + sizes[i]
   );
 }
 
 export const CustomImage = TiptapImage.extend<CustomImageOptions>({
-  name: "imageBlock",
+  name: 'imageBlock',
   selectable: true,
   draggable: true,
   addCommands() {
@@ -256,17 +256,17 @@ export const CustomImage = TiptapImage.extend<CustomImageOptions>({
       setImageBlockAlign:
         (align) =>
         ({ state, commands }) =>
-          commands.updateAttributes("imageBlock", { align }),
+          commands.updateAttributes('imageBlock', { align }),
       setImageBlockWidth:
         (width) =>
         ({ commands }) =>
-          commands.updateAttributes("imageBlock", {
+          commands.updateAttributes('imageBlock', {
             width: `${Math.max(0, Math.min(100, width))}%`,
           }),
       setImageBlockFloat:
         (float) =>
         ({ commands }) =>
-          commands.updateAttributes("imageBlock", { float }),
+          commands.updateAttributes('imageBlock', { float }),
     };
   },
   addAttributes() {
@@ -276,7 +276,7 @@ export const CustomImage = TiptapImage.extend<CustomImageOptions>({
 
       // New attrs
       width: {
-        default: "100%",
+        default: '100%',
         // tell them to render on the img tag
         renderHTML: (attributes) => {
           return {
@@ -285,7 +285,7 @@ export const CustomImage = TiptapImage.extend<CustomImageOptions>({
         },
       },
       height: {
-        default: "auto",
+        default: 'auto',
         renderHTML: (attributes) => {
           return {
             height: attributes.height,
@@ -293,28 +293,28 @@ export const CustomImage = TiptapImage.extend<CustomImageOptions>({
         },
       },
       align: {
-        default: "center",
-        parseHTML: (element) => element.getAttribute("data-align"),
+        default: 'center',
+        parseHTML: (element) => element.getAttribute('data-align'),
         renderHTML: (attributes) => {
-          console.log("attributes: ", attributes);
+          console.log('attributes: ', attributes);
           return {
-            "data-align": attributes.align,
+            'data-align': attributes.align,
           };
         },
       },
       float: {
-        default: "none",
-        parseHTML: (element) => element.getAttribute("data-float"),
+        default: 'none',
+        parseHTML: (element) => element.getAttribute('data-float'),
         renderHTML: (attributes) => {
-          console.log("attributes: ", attributes);
+          console.log('attributes: ', attributes);
           return {
-            "data-float": attributes.float,
+            'data-float': attributes.float,
           };
         },
       },
       alt: {
         default: undefined,
-        parseHTML: (element) => element.getAttribute("alt"),
+        parseHTML: (element) => element.getAttribute('alt'),
         renderHTML: (attributes) => ({
           alt: attributes.alt,
         }),
@@ -334,7 +334,7 @@ export const CustomImage = TiptapImage.extend<CustomImageOptions>({
 
   addNodeView() {
     return ReactNodeViewRenderer(Component, {
-      className: cn("flex"),
+      className: cn('flex'),
       // attrs
     });
   },
@@ -347,20 +347,20 @@ export const CustomImage = TiptapImage.extend<CustomImageOptions>({
   addProseMirrorPlugins() {
     return [
       new Plugin({
-        key: new PluginKey("imageUpload"),
+        key: new PluginKey('imageUpload'),
         props: {
           handlePaste: (view, event) => {
             const items = event.clipboardData?.items;
             if (!items) return false;
 
-            for (const item of items) {
+            for (const item of Array.from(items)) {
               if (!this.options.accept.includes(item.type)) return false;
 
               const file = item.getAsFile();
               if (!file) return false;
               if (file.size > this.options.maxFileSize) {
                 window.alert(
-                  `File is too big. Max file size is ${formatBytes(this.options.maxFileSize)}`
+                  `File is too big. Max file size is ${formatBytes(this.options.maxFileSize)}`,
                 );
                 return false;
               }
@@ -372,7 +372,7 @@ export const CustomImage = TiptapImage.extend<CustomImageOptions>({
                   this.options.onUploadEnd?.();
 
                   if (!url) {
-                    console.error("URL not returned from S3.");
+                    console.error('URL not returned from S3.');
                     return false;
                   }
                   // pre-load image
@@ -384,7 +384,7 @@ export const CustomImage = TiptapImage.extend<CustomImageOptions>({
                     const imageNode = schema.nodes.image;
                     if (!imageNode) {
                       console.error(
-                        "Image node type is not defined in the schema."
+                        'Image node type is not defined in the schema.',
                       );
                       return false;
                     }
@@ -395,7 +395,7 @@ export const CustomImage = TiptapImage.extend<CustomImageOptions>({
                   };
                 })
                 .catch(() =>
-                  window.alert(`Failed to upload image. Please try again`)
+                  window.alert(`Failed to upload image. Please try again`),
                 );
             }
 
@@ -405,35 +405,35 @@ export const CustomImage = TiptapImage.extend<CustomImageOptions>({
             const files = event.dataTransfer?.files;
             if (!files) return false;
 
-            for (const file of files) {
-              if (!file.type.startsWith("image")) continue;
+            for (const file of Array.from(files)) {
+              if (!file.type.startsWith('image')) continue;
               // first just make sure in our code that we're only allowing the file types we want
               if (!this.options.accept.includes(file.type)) {
                 console.log(
-                  `Unsupported file type. Supported types: ${this.options.accept.join(", ")}`
+                  `Unsupported file type. Supported types: ${this.options.accept.join(', ')}`,
                 );
                 return false;
               }
 
               if (file.size > this.options.maxFileSize) {
                 window.alert(
-                  `File is too big. Max file size is ${formatBytes(this.options.maxFileSize)}`
+                  `File is too big. Max file size is ${formatBytes(this.options.maxFileSize)}`,
                 );
                 return false;
               }
 
               this.options.onUploadStart?.();
-              console.log("file: ", file);
+              console.log('file: ', file);
               this.options
                 .uploadImage(file)
                 .then((url) => {
-                  console.log("url: ", url);
+                  console.log('url: ', url);
                   this.options.onUploadEnd?.();
                   // pre-load image
 
                   const img = new Image();
                   if (!url) {
-                    console.error("URL not returned from S3.");
+                    console.error('URL not returned from S3.');
                     return false;
                   }
                   const src = url;
@@ -443,7 +443,7 @@ export const CustomImage = TiptapImage.extend<CustomImageOptions>({
                     const imageNode = schema.nodes.image;
                     if (!imageNode) {
                       console.error(
-                        "Image node type is not defined in the schema."
+                        'Image node type is not defined in the schema.',
                       );
                       return false;
                     }
@@ -452,7 +452,7 @@ export const CustomImage = TiptapImage.extend<CustomImageOptions>({
                     console.log(image); // Check the output here
                     if (!imageNode) {
                       console.error(
-                        "Image node type is not defined in the schema."
+                        'Image node type is not defined in the schema.',
                       );
                       return false;
                     }
@@ -460,21 +460,21 @@ export const CustomImage = TiptapImage.extend<CustomImageOptions>({
                     const transaction =
                       view.state.tr.replaceSelectionWith(image);
                     if (
-                      typeof view.state.tr.replaceSelectionWith !== "function"
+                      typeof view.state.tr.replaceSelectionWith !== 'function'
                     ) {
-                      console.error("replaceSelectionWith is not a function");
+                      console.error('replaceSelectionWith is not a function');
                       return false;
                     }
                     if (!transaction) {
-                      console.error("Failed to create a transaction.");
+                      console.error('Failed to create a transaction.');
                       return false;
                     }
-                    console.log("transaction", transaction);
+                    console.log('transaction', transaction);
                     return view.dispatch(transaction);
                   };
                 })
                 .catch(() =>
-                  window.alert(`Failed to upload image. Please try again`)
+                  window.alert(`Failed to upload image. Please try again`),
                 );
             }
 

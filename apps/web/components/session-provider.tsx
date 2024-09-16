@@ -1,7 +1,8 @@
-"use client";
+'use client';
 
-import { type Session, type User } from "lucia";
-import { createContext, useContext } from "react";
+import { type User } from '@repo/db';
+import { type Session } from 'lucia';
+import { createContext, useContext } from 'react';
 
 interface SessionProviderProps {
   user: User | null;
@@ -9,7 +10,7 @@ interface SessionProviderProps {
 }
 
 const SessionContext = createContext<SessionProviderProps>(
-  {} as SessionProviderProps
+  {} as SessionProviderProps,
 );
 
 export function SessionProvider({
@@ -28,7 +29,7 @@ export const useSession = () => {
   const sessionContext = useContext(SessionContext);
 
   if (!sessionContext) {
-    throw new Error("useSession must be used within a SessionProvider");
+    throw new Error('useSession must be used within a SessionProvider');
   }
 
   return sessionContext;

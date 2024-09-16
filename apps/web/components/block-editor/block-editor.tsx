@@ -1,28 +1,30 @@
 "use client";
 
-import { EditorContent, EditorContext, type JSONContent } from "@tiptap/react";
-import React from "react";
-import { type User } from "lucia";
-import ImageBlockMenu from "../tiptap/extensions/image-block/components/image-block-menu";
-import { ContentItemMenu } from "../tiptap/components/content-item-menu";
-import { TextMenu } from "../tiptap/text-menu";
-import { CharacterCountDisplay } from "../tiptap/extensions/characterCountDisplay";
-import { Sidebar } from "../sidebar";
-import { useBlockEditor } from "./use-block-editor";
+import React, { useEffect, useMemo, useRef } from "react";
 import { useTabsStore } from "@/app/stores/tabs-provider";
+import { User } from "@repo/db";
+import { TableOfContentData } from "@tiptap-pro/extension-table-of-contents";
+import { EditorContent, EditorContext, type JSONContent } from "@tiptap/react";
+
+import { useEditorInstance } from "../editor-provider";
+import { ContentItemMenu } from "../tiptap/components/content-item-menu";
+import { CharacterCountDisplay } from "../tiptap/extensions/characterCountDisplay";
+import ImageBlockMenu from "../tiptap/extensions/image-block/components/image-block-menu";
+import { TextMenu } from "../tiptap/text-menu";
+import { useToCContext } from "../toc-provider";
+import { useBlockEditor } from "./use-block-editor";
 
 interface BlockEditorProps {
-  onChange: (
-    content: JSONContent | string | null,
-    plainTextContent: string
-  ) => void;
+  onChange: (content: JSONContent, plainTextContent: string) => void;
   user: User;
   contentId?: string;
-  content: JSONContent | string | null;
+  content: JSONContent;
   storyId: string;
+  isActive?: boolean;
 }
 
 export function BlockEditor({
+  isActive = false,
   user,
   onChange: handleOnChange,
   content,
@@ -30,43 +32,59 @@ export function BlockEditor({
   storyId,
 }: BlockEditorProps): JSX.Element | null {
   const updateTabContent = useTabsStore((state) => state.updateTabContent);
+  const { updateToCItems, getToCItems } = useToCContext();
+  const { setEditor, editorContentRef } = useEditorInstance();
+  const menuContainerRef = useRef(null);
+
   const { editor, tocSidebar } = useBlockEditor({
     onChange: (jsonContent, plainText) => {
+      if (!jsonContent || !plainText || !contentId) return;
       handleOnChange(jsonContent, plainText);
       updateTabContent({ tabId: contentId, content: jsonContent });
     },
+    onToCChange: (items) =>
+      contentId ? updateToCItems(contentId, items) : null,
     user,
     contentId,
     initialContent: content,
     storyId,
   });
 
-  const providerValue = React.useMemo(() => {
+  const providerValue = useMemo(() => {
     return {
       editor,
     };
-  }, []);
+  }, [editor]);
 
-  const editorRef = React.useRef<HTMLDivElement | null>(null);
-  const menuContainerRef = React.useRef(null);
+  useEffect(() => {
+    if (editor) {
+      console.log("setting editor in BlockEditor");
+      setEditor(editor);
+    }
+  }, [editor, setEditor]);
+
+  useEffect(() => {
+    if (isActive) {
+      editor?.commands.focus();
+    }
+  }, [isActive, editor]);
 
   if (!editor) return null;
 
+  const toCItems = contentId ? getToCItems(contentId) : [];
+
   return (
     <EditorContext.Provider value={providerValue}>
-      <div className="flex flex-row h-full">
-        <Sidebar isOpen={true} onClose={tocSidebar.close} editor={editor} />
-
-        <div className="flex flex-col h-full w-full" ref={menuContainerRef}>
+      <div className="flex h-full flex-row" ref={menuContainerRef}>
+        <div className="relative flex h-full flex-1 flex-col overflow-hidden">
           <EditorContent
-            className="flex-1 overflow-y-auto"
+            ref={editorContentRef}
+            className="mb-[70px] flex-1 overflow-y-auto"
             editor={editor}
-            ref={editorRef}
           />
           <ContentItemMenu editor={editor} />
           <TextMenu editor={editor} />
-
-          <ImageBlockMenu editor={editor} appendTo={menuContainerRef} />
+          <ImageBlockMenu appendTo={menuContainerRef} editor={editor} />
           <CharacterCountDisplay editor={editor} />
         </div>
       </div>

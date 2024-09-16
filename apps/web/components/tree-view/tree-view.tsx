@@ -7,36 +7,41 @@ import {
   useEffect,
   useState,
 } from "react";
-import TreeViewPrimitive, {
-  flattenTree,
-  type INode,
-  type NodeId,
-  type INodeRendererProps,
-} from "react-accessible-treeview";
+import { updateFileFolder } from "@/app/(main)/stories/actions/update-file-folder";
+import { useTabsStore } from "@/app/stores/tabs-provider";
+import { type Tab, type TabTypes } from "@/app/stores/tabs-store";
+import { useUpdateStoryUrl } from "@/hooks/use-update-story-url";
+import { cn } from "@/lib/utils";
 import {
   DndContext,
-  useSensors,
-  useSensor,
-  PointerSensor,
-  KeyboardSensor,
-  type DragEndEvent,
   DragOverlay,
-  type DragStartEvent,
+  KeyboardSensor,
+  MouseSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
   type DragOverEvent,
+  type DragStartEvent,
 } from "@dnd-kit/core";
 import {
   SortableContext,
-  verticalListSortingStrategy,
   useSortable,
+  verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
-import { cn } from "@/lib/utils";
-import { useTabsStore } from "@/app/stores/tabs-provider";
-import { useUpdateStoryUrl } from "@/hooks/use-update-story-url";
-import { type Tab, type TabTypes } from "@/app/stores/tabs-store";
-import { updateFileFolder } from "@/app/(main)/stories/actions/update-file-folder";
+import { JSONContent } from "@tiptap/core";
+import TreeViewPrimitive, {
+  flattenTree,
+  type INode,
+  type INodeRendererProps,
+  type NodeId,
+} from "react-accessible-treeview";
+import { set } from "react-hook-form";
+
+import { useToCContext } from "../toc-provider";
 import { TreeNode } from "./tree-node";
 
-interface NodeMetadata {
+export interface NodeMetadata {
   storyId: string;
   storyTitle: string;
   isRoot?: boolean;
@@ -53,7 +58,7 @@ export interface TreeItemNode {
   parent?: NodeId;
 }
 
-interface TreeNodeData<M extends NodeMetadata> {
+export interface TreeNodeData<M extends NodeMetadata> {
   id?: NodeId;
   name: string;
   isBranch?: boolean;
@@ -68,11 +73,12 @@ interface ContextMenuItems {
 
 export interface TreeViewProps extends React.ComponentPropsWithoutRef<"div"> {
   folder: TreeNodeData<NodeMetadata>;
-  contextMenuItems: ContextMenuItems[];
+  contextMenuItems?: ContextMenuItems[];
 }
 
 interface SortableTreeNodeProps extends INodeRendererProps {
   overItem?: NodeId[] | null;
+  selectedNode?: NodeId | null;
 }
 
 function SortableTreeNode({
@@ -85,6 +91,7 @@ function SortableTreeNode({
   isSelected,
   dispatch,
   overItem,
+  selectedNode,
   ...props
 }: SortableTreeNodeProps): JSX.Element {
   const [isEditing, setIsEditing] = useState(false);
@@ -109,31 +116,34 @@ function SortableTreeNode({
     console.log("Dragging over folder: ", overItem);
   }
 
+  const isSelectedNode = String(element.id) === String(selectedNode);
+
   return (
     <div
-      // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing -- OR is correct here for boolean logic
-      className={cn({ "bg-white/20": isDraggingOverFolder || isSelected })}
       ref={setNodeRef}
       style={style}
+      className={cn({
+        "bg-white/20": isDraggingOverFolder || isSelectedNode,
+      })}
     >
       <TreeNode
-        element={element}
-        level={level}
-        isExpanded={isExpanded}
-        isBranch={isBranch}
-        isDisabled={isDisabled}
-        isSelected={isSelected}
-        isEditing={isEditing}
-        onEditing={setIsEditing}
         dispatch={dispatch}
-        getNodeProps={getNodeProps}
-        isDragging={isDragging}
-        isDraggingOverFolder={isDraggingOverFolder}
-        isOver={isOver}
         dragAttributes={attributes}
         dragListeners={listeners}
+        element={element}
+        getNodeProps={getNodeProps}
+        isBranch={isBranch}
+        isDisabled={isDisabled}
+        isDragging={isDragging}
+        isDraggingOverFolder={isDraggingOverFolder}
+        isEditing={isEditing}
+        isExpanded={isExpanded}
+        isOver={isOver}
+        isSelected={isSelected}
+        level={level}
         setDragNodeRef={setNodeRef}
         style={style}
+        onEditing={setIsEditing}
         {...props}
       />
     </div>
@@ -141,7 +151,7 @@ function SortableTreeNode({
 }
 
 export function sortTreeItems(
-  items: INode<NodeMetadata>[]
+  items: INode<NodeMetadata>[],
 ): INode<NodeMetadata>[] {
   return items.map((item) => {
     if (item.metadata?.type === "folder") {
@@ -158,7 +168,7 @@ export function sortTreeItems(
 
 const getAllChildren = (
   item: INode<NodeMetadata>,
-  items: INode<NodeMetadata>[]
+  items: INode<NodeMetadata>[],
 ): INode<NodeMetadata>[] => {
   let children = items.filter((child) => child.parent === item.id);
 
@@ -175,9 +185,10 @@ const TreeView = forwardRef<HTMLUListElement, TreeViewProps>(
   ({ folder }, ref) => {
     const addTab = useTabsStore((state) => state.addTab);
     const activeGroupTabs = useTabsStore((state) => state.getActiveGroupTabs());
+    const activeTab = useTabsStore((state) => state.getActiveTab());
     const [items, setItems] = useState(() => flattenTree(folder));
     const [activeItem, setActiveItem] = useState<INode<NodeMetadata> | null>(
-      null
+      null,
     );
     const [overItem, setOverItem] = useState<NodeId[] | null>(null);
 
@@ -186,12 +197,12 @@ const TreeView = forwardRef<HTMLUListElement, TreeViewProps>(
     }, [folder]);
 
     const sensors = useSensors(
-      useSensor(PointerSensor, {
+      useSensor(MouseSensor, {
         activationConstraint: {
-          distance: 5,
+          distance: 10,
         },
       }),
-      useSensor(KeyboardSensor)
+      useSensor(KeyboardSensor),
     );
 
     const handleDragStart = (event: DragStartEvent): void => {
@@ -207,7 +218,7 @@ const TreeView = forwardRef<HTMLUListElement, TreeViewProps>(
       if (active.id !== over?.id && over) {
         setItems((prevItems) => {
           const activeIndex = prevItems.findIndex(
-            (item) => item.id === active.id
+            (item) => item.id === active.id,
           );
           const overIndex = prevItems.findIndex((item) => item.id === over.id);
 
@@ -238,7 +249,7 @@ const TreeView = forwardRef<HTMLUListElement, TreeViewProps>(
           if (draggedItem.metadata?.type === "folder") {
             const isDescendant = (
               parentId: NodeId,
-              childId: NodeId
+              childId: NodeId,
             ): boolean => {
               const child = prevItems.find((item) => item.id === childId);
               if (!child) return false;
@@ -336,9 +347,13 @@ const TreeView = forwardRef<HTMLUListElement, TreeViewProps>(
 
     const nodeRenderer = useCallback(
       (props: INodeRendererProps) => (
-        <SortableTreeNode overItem={overItem} {...props} />
+        <SortableTreeNode
+          overItem={overItem}
+          selectedNode={activeTab?.id}
+          {...props}
+        />
       ),
-      [overItem]
+      [activeTab?.id, overItem],
     );
 
     return (
@@ -351,13 +366,14 @@ const TreeView = forwardRef<HTMLUListElement, TreeViewProps>(
         <SortableContext items={items} strategy={verticalListSortingStrategy}>
           <TreeViewPrimitive
             ref={ref}
-            data={items}
-            className="basic"
             aria-label="Tree view List"
+            className="basic"
+            data={items}
+            defaultExpandedIds={items.map((item) => item.id)}
+            selectedIds={[]}
             nodeRenderer={nodeRenderer}
             onNodeSelect={(node) => {
               if (node.element.metadata?.storyTitle) {
-                console.log("node:", node);
                 const storyTitle = node.element.metadata.storyTitle as string;
                 const fileName = node.element.name;
                 const fileId = node.element.id as string;
@@ -365,13 +381,11 @@ const TreeView = forwardRef<HTMLUListElement, TreeViewProps>(
                   ? "story"
                   : node.element.metadata.type;
 
-                const content = JSON.parse(
-                  node.element.metadata.content
-                ) as string;
-                console.log("node.element.metadata: ", node.element.metadata);
+                const content = node.element.metadata.content;
+
                 const tab: Tab = {
                   label: fileName,
-                  content: content ?? "",
+                  content: (content as unknown as JSONContent) ?? "",
                   id: fileId,
                   storyTitle,
                   storyId: node.element.metadata.storyId as string,
@@ -387,17 +401,16 @@ const TreeView = forwardRef<HTMLUListElement, TreeViewProps>(
                 }
               }
             }}
-            defaultExpandedIds={items.map((item) => item.id)}
           />
         </SortableContext>
         <DragOverlay>
           {activeItem ? (
-            <div className="text-xs bg-blue-500/50">{activeItem.name}</div>
+            <div className="bg-blue-500/50 text-xs">{activeItem.name}</div>
           ) : null}
         </DragOverlay>
       </DndContext>
     );
-  }
+  },
 );
 
 TreeView.displayName = "TreeView";

@@ -1,54 +1,65 @@
-import Typography from "@tiptap/extension-typography";
-import StarterKit from "@tiptap/starter-kit";
-import Highlight from "@tiptap/extension-highlight";
-import Color from "@tiptap/extension-color";
-import TextStyle from "@tiptap/extension-text-style";
-import TextAlign from "@tiptap/extension-text-align";
-import { TaskItem } from "@tiptap/extension-task-item";
-import { TaskList } from "@tiptap/extension-task-list";
-import { Markdown } from "tiptap-markdown";
+import { table } from "console";
+import { useUploadImage } from "@/hooks/use-upload-image";
+import { findSuggestionMatch } from "@/lib/editor/findSuggestionMatch";
+import { FileHandler } from "@tiptap-pro/extension-file-handler";
+import {
+  getHierarchicalIndexes,
+  TableOfContentData,
+  TableOfContents,
+  TableOfContentsStorage,
+} from "@tiptap-pro/extension-table-of-contents";
 import CharacterCount from "@tiptap/extension-character-count";
 import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
-import { common, createLowlight } from "lowlight";
-import { Underline } from "@tiptap/extension-underline";
-import { TableOfContents } from "@tiptap-pro/extension-table-of-contents";
-import Table from "@tiptap/extension-table";
-import FontFamily from "@tiptap/extension-font-family";
-import { User } from "lucia";
-import GlobalDragHandle from "tiptap-extension-global-drag-handle";
-import { Float } from "./float";
-import { CustomTooltipNode, Link } from "./node-link";
-import { LineNumbers } from "./line-number";
-import { PageBreak } from "./page-break";
-import { GenerateText } from "./generateText";
-import { TableOfContentsNode } from "./tableOfContentsNode";
-import { TableCell, TableHeader, TableRow } from "./table";
-import { Heading } from "./heading";
-import { FontSize } from "./fontSize";
-import AutoJoiner from "tiptap-extension-auto-joiner";
-import { Column, Columns } from "./multi-column";
-import { SlashCommand } from "./slash-command";
-import { Selection } from "./selection";
+import Color from "@tiptap/extension-color";
 import Dropcursor from "@tiptap/extension-dropcursor";
+import FontFamily from "@tiptap/extension-font-family";
+import Highlight from "@tiptap/extension-highlight";
+import Table from "@tiptap/extension-table";
+import { TaskItem } from "@tiptap/extension-task-item";
+import { TaskList } from "@tiptap/extension-task-list";
+import TextAlign from "@tiptap/extension-text-align";
+import TextStyle from "@tiptap/extension-text-style";
+import Typography from "@tiptap/extension-typography";
+import { Underline } from "@tiptap/extension-underline";
+import StarterKit from "@tiptap/starter-kit";
+import { SuggestionMatch, Trigger } from "@tiptap/suggestion";
+import { common, createLowlight } from "lowlight";
+import { User } from "lucia";
+import AutoJoiner from "tiptap-extension-auto-joiner";
+import GlobalDragHandle from "tiptap-extension-global-drag-handle";
+import { Markdown } from "tiptap-markdown";
+
+import { CodeBlock } from "./code-block/code-block";
 import { Document } from "./document";
+import { Float } from "./float";
+import { FontSize } from "./fontSize";
+import { GenerateText } from "./generateText";
+import { Heading } from "./heading";
+import ImageBlock from "./image-block/image-block";
 // import Image from "../extensions/image";
 import { Image } from "./image/image";
-import { FileHandler } from "@tiptap-pro/extension-file-handler";
-import ImageUpload from "./document/image-upload/image-upload";
-import ImageBlock from "./image-block/image-block";
-import { useUploadImage } from "@/hooks/use-upload-image";
-import { SuggestionMatch, Trigger } from "@tiptap/suggestion";
-import { findSuggestionMatch } from "@/lib/editor/findSuggestionMatch";
-import { CodeBlock } from "./code-block/code-block";
+import { LineNumbers } from "./line-number";
+import { Column, Columns } from "./multi-column";
+import { CustomTooltipNode, Link } from "./node-link";
+import { PageBreak } from "./page-break";
+import { Selection } from "./selection";
+import { SlashCommand } from "./slash-command";
+import { TableCell, TableHeader, TableRow } from "./table";
+
+const CustomDocument = Document.extend({
+  content: "heading block*",
+});
 
 export const Extensions = ({
   contentId,
   userId,
   storyId,
+  onToCChange,
 }: {
   contentId?: string;
   userId: string;
   storyId: string;
+  onToCChange: (items: TableOfContentData) => void;
 }) => [
   StarterKit.configure({
     document: false,
@@ -58,7 +69,7 @@ export const Extensions = ({
     blockquote: false,
     codeBlock: false,
   }),
-  Document,
+  CustomDocument,
   Color,
   CodeBlock,
   Column,
@@ -123,10 +134,11 @@ export const Extensions = ({
             storyId,
             userId,
           });
-
+          // @ts-expect-error - figure out later
           if (image.url) {
             currentEditor
               .chain()
+              // @ts-expect-error - figure out later
               .setImageBlockAt({ pos, src: image.url })
               .focus()
               .run();
@@ -144,11 +156,13 @@ export const Extensions = ({
             storyId,
             userId,
           });
+          // @ts-expect-error - figure out later
           if (image.url) {
             return currentEditor
               .chain()
               .setImageBlockAt({
                 pos: currentEditor.state.selection.anchor,
+                // @ts-expect-error - figure out later
                 src: image.url,
               })
               .focus()
@@ -164,8 +178,13 @@ export const Extensions = ({
   TableCell,
   TableHeader,
   TableRow,
-  TableOfContents,
-  TableOfContentsNode,
+  TableOfContents.configure({
+    getIndex: getHierarchicalIndexes,
+    onUpdate(content) {
+      onToCChange(content);
+    },
+  }),
+  // TableOfContentsNode,
   TaskItem.configure({
     nested: true,
   }),

@@ -1,12 +1,13 @@
+import { nanoid } from "@/lib/utils";
 import { arrayMove } from "@dnd-kit/sortable";
+import { JSONContent } from "@tiptap/core";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
-import { nanoid } from "@/lib/utils";
 
 export type TabTypes = "file" | "folder" | "story" | "flow";
 export interface Tab {
   label: string;
-  content: string | null;
+  content: JSONContent;
   id: string;
   storyTitle: string;
   storyId: string;
@@ -40,11 +41,12 @@ export interface TabsActions {
     content,
   }: {
     tabId: string;
-    content: string;
+    content: JSONContent;
   }) => void;
   splitTab: (groupId: string) => void;
   setActiveGroup: (groupId: string) => void;
   getActiveGroupTabs: () => Tab[] | null;
+  getActiveTab: () => Tab | null;
 }
 
 export type TabsStore = TabsState & TabsActions;
@@ -74,7 +76,7 @@ export const createTabsStore = (initState: TabsState = defaultInitState) => {
           },
           getActiveGroupTabs: () => {
             const activeGroup = get().groups.find(
-              (group) => group.id === get().activeGroupId
+              (group) => group.id === get().activeGroupId,
             );
             return activeGroup ? activeGroup.tabs : [];
           },
@@ -93,12 +95,12 @@ export const createTabsStore = (initState: TabsState = defaultInitState) => {
                   },
                 ];
               }
-              console.log("newGroups", newGroups);
+
               return {
                 groups: newGroups.map((group) => {
                   if (group.id === groupId) {
                     const existingTabIndex = group.tabs.findIndex(
-                      (t) => t.id === tab.id
+                      (t) => t.id === tab.id,
                     );
                     if (existingTabIndex !== -1) {
                       // Tab already exists, just set it as active
@@ -126,21 +128,21 @@ export const createTabsStore = (initState: TabsState = defaultInitState) => {
                 if (panel.id !== groupId) return panel;
 
                 const updatedTabs = panel.tabs.filter(
-                  (tab) => tab.id !== tabId
+                  (tab) => tab.id !== tabId,
                 );
                 return {
                   ...panel,
                   tabs: updatedTabs,
                   activeTabId:
                     panel.activeTabId === tabId
-                      ? updatedTabs[0]?.id ?? null
+                      ? (updatedTabs[0]?.id ?? null)
                       : panel.activeTabId,
                 };
               });
 
               // Remove empty groups
               const filteredGroups = updatedGroups.filter(
-                (group) => group.tabs.length > 0
+                (group) => group.tabs.length > 0,
               );
 
               return {
@@ -154,21 +156,21 @@ export const createTabsStore = (initState: TabsState = defaultInitState) => {
             set((state) => {
               const updatedGroups = state.groups.map((group) => {
                 const updatedTabs = group.tabs.filter(
-                  (tab) => tab.id !== tabId
+                  (tab) => tab.id !== tabId,
                 );
                 return {
                   ...group,
                   tabs: updatedTabs,
                   activeTabId:
                     group.activeTabId === tabId
-                      ? updatedTabs[0]?.id ?? null
+                      ? (updatedTabs[0]?.id ?? null)
                       : group.activeTabId,
                 };
               });
 
               // Remove empty groups
               const filteredGroups = updatedGroups.filter(
-                (group) => group.tabs.length > 0
+                (group) => group.tabs.length > 0,
               );
 
               return {
@@ -181,7 +183,7 @@ export const createTabsStore = (initState: TabsState = defaultInitState) => {
           setActiveTab: (groupId, tabId) => {
             set((state) => ({
               groups: state.groups.map((panel) =>
-                panel.id === groupId ? { ...panel, activeTabId: tabId } : panel
+                panel.id === groupId ? { ...panel, activeTabId: tabId } : panel,
               ),
               activeGroupId: groupId,
             }));
@@ -191,7 +193,7 @@ export const createTabsStore = (initState: TabsState = defaultInitState) => {
               groups: state.groups.map((group) => ({
                 ...group,
                 tabs: group.tabs.map((tab) =>
-                  tab.id === tabId ? { ...tab, label } : tab
+                  tab.id === tabId ? { ...tab, label } : tab,
                 ),
               })),
             }));
@@ -203,7 +205,7 @@ export const createTabsStore = (initState: TabsState = defaultInitState) => {
               groups: state.groups.map((group) => ({
                 ...group,
                 tabs: group.tabs.map((tab) =>
-                  tab.id === tabId ? { ...tab, content } : tab
+                  tab.id === tabId ? { ...tab, content } : tab,
                 ),
               })),
             }));
@@ -211,7 +213,7 @@ export const createTabsStore = (initState: TabsState = defaultInitState) => {
           reorderTabs: (
             groupId: string,
             oldIndex: number,
-            newIndex: number
+            newIndex: number,
           ) => {
             set((state: TabsState & TabsActions) => ({
               groups: state.groups.map((panel) =>
@@ -220,14 +222,14 @@ export const createTabsStore = (initState: TabsState = defaultInitState) => {
                       ...panel,
                       tabs: arrayMove(panel.tabs, oldIndex, newIndex),
                     }
-                  : panel
+                  : panel,
               ),
             }));
           },
           splitTab: (groupId: string) => {
             set((state) => {
               const sourceGroupIndex = state.groups.findIndex(
-                (group) => group.id === groupId
+                (group) => group.id === groupId,
               );
               if (sourceGroupIndex === -1) return state;
 
@@ -236,7 +238,7 @@ export const createTabsStore = (initState: TabsState = defaultInitState) => {
                 if (!sourceGroup.activeTabId) return state;
 
                 const activeTab = sourceGroup.tabs.find(
-                  (tab) => tab.id === sourceGroup.activeTabId
+                  (tab) => tab.id === sourceGroup.activeTabId,
                 );
                 if (!activeTab) return state;
 
@@ -262,11 +264,23 @@ export const createTabsStore = (initState: TabsState = defaultInitState) => {
           setActiveGroup: (groupId: string) => {
             set({ activeGroupId: groupId });
           },
+          getActiveTab: () => {
+            const state = get();
+            const activeGroup = state.groups.find(
+              (group) => group.id === state.activeGroupId,
+            );
+            if (!activeGroup) return null;
+            return (
+              activeGroup.tabs.find(
+                (tab) => tab.id === activeGroup.activeTabId,
+              ) || null
+            );
+          },
         }),
         {
           name: "tab-store",
-        }
-      )
-    )
+        },
+      ),
+    ),
   );
 };

@@ -1,4 +1,5 @@
 import { FileTabs } from "@/components/file-tabs/file-tabs";
+import { SideMenu } from "@/components/side-menu";
 import { validateRequest } from "@/lib/auth";
 
 export default async function Page(): Promise<JSX.Element> {
@@ -8,7 +9,10 @@ export default async function Page(): Promise<JSX.Element> {
   }
 
   return (
-    // <TestEditor />
-    <FileTabs user={user} tabs={[]} />
+    <>
+      <SideMenu user={user} />
+      {/* @ts-expect-error - fix later */}
+      <FileTabs user={user} tabs={[]} />
+    </>
   );
 }

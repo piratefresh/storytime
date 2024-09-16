@@ -1,17 +1,18 @@
 "use client";
 
 import { Fragment } from "react";
-import { type User } from "@repo/db";
-import { nanoid } from "nanoid";
+import { useTabsStore } from "@/app/stores/tabs-provider";
+import { type Tab } from "@/app/stores/tabs-store";
+import { FileTabs } from "@/components/file-tabs/file-tabs";
 import {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import { FileTabs } from "@/components/file-tabs/file-tabs";
-import { useTabsStore } from "@/app/stores/tabs-provider";
-import { type Tab } from "@/app/stores/tabs-store";
-import { type StoryWithFolder } from "../page";
+import { type User } from "@repo/db";
+import { nanoid } from "nanoid";
+
+import { StoryWithFolder } from "../../actions/get-story";
 
 export function GroupPanel({
   story,
@@ -21,7 +22,7 @@ export function GroupPanel({
   user: User;
 }): JSX.Element {
   const groups = useTabsStore((state) => state.groups);
-  console.log("story: ", story);
+
   return (
     <ResizablePanelGroup direction="horizontal">
       {groups.map((group, index) => (
@@ -44,7 +45,7 @@ export function EditorPanel({
   story: StoryWithFolder;
 }): JSX.Element | null {
   const group = useTabsStore((state) =>
-    state.groups.find((g) => g.id === groupId)
+    state.groups.find((g) => g.id === groupId),
   );
   const activeGroupId = useTabsStore((state) => state.activeGroupId);
   const addTab = useTabsStore((state) => state.addTab);
@@ -52,7 +53,7 @@ export function EditorPanel({
   const setActiveTab = useTabsStore((state) => state.setActiveTab);
   const reorderTabs = useTabsStore((state) => state.reorderTabs);
   const splitTab = useTabsStore((state) => state.splitTab);
-  const setActiveGroup = useTabsStore((state) => state.setActiveGroup);
+
   if (!group) return null;
 
   const activeTabId = group.activeTabId;
@@ -64,7 +65,7 @@ export function EditorPanel({
   const handleAddFlowTab = () => {
     const tab: Tab = {
       label: `Graph: ${story.title} - ${new Date().toLocaleTimeString()}`,
-      content: "",
+      content: {},
       id: nanoid(),
       storyTitle: story.title,
       storyId: story.id,
@@ -78,18 +79,17 @@ export function EditorPanel({
   return (
     <ResizablePanel>
       <FileTabs
-        groupId={group.id}
-        onSplitTab={handleSplitTab}
-        onRemoveTab={removeTab}
-        onSetActiveTab={setActiveTab}
-        onReorderTabs={reorderTabs}
-        onSetActiveGroup={setActiveGroup}
-        onAddGraphTab={handleAddFlowTab}
-        isActiveGroup={activeGroupId === group.id}
-        tabs={tabs}
         activeTabId={activeTabId}
-        user={user}
+        groupId={group.id}
+        isActiveGroup={activeGroupId === group.id}
         story={story}
+        tabs={tabs}
+        user={user}
+        onAddGraphTab={handleAddFlowTab}
+        onRemoveTab={removeTab}
+        onReorderTabs={reorderTabs}
+        onSetActiveTab={setActiveTab}
+        onSplitTab={handleSplitTab}
       />
     </ResizablePanel>
   );

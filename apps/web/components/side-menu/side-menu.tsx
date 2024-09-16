@@ -1,13 +1,13 @@
 "use server";
 
 import Link from "next/link";
-import { type User } from "lucia";
-import { type Folder, type File as StoryFile } from "@repo/db";
+import { StoryWithFolder } from "@/app/(main)/stories/actions/get-story";
 import { CreateStoryForm } from "@/app/(main)/stories/create/components/create-story-form";
 import { db } from "@/lib/db";
-import { type StoryWithFolder } from "@/app/(main)/stories/[title]/page";
+import { User, type Folder, type File as StoryFile } from "@repo/db";
+
+import { NodeMetadata, TreeNodeData, TreeView } from "../tree-view/tree-view";
 import { Button } from "../ui/button";
-import { Icon } from "../ui/icon";
 import {
   Dialog,
   DialogContent,
@@ -15,25 +15,28 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "../ui/dialog";
-import { TreeView } from "../tree-view/tree-view";
-import { type TreeItemNode } from "../tree-view/tree-view";
+import { Icon } from "../ui/icon";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
+import { ToCTab } from "./components/toc-tab";
 
 interface SideMenuProps {
   user: User | null;
 }
 
-function constructFolderStructure(stories: StoryWithFolder[]): TreeItemNode {
+function constructFolderStructure(
+  stories: StoryWithFolder[],
+): TreeNodeData<NodeMetadata> {
   const allFolders = stories.flatMap((story) => story.folder);
 
   // Function to build folder and file hierarchy
   const buildHierarchy = (
     parentId: string | null,
     storyId: string,
-    storyTitle: string
+    storyTitle: string,
   ): (Folder | StoryFile)[] => {
     const childFolders = allFolders
       .filter(
-        (folder) => folder.parentId === parentId && folder.storyId === storyId
+        (folder) => folder.parentId === parentId && folder.storyId === storyId,
       )
       .map((folder) => {
         const folderFiles: StoryFile[] = folder.file.map((file) => ({
@@ -52,7 +55,7 @@ function constructFolderStructure(stories: StoryWithFolder[]): TreeItemNode {
           ownerId: folder.ownerId, // Assuming folder has ownerId
           parentId: folder.id,
         }));
-        console.log("folderFiles: ", folderFiles);
+
         return {
           ...folder,
           id: folder.id,
@@ -79,6 +82,7 @@ function constructFolderStructure(stories: StoryWithFolder[]): TreeItemNode {
       storyTitle: "root",
       type: "story" as const,
     },
+    //@ts-expect-error - Need to fix the type of children
     children: stories.map((story) => {
       return {
         name: story.title,
@@ -144,20 +148,37 @@ export async function SideMenu({ user }: SideMenuProps): Promise<JSX.Element> {
   });
 
   const treeData = constructFolderStructure(stories);
-  console.log("treeData: ", treeData);
+
   return (
-    <div className="min-h-screen min-w-80 bg-neutral-800 border border-border">
-      <div className="flex gap-4 items-center justify-center">
-        {/* <AddFolderForm /> */}
+    <div className="min-h-screen min-w-80 border border-border bg-neutral-800">
+      <div className="flex items-center justify-center gap-4">
         <Button variant="ghost">
           <Icon name="FilePen" />
+        </Button>
+        <Button variant="ghost">
+          <Icon name="PanelLeft" />
         </Button>
       </div>
       <div className="flex flex-col justify-center">
         {user ? (
           <>
             {stories.length > 0 ? (
-              <TreeView folder={treeData} />
+              <Tabs defaultValue="explorer">
+                <TabsList>
+                  <TabsTrigger value="explorer">
+                    <Icon name="Globe" />
+                  </TabsTrigger>
+                  <TabsTrigger value="table-of-contents">
+                    <Icon name="List" />
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="explorer">
+                  <TreeView folder={treeData} />
+                </TabsContent>
+                <TabsContent value="table-of-contents">
+                  <ToCTab />
+                </TabsContent>
+              </Tabs>
             ) : (
               <>
                 <p>You have no yet created a story</p>

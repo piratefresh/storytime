@@ -1,13 +1,12 @@
-"use server";
+'use server';
 
-import { cookies } from "next/headers";
-import { lucia } from "@/lib/auth";
-import { redirect } from "next/navigation";
-import { Scrypt } from "lucia";
-import { db } from "@/lib/db";
-
-import { z } from "zod";
-import { userAuthSchema } from "@/app/schemas/user-auth-schema";
+import { userAuthSchema } from '@/app/schemas/user-auth-schema';
+import { lucia } from '@/lib/auth';
+import { db } from '@/lib/db';
+import { Scrypt } from 'lucia';
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
+import { z } from 'zod';
 
 type FormData = z.infer<typeof userAuthSchema>;
 
@@ -16,7 +15,7 @@ export async function login(formData: FormData) {
   // If form validation fails, return errors early. Otherwise, continue.
   if (!validatedFields.success) {
     return {
-      error: "Missing Fields. Failed to Create Invoice.",
+      error: 'Missing Fields. Failed to Create Invoice.',
     };
   }
   const email = formData.email;
@@ -39,7 +38,13 @@ export async function login(formData: FormData) {
     // it is crucial your implementation is protected against brute-force attacks with login throttling etc.
     // If usernames are public, you may outright tell the user that the username is invalid.
     return {
-      error: "Incorrect username or password",
+      error: 'Incorrect username or password',
+    };
+  }
+
+  if (!existingUser.hashedPassword) {
+    return {
+      error: 'Incorrect username or password',
     };
   }
 
@@ -47,12 +52,12 @@ export async function login(formData: FormData) {
 
   const validPassword = await scrypt.verify(
     existingUser.hashedPassword,
-    password
+    password,
   );
 
   if (!validPassword) {
     return {
-      error: "Incorrect username or password",
+      error: 'Incorrect username or password',
     };
   }
 
@@ -61,7 +66,7 @@ export async function login(formData: FormData) {
   cookies().set(
     sessionCookie.name,
     sessionCookie.value,
-    sessionCookie.attributes
+    sessionCookie.attributes,
   );
-  return redirect("/");
+  return redirect('/');
 }

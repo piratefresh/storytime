@@ -1,21 +1,17 @@
 {
-  "extends": "@repo/typescript-config/nextjs.json",
+  "extends": "@repo/tsconfig/base.json",
   "compilerOptions": {
     "plugins": [
       {
-        "name": "next",
-      },
+        "name": "next"
+      }
     ],
     "paths": {
-      "@/*": ["./*"],
+      "@/*": ["./*"]
     },
+    "lib": ["ES2022", "dom", "dom.iterable"],
+    "jsx": "preserve"
   },
-  "include": [
-    "next-env.d.ts",
-    "next.config.js",
-    "**/*.ts",
-    "**/*.tsx",
-    ".next/types/**/*.ts", "app/(auth)/session/get-user",
-  ],
-  "exclude": ["node_modules"],
+  "include": [".", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
 }

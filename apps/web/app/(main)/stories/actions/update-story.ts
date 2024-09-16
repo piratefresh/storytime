@@ -1,28 +1,29 @@
-"use server";
+'use server';
 
-import { validateRequest } from "@/lib/auth";
-import db from "@/lib/db";
-import { revalidatePath } from "next/cache";
-import { ActionResult } from "next/dist/server/app-render/types";
+import { validateRequest } from '@/lib/auth';
+import db from '@/lib/db';
+import { JSONContent } from '@tiptap/core';
+import { revalidatePath } from 'next/cache';
+import { ActionResult } from 'next/dist/server/app-render/types';
 
 export async function updateStory({
   storyId,
   content,
 }: {
   storyId: string;
-  content: string;
+  content: string | JSONContent;
 }): Promise<ActionResult> {
   const { session } = await validateRequest();
   if (!session) {
     return {
-      error: "Unauthorized",
+      error: 'Unauthorized',
     };
   }
 
   // Default name if none provided
   if (!content) {
     return {
-      error: "Content is required.",
+      error: 'Content is required.',
     };
   }
 
@@ -37,7 +38,7 @@ export async function updateStory({
 
   if (!story) {
     return {
-      error: "Story not found, failed to create folder",
+      error: 'Story not found, failed to create folder',
     };
   }
 

@@ -1,11 +1,12 @@
-import { ReactNodeViewRenderer } from "@tiptap/react";
-import { mergeAttributes, nodeInputRule, Range } from "@tiptap/core";
-import TiptapImage, { ImageOptions } from "@tiptap/extension-image";
-import ImageBlockView from "./components/image-block-view";
-import { defaultMarkdownSerializer } from "prosemirror-markdown";
-import { MarkdownNodeSpec } from "tiptap-markdown";
+import { mergeAttributes, nodeInputRule, Range } from '@tiptap/core';
+import TiptapImage, { ImageOptions } from '@tiptap/extension-image';
+import { ReactNodeViewRenderer } from '@tiptap/react';
+import { defaultMarkdownSerializer } from 'prosemirror-markdown';
+import { MarkdownNodeSpec } from 'tiptap-markdown';
 
-declare module "@tiptap/core" {
+import ImageBlockView from './components/image-block-view';
+
+declare module '@tiptap/core' {
   interface Commands<ReturnType> {
     imageBlock: {
       setImageBlock: (attributes: { src: string }) => ReturnType;
@@ -13,16 +14,17 @@ declare module "@tiptap/core" {
         src: string;
         pos: number | Range;
       }) => ReturnType;
-      setImageBlockAlign: (align: "left" | "center" | "right") => ReturnType;
+      setImageBlockAlign: (align: 'left' | 'center' | 'right') => ReturnType;
       setImageBlockWidth: (width: number) => ReturnType;
+      setImageBlockFloat: (float: 'left' | 'right' | 'none') => ReturnType;
     };
   }
 }
 
 export const ImageBlock = TiptapImage.extend({
-  name: "imageBlock",
+  name: 'imageBlock',
 
-  group: "block",
+  group: 'block',
 
   defining: true,
 
@@ -40,36 +42,36 @@ export const ImageBlock = TiptapImage.extend({
     return {
       ...this.parent?.(),
       src: {
-        default: "",
+        default: '',
         parseHTML: (element) => {
-          return element.getAttribute("src");
+          return element.getAttribute('src');
         },
         renderHTML: (attributes) => {
           return { src: attributes.src };
         },
       },
       width: {
-        default: "100%",
+        default: '100%',
         parseHTML: (element) => {
-          return element.getAttribute("data-width");
+          return element.getAttribute('data-width');
         },
         renderHTML: (attributes) => {
-          return { "data-width": attributes.width };
+          return { 'data-width': attributes.width };
         },
       },
       align: {
-        default: "center",
+        default: 'center',
         parseHTML: (element) => {
-          return element.getAttribute("data-align");
+          return element.getAttribute('data-align');
         },
         renderHTML: (attributes) => {
-          return { "data-align": attributes.align };
+          return { 'data-align': attributes.align };
         },
       },
       alt: {
         default: undefined,
         parseHTML: (element) => {
-          return element.getAttribute("alt");
+          return element.getAttribute('alt');
         },
         renderHTML: (attributes) => {
           return { alt: attributes.alt };
@@ -87,9 +89,9 @@ export const ImageBlock = TiptapImage.extend({
   // },
 
   renderHTML({ HTMLAttributes }) {
-    console.log("renderHTML Attributes:", HTMLAttributes); // Log all attributes during rendering
+    console.log('renderHTML Attributes:', HTMLAttributes); // Log all attributes during rendering
     return [
-      "img",
+      'img',
       mergeAttributes(this.options.HTMLAttributes, HTMLAttributes),
     ];
   },
@@ -100,7 +102,7 @@ export const ImageBlock = TiptapImage.extend({
         (attrs) =>
         ({ commands }) => {
           return commands.insertContent({
-            type: "imageBlock",
+            type: 'imageBlock',
             attrs: { src: attrs.src },
           });
         },
@@ -109,7 +111,7 @@ export const ImageBlock = TiptapImage.extend({
         (attrs) =>
         ({ commands }) => {
           return commands.insertContentAt(attrs.pos, {
-            type: "imageBlock",
+            type: 'imageBlock',
             attrs: { src: attrs.src },
           });
         },
@@ -117,12 +119,12 @@ export const ImageBlock = TiptapImage.extend({
       setImageBlockAlign:
         (align) =>
         ({ commands }) =>
-          commands.updateAttributes("imageBlock", { align }),
+          commands.updateAttributes('imageBlock', { align }),
 
       setImageBlockWidth:
         (width) =>
         ({ commands }) =>
-          commands.updateAttributes("imageBlock", {
+          commands.updateAttributes('imageBlock', {
             width: `${Math.max(0, Math.min(100, width))}%`,
           }),
     };

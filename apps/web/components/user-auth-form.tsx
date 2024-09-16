@@ -1,14 +1,18 @@
-"use client";
+'use client';
 
-import { usePathname, useSearchParams } from "next/navigation";
-import { useFormState, useFormStatus } from "react-dom";
-import { login } from "@/app/(auth)/login/actions/login";
-import { signup } from "@/app/(auth)/register/actions/signup";
-import { userAuthSchema } from "@/app/schemas/user-auth-schema";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import { login } from '@/app/(auth)/login/actions/login';
+import { signup } from '@/app/(auth)/register/actions/signup';
+import { userAuthSchema } from '@/app/schemas/user-auth-schema';
+import { cn } from '@/lib/utils';
+import { zodResolver } from '@hookform/resolvers/zod';
+import Link from 'next/link';
+import { usePathname, useSearchParams } from 'next/navigation';
+import { useFormState, useFormStatus } from 'react-dom';
+import { useForm } from 'react-hook-form';
+import { z } from 'zod';
 
-import { z } from "zod";
+import { GithubLoginButton } from './github-login-button';
+import { Button } from './ui/button';
 import {
   Form,
   FormControl,
@@ -17,13 +21,9 @@ import {
   FormItem,
   FormLabel,
   FormMessage,
-} from "./ui/form";
-import { Input } from "./ui/input";
-import { Button } from "./ui/button";
-import { cn } from "@/lib/utils";
-import { GithubLoginButton } from "./github-login-button";
-import Link from "next/link";
-import { TypographyP } from "./ui/typography";
+} from './ui/form';
+import { Input } from './ui/input';
+import { TypographyP } from './ui/typography';
 
 type FormData = z.infer<typeof userAuthSchema>;
 
@@ -42,14 +42,14 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
   const onAction = async () => {
     const valid = await form.trigger();
     if (valid) {
-      if (pathname === "/login") {
+      if (pathname === '/login') {
         const response = await login(form.getValues());
-        form.setError("root.serverError", {
+        form.setError('root.serverError', {
           type: `${response.error}`,
         });
       } else {
         const response = await signup(form.getValues());
-        form.setError("root.serverError", {
+        form.setError('root.serverError', {
           type: `${response.error}`,
         });
       }
@@ -59,7 +59,7 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
   const [state, dispatch] = useFormState(onAction, undefined);
 
   return (
-    <div className={cn("grid gap-6", className)} {...props}>
+    <div className={cn('grid gap-6', className)} {...props}>
       <Form {...form}>
         <form action={dispatch} className="flex flex-col gap-4">
           <FormField
@@ -96,12 +96,10 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
           <SubmitButton />
         </form>
       </Form>
-      <Link href={pathname === "/login" ? "/register" : "/login"}>
+      <Link href={pathname === '/login' ? '/register' : '/login'}>
         <TypographyP>Create Account</TypographyP>
       </Link>
-      <GithubLoginButton
-        isLogin={pathname === "/login" ? "/register" : "/login"}
-      />
+      <GithubLoginButton isLogin={pathname === '/login'} />
     </div>
   );
 }

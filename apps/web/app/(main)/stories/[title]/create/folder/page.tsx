@@ -1,7 +1,8 @@
-import { validateRequest } from "@/lib/auth";
-import { redirect } from "next/navigation";
-import { CreateFolderForm } from "./components/create-folder-form";
-import { getStory } from "../../page";
+import { validateRequest } from '@/lib/auth';
+import { redirect } from 'next/navigation';
+
+import { getStory } from '../../../actions/get-story';
+import { CreateFolderForm } from './components/create-folder-form';
 
 async function CreateFolderPage({
   params: { title },
@@ -11,7 +12,7 @@ async function CreateFolderPage({
   const { user } = await validateRequest();
 
   if (!user) {
-    redirect("/stories");
+    redirect('/stories');
   }
   const story = await getStory({
     title: decodeURIComponent(title),
@@ -19,7 +20,7 @@ async function CreateFolderPage({
   });
 
   if (!story) {
-    redirect("/stories");
+    redirect('/stories');
   }
 
   return <CreateFolderForm user={user} id={story?.id} />;

@@ -1,12 +1,19 @@
 import type { Metadata } from "next";
+
 import "./globals.css";
+
 import { Inter } from "next/font/google";
-import { Toaster } from "@/components/toast";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { ThemeProvider } from "@/components/theme-provider";
 import { SessionProvider } from "@/components/session-provider";
-import { validateRequest } from "@/lib/auth";
 import { SideMenu } from "@/components/side-menu";
+import { ThemeProvider } from "@/components/theme-provider";
+import { Toaster } from "@/components/toast";
+import { ToCProvider } from "@/components/toc-provider";
+import { TRPCProvider } from "@/components/trpc-provider";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { validateRequest } from "@/lib/auth";
+
+// import { TRPCReactProvider } from "@/trpc/react";
+
 import { TabsStoreProvider } from "./stores/tabs-provider";
 
 const inter = Inter({ subsets: ["latin"] });
@@ -24,21 +31,26 @@ export default async function RootLayout({
   const sessionData = await validateRequest();
 
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={inter.className}>
+    <html
+      suppressHydrationWarning
+      className={`${inter.className} h-full`}
+      lang="en"
+    >
+      <body className="flex h-full flex-col">
         <TabsStoreProvider>
           <ThemeProvider
+            disableTransitionOnChange
+            enableSystem
             attribute="class"
             defaultTheme="dark"
-            enableSystem
-            disableTransitionOnChange
           >
             <TooltipProvider>
               <SessionProvider value={sessionData}>
-                <div className="flex">
-                  <SideMenu user={sessionData.user} />
-                  <main className="flex w-full h-full">{children}</main>
-                </div>
+                <TRPCProvider>
+                  <ToCProvider>
+                    <main className="flex h-full w-full">{children}</main>
+                  </ToCProvider>
+                </TRPCProvider>
               </SessionProvider>
             </TooltipProvider>
             <Toaster />

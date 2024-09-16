@@ -1,11 +1,11 @@
 import {
-  TypographyP,
   TypographyH1,
   TypographyH2,
-} from "@/components/ui/typography";
-import { UserAuthForm } from "@/components/user-auth-form";
+  TypographyP,
+} from '@/components/ui/typography';
+import { UserAuthForm } from '@/components/user-auth-form';
 
-export function LoginPage(): JSX.Element {
+function LoginPage(): JSX.Element {
   return (
     <div className="grid place-content-center w-full min-h-screen">
       <div className="flex flex-col gap-4">

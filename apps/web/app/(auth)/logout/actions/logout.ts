@@ -1,15 +1,15 @@
-"use server";
+'use server';
 
-import { lucia, validateRequest } from "@/lib/auth";
-import { ActionResult } from "next/dist/server/app-render/types";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
+import { lucia, validateRequest } from '@/lib/auth';
+import { type ActionResult } from 'next/dist/server/app-render/types';
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
 
 export async function logout(): Promise<ActionResult> {
   const { session } = await validateRequest();
   if (!session) {
     return {
-      error: "Unauthorized",
+      error: 'Unauthorized',
     };
   }
 
@@ -19,7 +19,7 @@ export async function logout(): Promise<ActionResult> {
   cookies().set(
     sessionCookie.name,
     sessionCookie.value,
-    sessionCookie.attributes
+    sessionCookie.attributes,
   );
-  return redirect("/login");
+  return redirect('/login');
 }

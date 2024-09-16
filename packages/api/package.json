@@ -1,0 +1,52 @@
+{
+  "name": "@repo/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./index.ts"
+    },
+    "./env": "./env.mjs",
+    "./edge": "./edge.ts",
+    "./lambda": "./lambda.ts",
+    "./transformer": "./transformer.ts",
+    "./validators": "./validators.ts"
+  },
+  "license": "MIT",
+  "scripts": {
+    "build": "tsc",
+    "clean": "git clean -xdf .cache .turbo dist node_modules",
+    "dev": "tsc",
+    "format": "prettier --check . --ignore-path ../../.gitignore",
+    "lint": "eslint",
+    "typecheck": "tsc --noEmit --emitDeclarationOnly false"
+  },
+  "dependencies": {
+    "@dinero.js/currencies": "2.0.0-alpha.14",
+    "@repo/db": "workspace:*",
+    "@repo/validators": "workspace:*",
+    "@repo/web": "workspace:*",
+    "@trpc/server": "catalog:",
+    "dinero.js": "2.0.0-alpha.14",
+    "superjson": "2.2.1",
+    "zod": "catalog:"
+  },
+  "devDependencies": {
+    "@repo/eslint-config": "workspace:*",
+    "@repo/prettier-config": "workspace:*",
+    "@repo/tsconfig": "workspace:*",
+    "@types/dinero.js": "^1.9.4",
+    "eslint": "catalog:",
+    "prettier": "catalog:",
+    "typescript": "catalog:"
+  },
+  "eslintConfig": {
+    "root": true,
+    "extends": [
+      "@repo/eslint-config/base"
+    ]
+  },
+  "prettier": "@repo/prettier-config"
+}

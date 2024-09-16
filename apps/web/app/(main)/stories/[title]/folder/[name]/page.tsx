@@ -1,30 +1,16 @@
-import { Button } from "@/components/ui/button";
-import db from "@/lib/db";
-import { validateProtected } from "@/lib/validateProtected";
-import Link from "next/link";
-import { redirect } from "next/navigation";
-import { cache } from "react";
+import { Button } from '@/components/ui/button';
+import { validateProtected } from '@/lib/validate-protected';
+import Link from 'next/link';
+import { redirect } from 'next/navigation';
 
-export const getStory = cache(
-  async ({ title, userId }: { title: string; userId: string }) => {
-    const item = await db.story.findFirst({
-      where: {
-        ownerId: userId,
-        title,
-      },
-      include: {
-        folder: true,
-      },
-    });
-    return item;
-  }
-);
+import { getStory } from '../../../actions/get-story';
+
 async function FolderPage({
   params: { title, name },
 }: {
   params: { title: string; name: string };
 }) {
-  const { user } = await validateProtected({ redirectURL: "/stories" });
+  const { user } = await validateProtected({ redirectURL: '/stories' });
 
   const story = await getStory({
     title: decodeURIComponent(title),
@@ -32,7 +18,7 @@ async function FolderPage({
   });
 
   if (!story) {
-    redirect("/stories");
+    redirect('/stories');
   }
 
   return (

@@ -1,7 +1,7 @@
-import { Extension } from "@tiptap/core";
-import { Node as ProsemirrorNode } from "@tiptap/pm/model";
-import { Plugin, PluginKey, TextSelection } from "@tiptap/pm/state";
-import { Decoration, DecorationSet } from "@tiptap/pm/view";
+import { Extension } from '@tiptap/core';
+import { Node as ProsemirrorNode } from '@tiptap/pm/model';
+import { Plugin, PluginKey, TextSelection } from '@tiptap/pm/state';
+import { Decoration, DecorationSet } from '@tiptap/pm/view';
 
 export interface Result {
   message: string;
@@ -38,13 +38,13 @@ export default class LinterPlugin {
 }
 
 interface IconDivElement extends HTMLDivElement {
-  issue?: Issue;
+  issue?: any;
 }
 
-function renderIcon(issue: Issue) {
-  const icon: IconDivElement = document.createElement("div");
+function renderIcon(issue: any) {
+  const icon: IconDivElement = document.createElement('div');
 
-  icon.className = "lint-icon";
+  icon.className = 'lint-icon';
   icon.title = issue.message;
   icon.issue = issue;
 
@@ -53,7 +53,7 @@ function renderIcon(issue: Issue) {
 
 function runAllLinterPlugins(
   doc: ProsemirrorNode,
-  plugins: Array<typeof LinterPlugin>
+  plugins: Array<typeof LinterPlugin>,
 ) {
   const decorations: [any?] = [];
 
@@ -66,9 +66,9 @@ function runAllLinterPlugins(
   results.forEach((issue) => {
     decorations.push(
       Decoration.inline(issue.from, issue.to, {
-        class: "problem",
+        class: 'problem',
       }),
-      Decoration.widget(issue.from, renderIcon(issue))
+      Decoration.widget(issue.from, renderIcon(issue)),
     );
   });
 
@@ -80,7 +80,7 @@ export interface LinterOptions {
 }
 
 export const Linter = Extension.create<LinterOptions>({
-  name: "linter",
+  name: 'linter',
 
   addOptions() {
     return {
@@ -93,7 +93,7 @@ export const Linter = Extension.create<LinterOptions>({
 
     return [
       new Plugin({
-        key: new PluginKey("linter"),
+        key: new PluginKey('linter'),
         state: {
           init(_, { doc }) {
             return runAllLinterPlugins(doc, plugins);
@@ -117,7 +117,7 @@ export const Linter = Extension.create<LinterOptions>({
               view.dispatch(
                 view.state.tr
                   .setSelection(TextSelection.create(view.state.doc, from, to))
-                  .scrollIntoView()
+                  .scrollIntoView(),
               );
 
               return true;

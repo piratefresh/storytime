@@ -1,6 +1,3 @@
-import { type DraggableAttributes } from "@dnd-kit/core";
-import { type SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
-import { type Folder } from "@repo/db";
 import {
   Fragment,
   startTransition,
@@ -9,16 +6,19 @@ import {
   useRef,
   useState,
 } from "react";
-import { type INodeRendererProps } from "react-accessible-treeview";
-import { ChevronDown, ChevronRight, FileIcon, FolderIcon } from "lucide-react";
-import { useTabsStore } from "@/app/stores/tabs-provider";
-import { useUpdateStoryUrl } from "@/hooks/use-update-story-url";
+import { createFile } from "@/app/(main)/stories/actions/create-file";
 import { createFolder } from "@/app/(main)/stories/actions/create-folder";
 import { deleteFileFolder } from "@/app/(main)/stories/actions/delete-file-folder";
-import { createFile } from "@/app/(main)/stories/actions/create-file";
-import { cn } from "@/lib/utils";
 import { rename } from "@/app/(main)/stories/actions/rename";
-import { Input } from "../ui/input";
+import { useTabsStore } from "@/app/stores/tabs-provider";
+import { useUpdateStoryUrl } from "@/hooks/use-update-story-url";
+import { cn } from "@/lib/utils";
+import { type DraggableAttributes } from "@dnd-kit/core";
+import { type SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
+import { type Folder } from "@repo/db";
+import { ChevronDown, ChevronRight, FileIcon, FolderIcon } from "lucide-react";
+import { type INodeRendererProps } from "react-accessible-treeview";
+
 import {
   ContextMenu,
   ContextMenuContent,
@@ -29,9 +29,9 @@ import {
   ContextMenuSubTrigger,
   ContextMenuTrigger,
 } from "../ui/context-menu";
-import { type TreeItemNode } from "./tree-view";
 import { DropdownMenuLabel } from "../ui/dropdown-menu";
-import { Context } from "@dnd-kit/sortable/dist/components";
+import { Input } from "../ui/input";
+import { type TreeItemNode } from "./tree-view";
 
 interface TreeNodeProps extends INodeRendererProps {
   onDoubleClick?: (info: Folder) => void;
@@ -77,7 +77,7 @@ export function TreeNode({
 }: TreeNodeProps): JSX.Element {
   const updateTabLabel = useTabsStore((state) => state.updateTabLabel);
   const removeTabFromAllGroups = useTabsStore(
-    (state) => state.removeTabFromAllGroups
+    (state) => state.removeTabFromAllGroups,
   );
 
   const updateStoryUrl = useUpdateStoryUrl();
@@ -122,7 +122,7 @@ export function TreeNode({
       onEditing,
       updateStoryUrl,
       updateTabLabel,
-    ]
+    ],
   );
 
   const handleSubmit = (e: React.FormEvent): void => {
@@ -166,13 +166,13 @@ export function TreeNode({
             label: "Create file",
             onClick: (info: TreeItemNode) => {
               const formData = new FormData();
-              if (info.metadata.storyId) {
+              if (info.metadata?.storyId) {
                 formData.append("storyId", info.metadata.storyId);
               }
               if (
                 "id" in info &&
                 typeof info.id === "string" &&
-                !info.metadata.isRoot
+                !info.metadata?.isRoot
               ) {
                 formData.append("folderId", info.id);
               }
@@ -185,11 +185,11 @@ export function TreeNode({
             label: "Create folder",
             onClick: (info: TreeItemNode) => {
               const formData = new FormData();
-              if (info.metadata.storyId) {
+              if (info.metadata?.storyId) {
                 formData.append("storyId", info.metadata.storyId);
               }
-              if (!info.metadata.isRoot && info.id) {
-                formData.append("parentId", info.id);
+              if (!info.metadata?.isRoot && info.id) {
+                formData.append("parentId", info.id.toString());
               }
               startTransition(async () => {
                 await createFolder(null, formData);
@@ -213,7 +213,7 @@ export function TreeNode({
                 label: "Choose destination...",
                 onClick: () => {
                   console.log(
-                    "Choose destination - functionality to be implemented"
+                    "Choose destination - functionality to be implemented",
                   );
                 },
               },
@@ -237,19 +237,20 @@ export function TreeNode({
             label: "Delete",
             onClick: (info: TreeItemNode) => {
               const formData = new FormData();
+              if (!info.metadata) return;
               formData.append("storyId", info.metadata.storyId);
               formData.append("name", info.name);
               formData.append("type", info.metadata.type);
               if (info.metadata.type === "file") {
-                formData.append("fileId", info.id);
+                formData.append("fileId", info.id.toString());
               } else {
-                formData.append("folderId", info.id);
+                formData.append("folderId", info.id.toString());
               }
 
               startTransition(async () => {
                 const response = await deleteFileFolder(null, formData);
                 if (response?.status) {
-                  removeTabFromAllGroups(info.id);
+                  removeTabFromAllGroups(info.id.toString());
                 }
               });
             },
@@ -279,7 +280,7 @@ export function TreeNode({
       <span
         className={cn({
           hidden: isEditing,
-          "flex gap-2 items-center": !isEditing,
+          "flex items-center gap-2": !isEditing,
         })}
       >
         {element.metadata?.type === "folder" ? (
@@ -293,6 +294,8 @@ export function TreeNode({
       <form onSubmit={handleSubmit} className={cn(!isEditing && "hidden")}>
         <Input
           ref={inputRef}
+          className="flex"
+          value={localValueState}
           onChange={(e) => {
             setLocalValueState(e.target.value);
           }}
@@ -306,20 +309,20 @@ export function TreeNode({
               e.stopPropagation();
             }
           }}
-          className="flex"
-          value={localValueState}
         />
       </form>
     </>
   );
 
   const defaultNode = (
-    <div
+    <ContextMenuTrigger
       {...nodeProps}
       ref={setDragNodeRef}
       {...(isEditing ? {} : { ...dragAttributes, ...dragListeners })}
-      aria-selected={isSelected}
       aria-expanded={isExpanded}
+      aria-selected={isSelected}
+      data-treeview-is-branch={isBranch}
+      data-treeview-level={level}
       className={cn(
         "relative",
         "transition-colors",
@@ -333,13 +336,11 @@ export function TreeNode({
         "aria-selected:!bg-selection",
         "group",
         "h-[28px]",
-        "hover:bg-control"
+        "hover:bg-control",
       )}
       style={{
         marginLeft: 10 * (level - 1),
       }}
-      data-treeview-is-branch={isBranch}
-      data-treeview-level={level}
     >
       {element.metadata?.type === "folder" ? (
         <ArrowIcon isOpen={isExpanded} />
@@ -347,14 +348,12 @@ export function TreeNode({
         <div style={{ width: 16 }} />
       )}
       {nodeContent}
-    </div>
+    </ContextMenuTrigger>
   );
-
-  const contextMenuItems = getContextMenuItems();
 
   return (
     <ContextMenu>
-      <ContextMenuTrigger>{defaultNode}</ContextMenuTrigger>
+      {defaultNode}
       <ContextMenuContent>
         <DropdownMenuLabel>{nodeContent}</DropdownMenuLabel>
         <ContextMenuSeparator />
@@ -389,7 +388,7 @@ export function TreeNode({
                 >
                   {item.label}
                 </ContextMenuItem>
-              )
+              ),
             )}
           </Fragment>
         ))}

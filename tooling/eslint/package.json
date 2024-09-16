@@ -1,0 +1,39 @@
+{
+  "name": "@repo/eslint-config",
+  "version": "0.2.0",
+  "private": true,
+  "license": "MIT",
+  "files": [
+    "./base.js",
+    "./nextjs.js",
+    "./react.js"
+  ],
+  "scripts": {
+    "clean": "rm -rf .turbo node_modules",
+    "lint": "eslint .",
+    "format": "prettier --check \"**/*.{js,json}\"",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@next/eslint-plugin-next": "^14.1.0",
+    "@typescript-eslint/eslint-plugin": "^6.19.0",
+    "@typescript-eslint/parser": "^6.19.0",
+    "@vercel/style-guide": "^6.0.0",
+    "eslint-config-prettier": "^9.1.0",
+    "eslint-config-turbo": "^1.11.3",
+    "eslint-plugin-import": "^2.29.1",
+    "eslint-plugin-jsx-a11y": "^6.8.0",
+    "eslint-plugin-react": "^7.33.2",
+    "eslint-plugin-react-hooks": "^4.6.0"
+  },
+  "devDependencies": {
+    "@repo/prettier-config": "workspace:*",
+    "@repo/tsconfig": "workspace:*",
+    "@types/eslint": "^8.56.2",
+    "@types/node": "^22.5.2",
+    "eslint": "^8.56.0",
+    "eslint-plugin-only-warn": "^1.1.0",
+    "turbo": "^2.1.1",
+    "typescript": "^5.4.5"
+  }
+}

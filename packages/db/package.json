@@ -15,9 +15,23 @@
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "prisma": "^5.9.1"
+    "@repo/eslint-config": "workspace:*",
+    "@repo/prettier-config": "workspace:*",
+    "@repo/tsconfig": "workspace:*",
+    "prisma": "catalog:prisma"
   },
   "dependencies": {
-    "@prisma/client": "5.9.1"
-  }
+    "@prisma/client": "catalog:prisma",
+    "neo4j-driver": "^5.24.0",
+    "superjson": "2.2.1"
+  },
+  "eslintConfig": {
+    "extends": [
+      "@repo/eslint-config/base"
+    ],
+    "rules": {
+      "@typescript-eslint/consistent-type-definitions": "off"
+    }
+  },
+  "prettier": "@repo/prettier-config"
 }

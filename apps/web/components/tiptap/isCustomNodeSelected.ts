@@ -1,28 +1,28 @@
-import { Editor } from "@tiptap/react";
-import { CustomTooltipNode, Link } from "./extensions/node-link";
-import { PageBreak } from "./extensions/page-break";
-import CharacterCount from "@tiptap/extension-character-count";
-import { GenerateText } from "./extensions/generateText";
-import CustomImage from "./extensions/image";
-import ImageBlock from "./extensions/image-block/image-block";
-import ImageUpload from "./extensions/document/image-upload/image-upload";
-import { Image } from "./extensions/image/image";
+import CharacterCount from '@tiptap/extension-character-count';
+import { Editor } from '@tiptap/react';
+
+import { GenerateText } from './extensions/generateText';
+import CustomImage from './extensions/image';
+import ImageBlock from './extensions/image-block/image-block';
+import { Image } from './extensions/image/image';
+import { CustomTooltipNode, Link } from './extensions/node-link';
+import { PageBreak } from './extensions/page-break';
 
 export const isTableGripSelected = (node: HTMLElement) => {
   let container = node;
 
-  while (container && !["TD", "TH"].includes(container.tagName)) {
+  while (container && !['TD', 'TH'].includes(container.tagName)) {
     container = container.parentElement!;
   }
 
   const gripColumn =
     container &&
     container.querySelector &&
-    container.querySelector("a.grip-column.selected");
+    container.querySelector('a.grip-column.selected');
   const gripRow =
     container &&
     container.querySelector &&
-    container.querySelector("a.grip-row.selected");
+    container.querySelector('a.grip-row.selected');
 
   if (gripColumn || gripRow) {
     return true;
@@ -40,7 +40,6 @@ export const isCustomNodeSelected = (editor: Editor, node: HTMLElement) => {
     Link.name,
     CustomImage.name,
     ImageBlock.name,
-    ImageUpload.name,
     Image.name,
   ];
 

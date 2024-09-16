@@ -1,63 +1,10 @@
-import { cache } from "react";
-import { type Prisma } from "@repo/db";
 import { redirect } from "next/navigation";
-import { db } from "@/lib/db";
+import { EditorProvider } from "@/components/editor-provider";
+import { SideMenu } from "@/components/side-menu";
 import { validateRequest } from "@/lib/auth";
+
+import { getStory } from "../actions/get-story";
 import { GroupPanel } from "./components/group-panel";
-
-export type StoryWithFolder = Prisma.StoryGetPayload<{
-  include: {
-    folder: {
-      include: {
-        file: {
-          orderBy: {
-            name: "asc";
-          };
-        };
-      };
-      orderBy: {
-        name: "asc";
-      };
-    };
-    file: {
-      orderBy: {
-        name: "asc";
-      };
-    };
-  };
-}>;
-
-export const getStory = cache(
-  async ({
-    title,
-    userId,
-  }: {
-    title: string;
-    userId: string;
-  }): Promise<StoryWithFolder | null> => {
-    const story = await db.story.findFirst({
-      where: {
-        ownerId: userId,
-        title,
-      },
-      include: {
-        folder: {
-          include: {
-            file: {
-              orderBy: {
-                name: "asc",
-              },
-            },
-          },
-          orderBy: {
-            name: "asc",
-          },
-        },
-      },
-    });
-    return story ?? null;
-  }
-);
 
 export default async function StoryPage({
   params: { title },
@@ -75,11 +22,14 @@ export default async function StoryPage({
     userId: user.id,
   });
 
-  console.log("story: ", JSON.stringify(story));
-
   if (!story) {
     redirect("/stories");
   }
 
-  return <GroupPanel story={story} user={user} />;
+  return (
+    <EditorProvider>
+      <SideMenu user={user} />
+      <GroupPanel story={story} user={user} />
+    </EditorProvider>
+  );
 }

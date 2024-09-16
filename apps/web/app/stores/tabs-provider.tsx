@@ -1,13 +1,14 @@
 "use client";
 
-import { type ReactNode, createContext, useRef, useContext } from "react";
+import { createContext, useContext, useRef, type ReactNode } from "react";
 import { useStore } from "zustand";
-import { type TabsStore, createTabsStore } from "./tabs-store";
+
+import { createTabsStore, type TabsStore } from "./tabs-store";
 
 export type TabsStoreApi = ReturnType<typeof createTabsStore>;
 
 export const TabsStoreContext = createContext<TabsStoreApi | undefined>(
-  undefined
+  undefined,
 );
 
 export interface TabsStoreProviderProps {
