@@ -1,7 +1,7 @@
 import { validateRequest } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { CreateFolderForm } from "./components/create-folder-form";
-import { getStory } from "../../page";
+import { getStory } from "../../get-story";
 
 async function CreateFolderPage({
   params: { title },

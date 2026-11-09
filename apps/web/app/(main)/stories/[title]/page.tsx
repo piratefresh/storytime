@@ -1,9 +1,8 @@
-import { cache } from "react";
 import { type Prisma } from "@repo/db";
 import { redirect } from "next/navigation";
-import { db } from "@/lib/db";
 import { validateRequest } from "@/lib/auth";
 import { GroupPanel } from "./components/group-panel";
+import { getStory } from "./get-story";
 
 export type StoryWithFolder = Prisma.StoryGetPayload<{
   include: {
@@ -26,38 +25,6 @@ export type StoryWithFolder = Prisma.StoryGetPayload<{
     };
   };
 }>;
-
-export const getStory = cache(
-  async ({
-    title,
-    userId,
-  }: {
-    title: string;
-    userId: string;
-  }): Promise<StoryWithFolder | null> => {
-    const story = await db.story.findFirst({
-      where: {
-        ownerId: userId,
-        title,
-      },
-      include: {
-        folder: {
-          include: {
-            file: {
-              orderBy: {
-                name: "asc",
-              },
-            },
-          },
-          orderBy: {
-            name: "asc",
-          },
-        },
-      },
-    });
-    return story ?? null;
-  }
-);
 
 export default async function StoryPage({
   params: { title },

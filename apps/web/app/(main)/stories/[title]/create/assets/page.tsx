@@ -4,7 +4,7 @@ import { CreateAssetForm } from "./components/create-asset-form";
 import { cache } from "react";
 import db from "@/lib/db";
 
-export const getStory = cache(
+const getStory = cache(
   async ({ title, userId }: { title: string; userId: string }) => {
     const item = await db.story.findFirst({
       where: {

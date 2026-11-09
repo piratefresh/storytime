@@ -5,7 +5,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { cache } from "react";
 
-export const getStory = cache(
+const getStory = cache(
   async ({ title, userId }: { title: string; userId: string }) => {
     const item = await db.story.findFirst({
       where: {
