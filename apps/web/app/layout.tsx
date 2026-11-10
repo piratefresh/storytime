@@ -20,7 +20,7 @@ export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
-}): Promise<JSX.Element> {
+}): Promise<React.JSX.Element> {
   const sessionData = await validateRequest();
 
   return (

@@ -1,25 +1,23 @@
 "use client";
 
-import { emailVerification } from "@/app/(auth)/verify-email/actions/verify-email";
 import { useFormState, useFormStatus } from "react-dom";
-import { OTPInput, SlotProps } from "input-otp";
+import { OTPInput, type SlotProps } from "input-otp";
 import { toast } from "sonner";
+import { emailVerification } from "@/app/(auth)/verify-email/actions/verify-email";
 import { cn } from "@/lib/utils";
 
 export function VerifyEmailForm({ code }: { code: string }) {
   const onAction = async () => {
     if (code) {
-      const response = await emailVerification({ code: code as string });
+      const response = await emailVerification({ code });
 
-      if (response) {
-        if (response.error) {
-          toast.error(response.error);
-        }
+      if (response.error) {
+        toast.error(response.error);
       }
     }
   };
 
-  const [state, dispatch] = useFormState(onAction, undefined);
+  const [, dispatch] = useFormState(onAction, undefined);
 
   return (
     <form action={dispatch}>
@@ -30,6 +28,7 @@ export function VerifyEmailForm({ code }: { code: string }) {
           <>
             <div className="flex">
               {slots.slice(0, 4).map((slot, idx) => (
+                // eslint-disable-next-line react/no-array-index-key -- OTP slots are fixed positions; index is their identity
                 <Slot key={idx} {...slot} />
               ))}
             </div>
@@ -38,6 +37,7 @@ export function VerifyEmailForm({ code }: { code: string }) {
 
             <div className="flex">
               {slots.slice(4).map((slot, idx) => (
+                // eslint-disable-next-line react/no-array-index-key -- OTP slots are fixed positions; index is their identity
                 <Slot key={idx} {...slot} />
               ))}
             </div>
@@ -50,7 +50,7 @@ export function VerifyEmailForm({ code }: { code: string }) {
   );
 }
 
-const SubmitButton = () => {
+function SubmitButton() {
   const status = useFormStatus();
 
   return (
@@ -58,7 +58,7 @@ const SubmitButton = () => {
       Verify Email
     </button>
   );
-};
+}
 
 function Slot(props: SlotProps) {
   return (
@@ -74,7 +74,7 @@ function Slot(props: SlotProps) {
       )}
     >
       {props.char !== null && <div>{props.char}</div>}
-      {props.hasFakeCaret && <FakeCaret />}
+      {props.hasFakeCaret ? <FakeCaret /> : null}
     </div>
   );
 }

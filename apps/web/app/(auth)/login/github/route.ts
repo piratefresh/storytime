@@ -1,8 +1,8 @@
-import { github } from "@/lib/auth";
 import { generateState } from "arctic";
 import { serializeCookie } from "oslo/cookie";
+import { github } from "@/lib/auth";
 
-export async function GET(request: Request) {
+export async function GET() {
   const state = generateState();
   const url = await github.createAuthorizationURL(state);
   return new Response(null, {

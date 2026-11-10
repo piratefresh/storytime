@@ -1,4 +1,4 @@
-import { Editor, useCurrentEditor } from "@tiptap/react";
+import { useCurrentEditor } from "@tiptap/react";
 import {
   Bold,
   Italic,
@@ -6,21 +6,11 @@ import {
   Code,
   List,
   ListOrdered,
-  CodeSquare,
   TextQuote,
-  X,
-  CheckSquare,
-  Type,
-  Hash,
-  ListChecks,
   AlignLeft,
   AlignCenter,
   AlignRight,
   AlignJustify,
-  ArrowLeft,
-  ArrowRight,
-  Image,
-  LucideIcon,
   MoveHorizontal,
   Minus,
   Undo,
@@ -28,7 +18,7 @@ import {
   RemoveFormatting,
   Baseline,
 } from "lucide-react";
-
+import React from "react";
 import {
   Select,
   SelectContent,
@@ -36,10 +26,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import React from "react";
 import { cn } from "@/lib/utils";
 
-export const MenuBar = () => {
+export function MenuBar() {
   const [activeFormat, setActiveFormat] = React.useState("paragraph");
   const { editor } = useCurrentEditor();
 
@@ -52,9 +41,10 @@ export const MenuBar = () => {
       return null;
     }
 
-    const currentSetting = editor.extensionManager.extensions.find(
+    const lineNumbersOptions = editor.extensionManager.extensions.find(
       (ext) => ext.name === "lineNumbers"
-    )?.options.showLineNumbers;
+    )?.options as { showLineNumbers?: boolean } | undefined;
+    const currentSetting = lineNumbersOptions?.showLineNumbers;
 
     if (currentSetting !== undefined) {
       const transaction = editor.view.state.tr.setMeta("lineNumbers", {
@@ -87,7 +77,7 @@ export const MenuBar = () => {
     }
   };
 
-  editor.on("selectionUpdate", ({ editor }) => {
+  editor.on("selectionUpdate", () => {
     updateActiveFormat();
   });
 
@@ -120,16 +110,6 @@ export const MenuBar = () => {
   };
 
   const isActive = "bg-black text-white";
-
-  const replaceSelectedText = (replacementText: string) => {
-    if (editor) {
-      const { state, dispatch } = editor.view;
-      const { from, to } = state.selection;
-      editor.commands.insertContentAt({ from, to }, replacementText, {
-        updateSelection: true,
-      });
-    }
-  };
 
   return (
     <div className="flex flex-wrap gap-2 bg-accent p-2">
@@ -210,26 +190,26 @@ export const MenuBar = () => {
         <SelectContent>
           <SelectItem
             value="paragraph"
-            onSelect={() => applyFormat("paragraph")}
+            onSelect={() => { applyFormat("paragraph"); }}
           >
             Paragraph
           </SelectItem>
-          <SelectItem value="h1" onSelect={() => applyFormat("h1")}>
+          <SelectItem value="h1" onSelect={() => { applyFormat("h1"); }}>
             Heading 1
           </SelectItem>
-          <SelectItem value="h2" onSelect={() => applyFormat("h2")}>
+          <SelectItem value="h2" onSelect={() => { applyFormat("h2"); }}>
             Heading 2
           </SelectItem>
-          <SelectItem value="h3" onSelect={() => applyFormat("h3")}>
+          <SelectItem value="h3" onSelect={() => { applyFormat("h3"); }}>
             Heading 3
           </SelectItem>
-          <SelectItem value="h4" onSelect={() => applyFormat("h4")}>
+          <SelectItem value="h4" onSelect={() => { applyFormat("h4"); }}>
             Heading 4
           </SelectItem>
-          <SelectItem value="h5" onSelect={() => applyFormat("h5")}>
+          <SelectItem value="h5" onSelect={() => { applyFormat("h5"); }}>
             Heading 5
           </SelectItem>
-          <SelectItem value="h6" onSelect={() => applyFormat("h6")}>
+          <SelectItem value="h6" onSelect={() => { applyFormat("h6"); }}>
             Heading 6
           </SelectItem>
         </SelectContent>
@@ -454,16 +434,19 @@ export const MenuBar = () => {
       >
         Un Page Break
       </button>
-      <button onClick={() => toggleLineNumbers()}>Toggle Line Numbers</button>
+      <button type="button" onClick={() => toggleLineNumbers()}>
+        Toggle Line Numbers
+      </button>
 
       <button
+        type="button"
         onClick={() => {
           console.log("onclick");
-          editor?.commands.generateText("Nilsen");
+          editor.commands.generateText("Nilsen");
         }}
       >
         Fake AI
       </button>
     </div>
   );
-};
+}

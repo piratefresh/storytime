@@ -2,10 +2,9 @@
 
 import * as React from "react";
 import { X } from "lucide-react";
-
+import { Command as CommandPrimitive } from "cmdk";
 import { Badge } from "@/components/ui/badge";
 import { Command, CommandGroup, CommandItem } from "@/components/ui/command";
-import { Command as CommandPrimitive } from "cmdk";
 
 export type Item = Record<"value" | "label", string>;
 
@@ -73,7 +72,8 @@ export function FancyMultiSelect({
   const selectables = items.filter((item) => !selected.includes(item));
 
   React.useEffect(() => {
-    onChange?.(selected);
+    onChange(selected);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- notify only when the selection changes; callers may pass an unstable onChange
   }, [selected]);
 
   return (
@@ -88,6 +88,7 @@ export function FancyMultiSelect({
               <Badge key={item.value} variant="secondary">
                 {item.label}
                 <button
+                  type="button"
                   className="ml-1 ring-offset-background rounded-full outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2"
                   onKeyDown={(e) => {
                     if (e.key === "Enter") {
@@ -98,7 +99,7 @@ export function FancyMultiSelect({
                     e.preventDefault();
                     e.stopPropagation();
                   }}
-                  onClick={() => handleUnselect(item)}
+                  onClick={() => { handleUnselect(item); }}
                 >
                   <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
                 </button>
@@ -110,8 +111,8 @@ export function FancyMultiSelect({
             ref={inputRef}
             value={inputValue}
             onValueChange={setInputValue}
-            onBlur={() => setOpen(false)}
-            onFocus={() => setOpen(true)}
+            onBlur={() => { setOpen(false); }}
+            onFocus={() => { setOpen(true); }}
             placeholder={placeholder}
             className="ml-2 bg-transparent outline-none placeholder:text-muted-foreground flex-1"
           />
@@ -129,11 +130,11 @@ export function FancyMultiSelect({
                       e.preventDefault();
                       e.stopPropagation();
                     }}
-                    onSelect={(value) => {
+                    onSelect={() => {
                       setInputValue("");
                       setSelected((prev) => [...prev, item]);
                     }}
-                    className={"cursor-pointer"}
+                    className="cursor-pointer"
                   >
                     {item.label}
                   </CommandItem>

@@ -1,10 +1,10 @@
-import { validateRequest } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { CreateAssetForm } from "./components/create-asset-form";
 import { cache } from "react";
+import { validateRequest } from "@/lib/auth";
 import db from "@/lib/db";
+import { CreateAssetForm } from "./components/create-asset-form";
 
-export const getStory = cache(
+const getStory = cache(
   async ({ title, userId }: { title: string; userId: string }) => {
     const item = await db.story.findFirst({
       where: {
@@ -20,10 +20,11 @@ export const getStory = cache(
 );
 
 async function CreateAssetPage({
-  params: { title },
+  params,
 }: {
-  params: { title: string };
+  params: Promise<{ title: string }>;
 }) {
+  const { title } = await params;
   const { user } = await validateRequest();
 
   if (!user) {
@@ -38,7 +39,7 @@ async function CreateAssetPage({
     redirect("/stories");
   }
 
-  return <CreateAssetForm user={user} id={story?.id} folders={story.folder} />;
+  return <CreateAssetForm user={user} id={story.id} folders={story.folder} />;
 }
 
 export default CreateAssetPage;

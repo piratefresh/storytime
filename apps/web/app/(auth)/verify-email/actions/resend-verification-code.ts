@@ -1,11 +1,11 @@
 "use server";
 
 import db from "@/lib/db";
-import { sendEmailVerificationCode } from "../../register/actions/signup";
 import { generateEmailVerificationCode } from "@/lib/auth";
+import { sendEmailVerificationCode } from "../../register/actions/signup";
 
 export async function resendVerificationCode({ email }: { email: string }) {
-  let user = await db.user.findFirst({
+  const user = await db.user.findFirst({
     where: {
       email,
     },

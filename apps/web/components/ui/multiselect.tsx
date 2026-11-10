@@ -1,7 +1,6 @@
 import * as React from "react";
-import { cn } from "@/lib/utils";
-
 import { Check, X, ChevronsUpDown } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
   Command,
@@ -17,10 +16,10 @@ import {
 } from "@/components/ui/popover";
 import { Badge } from "@/components/ui/badge";
 
-export type OptionType = {
+export interface OptionType {
   label: string;
   value: string;
-};
+}
 
 interface MultiSelectProps {
   options: OptionType[];
@@ -30,7 +29,7 @@ interface MultiSelectProps {
 }
 
 const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
-  ({ options, selected, onChange, className, ...props }, ref) => {
+  ({ options, selected, onChange, className, ...props }, _ref) => {
     const [open, setOpen] = React.useState(false);
 
     const handleUnselect = (item: string) => {
@@ -60,7 +59,7 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
                   variant="secondary"
                   key={item}
                   className="mr-1 mb-1"
-                  onClick={() => handleUnselect(item)}
+                  onClick={() => { handleUnselect(item); }}
                 >
                   {item}
                   <button
@@ -75,7 +74,7 @@ const MultiSelect = React.forwardRef<HTMLButtonElement, MultiSelectProps>(
                       e.preventDefault();
                       e.stopPropagation();
                     }}
-                    onClick={() => handleUnselect(item)}
+                    onClick={() => { handleUnselect(item); }}
                   >
                     <X className="h-3 w-3 text-muted-foreground hover:text-foreground" />
                   </button>

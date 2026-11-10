@@ -1,10 +1,9 @@
-import { cn } from "@/lib/utils";
 import { useCallback, useEffect, useState } from "react";
 
-type ResizableImageResizerProps = {
+interface ResizableImageResizerProps {
   className?: string;
   onResize: (event: MouseEvent) => void;
-};
+}
 
 // const useStyles = makeStyles({ name: { ResizableImageResizer } })((theme) => ({
 //   root: {
@@ -22,7 +21,6 @@ type ResizableImageResizerProps = {
 
 export function ResizableImageResizer({
   onResize,
-  className,
 }: ResizableImageResizerProps) {
   //   const { classes, cx } = useStyles();
   const [mouseDown, setMouseDown] = useState(false);
@@ -45,7 +43,7 @@ export function ResizableImageResizer({
   }, [mouseDown, onResize]);
 
   useEffect(() => {
-    const handleMouseUp = () => setMouseDown(false);
+    const handleMouseUp = () => { setMouseDown(false); };
 
     window.addEventListener("mouseup", handleMouseUp);
 
@@ -63,29 +61,33 @@ export function ResizableImageResizer({
     // closest, as described here https://stackoverflow.com/a/43022983/4543977,
     // but we don't do keyboard-based resizing at this time so it doesn't make
     // sense to have it keyboard focusable)
-    // eslint-disable-next-line jsx-a11y/no-static-element-interactions
+     
     <>
       <div
+        role="presentation"
         className="absolute cursor-nw-resize h-2.5 w-2.5 z-20 top-0 left-0 bg-[#335dff] border border-[#335dff]"
-        onMouseDown={() => {
-          handleMouseDown();
+        onMouseDown={(e) => {
+          handleMouseDown(e);
         }}
-      ></div>
+       />
 
       <div
+        role="presentation"
         className="absolute cursor-nesw-resize h-2.5 w-2.5 z-20 top-0 right-0 bg-[#335dff] border border-[#335dff]"
-        onMouseDown={() => handleMouseDown()}
-      ></div>
+        onMouseDown={handleMouseDown}
+       />
 
       <div
+        role="presentation"
         className="absolute cursor-nwse-resize w-2.5 h-2.5 z-20 right-0 bottom-0 bg-[#335dff] border border-[#335dff]"
-        onMouseDown={() => handleMouseDown()}
-      ></div>
+        onMouseDown={handleMouseDown}
+       />
 
       <div
+        role="presentation"
         className="absolute cursor-nesw-resize h-2.5 w-2.5 z-20 left-0 bottom-0 bg-[#335dff] border border-[#335dff]"
-        onMouseDown={() => handleMouseDown()}
-      ></div>
+        onMouseDown={handleMouseDown}
+       />
     </>
   );
 }

@@ -1,5 +1,10 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { type z } from "zod";
+import { useFormState, useFormStatus } from "react-dom";
+import { type User } from "lucia";
 import {
   Form,
   FormControl,
@@ -10,18 +15,11 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { TypographyH1 } from "@/components/ui/typography";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { Input } from "@/components/ui/input";
-import { useFormState, useFormStatus } from "react-dom";
-import { User } from "lucia";
 import { Textarea } from "@/components/ui/textarea";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-
-import React from "react";
-import { FancyMultiSelect, Item } from "@/components/ui/fancy-box";
+import { FancyMultiSelect, type Item } from "@/components/ui/fancy-box";
 import { formSchema } from "@/app/schemas/create-folder-schema";
 import { createFolder } from "../actions/create-folder";
 
@@ -61,7 +59,6 @@ const FRAMEWORKS = [
 ] satisfies Item[];
 
 export function CreateFolderForm({
-  user,
   id,
 }: {
   user: User | null;
@@ -77,8 +74,6 @@ export function CreateFolderForm({
     },
   });
 
-  const { errors } = form.formState;
-
   const onAction = async () => {
     const valid = await form.trigger();
     if (valid) {
@@ -89,16 +84,13 @@ export function CreateFolderForm({
 
       if (response.error) {
         form.setError("root.serverError", {
-          type: `${response.error}`,
+          type: response.error,
         });
-      }
-
-      if (response) {
       }
     }
   };
 
-  const [state, dispatch] = useFormState(onAction, undefined);
+  const [, dispatch] = useFormState(onAction, undefined);
   return (
     <Form {...form}>
       <form action={dispatch} className="space-y-8 w-full max-w-screen-md">
@@ -176,7 +168,6 @@ export function CreateFolderForm({
               <FormLabel>Tags</FormLabel>
               <FormControl>
                 <FancyMultiSelect
-                  value={field?.value ?? []}
                   onChange={field.onChange}
                   placeholder="Press enter to add a tag"
                   items={FRAMEWORKS}
@@ -197,7 +188,7 @@ export function CreateFolderForm({
   );
 }
 
-const SubmitButton = () => {
+function SubmitButton() {
   const status = useFormStatus();
 
   return (
@@ -205,4 +196,4 @@ const SubmitButton = () => {
       Submit
     </Button>
   );
-};
+}

@@ -1,28 +1,6 @@
-import { Group } from "./types";
+import { type Group } from "./types";
 
 export const GROUPS: Group[] = [
-  {
-    name: "ai",
-    title: "AI",
-    commands: [
-      {
-        name: "aiWriter",
-        label: "AI Writer",
-        iconName: "Sparkles",
-        description: "Let AI finish your thoughts",
-        shouldBeHidden: (editor) => editor.isActive("columns"),
-        action: (editor) => editor.chain().focus().setAiWriter().run(),
-      },
-      {
-        name: "aiImage",
-        label: "AI Image",
-        iconName: "Sparkles",
-        description: "Generate an image from text",
-        shouldBeHidden: (editor) => editor.isActive("columns"),
-        action: (editor) => editor.chain().focus().setAiImage().run(),
-      },
-    ],
-  },
   {
     name: "format",
     title: "Format",
@@ -99,7 +77,7 @@ export const GROUPS: Group[] = [
       {
         name: "codeBlock",
         label: "Code Block",
-        iconName: "SquareCode",
+        iconName: "CodeSquare",
         description: "Code block with syntax highlighting",
         shouldBeHidden: (editor) => editor.isActive("columns"),
         action: (editor) => {
@@ -139,7 +117,7 @@ export const GROUPS: Group[] = [
       {
         name: "columns",
         label: "Columns",
-        iconName: "Columns",
+        iconName: "Columns2",
         description: "Add two column content",
         aliases: ["cols"],
         shouldBeHidden: (editor) => editor.isActive("columns"),

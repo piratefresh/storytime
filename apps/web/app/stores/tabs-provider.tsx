@@ -16,8 +16,8 @@ export interface TabsStoreProviderProps {
 
 export function TabsStoreProvider({
   children,
-}: TabsStoreProviderProps): JSX.Element {
-  const storeRef = useRef<TabsStoreApi>();
+}: TabsStoreProviderProps): React.JSX.Element {
+  const storeRef = useRef<TabsStoreApi | undefined>(undefined);
   if (!storeRef.current) {
     storeRef.current = createTabsStore();
   }

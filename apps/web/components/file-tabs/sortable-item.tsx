@@ -8,7 +8,7 @@ export function SortableItem({
 }: {
   children: React.ReactElement;
   id: UniqueIdentifier;
-}): JSX.Element {
+}): React.JSX.Element {
   const { attributes, listeners, setNodeRef, transform, transition } =
     useSortable({ id });
 

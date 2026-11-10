@@ -1,9 +1,7 @@
 import { ReactNodeViewRenderer } from "@tiptap/react";
-import { mergeAttributes, nodeInputRule, Range } from "@tiptap/core";
-import TiptapImage, { ImageOptions } from "@tiptap/extension-image";
+import { mergeAttributes, type Range } from "@tiptap/core";
+import TiptapImage from "@tiptap/extension-image";
 import ImageBlockView from "./components/image-block-view";
-import { defaultMarkdownSerializer } from "prosemirror-markdown";
-import { MarkdownNodeSpec } from "tiptap-markdown";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -45,7 +43,7 @@ export const ImageBlock = TiptapImage.extend({
           return element.getAttribute("src");
         },
         renderHTML: (attributes) => {
-          return { src: attributes.src };
+          return { src: attributes.src as string };
         },
       },
       width: {
@@ -54,7 +52,7 @@ export const ImageBlock = TiptapImage.extend({
           return element.getAttribute("data-width");
         },
         renderHTML: (attributes) => {
-          return { "data-width": attributes.width };
+          return { "data-width": attributes.width as string | number };
         },
       },
       align: {
@@ -63,7 +61,7 @@ export const ImageBlock = TiptapImage.extend({
           return element.getAttribute("data-align");
         },
         renderHTML: (attributes) => {
-          return { "data-align": attributes.align };
+          return { "data-align": attributes.align as string };
         },
       },
       alt: {
@@ -72,7 +70,7 @@ export const ImageBlock = TiptapImage.extend({
           return element.getAttribute("alt");
         },
         renderHTML: (attributes) => {
-          return { alt: attributes.alt };
+          return { alt: attributes.alt as string | undefined };
         },
       },
     };
@@ -123,14 +121,14 @@ export const ImageBlock = TiptapImage.extend({
         (width) =>
         ({ commands }) =>
           commands.updateAttributes("imageBlock", {
-            width: `${Math.max(0, Math.min(100, width))}%`,
+            width: `${String(Math.max(0, Math.min(100, width)))}%`,
           }),
     };
   },
 
   addOptions() {
     return {
-      ...this.parent?.(),
+      ...this.parent(),
     };
   },
 

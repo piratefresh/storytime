@@ -1,14 +1,13 @@
 import { useCallback } from "react";
-import { useStore, getBezierPath, EdgeProps } from "reactflow";
-
+import { useStore, getBezierPath, type EdgeProps } from "@xyflow/react";
 import { getEdgeParams } from "./utils";
 
 function FloatingEdge({ id, source, target, markerEnd, style }: EdgeProps) {
   const sourceNode = useStore(
-    useCallback((store) => store.nodeInternals.get(source), [source])
+    useCallback((store) => store.nodeLookup.get(source), [source])
   );
   const targetNode = useStore(
-    useCallback((store) => store.nodeInternals.get(target), [target])
+    useCallback((store) => store.nodeLookup.get(target), [target])
   );
 
   if (!sourceNode || !targetNode) {

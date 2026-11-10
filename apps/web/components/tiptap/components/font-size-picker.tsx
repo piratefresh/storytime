@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -6,7 +7,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icon";
 import { Toolbar } from "@/components/ui/toolbar";
-import { useCallback } from "react";
 
 const FONT_SIZES = [
   { label: "Smaller", value: "12px" },
@@ -16,29 +16,29 @@ const FONT_SIZES = [
   { label: "Extra Large", value: "24px" },
 ];
 
-export type FontSizePickerProps = {
+export interface FontSizePickerProps {
   container: HTMLDivElement | null;
-  onChange: (value: string) => void; // eslint-disable-line no-unused-vars
+  onChange: (value: string) => void;  
   value: string;
-};
+}
 
-export const FontSizePicker = ({
+export function FontSizePicker({
   container,
   onChange,
   value,
-}: FontSizePickerProps) => {
+}: FontSizePickerProps) {
   const currentValue = FONT_SIZES.find((size) => size.value === value);
-  const currentSizeLabel = currentValue?.label.split(" ")[0] || "Medium";
+  const currentSizeLabel = currentValue?.label.split(" ")[0] ?? "Medium";
 
   const selectSize = useCallback(
-    (size: string) => () => onChange(size),
+    (size: string) => () => { onChange(size); },
     [onChange]
   );
 
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
-        <Toolbar.Button active={!!currentValue?.value}>
+        <Toolbar.Button active={Boolean(currentValue?.value)}>
           {currentSizeLabel}
           <Icon name="ChevronDown" className="w-2 h-2" />
         </Toolbar.Button>
@@ -57,4 +57,4 @@ export const FontSizePicker = ({
       </DropdownMenuContent>
     </DropdownMenu>
   );
-};
+}

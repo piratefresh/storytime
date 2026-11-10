@@ -1,9 +1,9 @@
-import { cn } from "@/lib/utils";
-import { Node } from "@tiptap/pm/model";
-import { Editor, NodeViewWrapper } from "@tiptap/react";
+import { type Node } from "@tiptap/pm/model";
+import { type Editor, NodeViewWrapper } from "@tiptap/react";
 import { useCallback, useMemo, useRef } from "react";
-import { ResizableImageResizer } from "./image-block-resizer";
 import throttle from "throttleit";
+import { cn } from "@/lib/utils";
+import { ResizableImageResizer } from "./image-block-resizer";
 
 interface ImageBlockViewProps {
   editor: Editor;
@@ -11,6 +11,8 @@ interface ImageBlockViewProps {
   node: Node & {
     attrs: {
       src: string;
+      width?: string | number;
+      align?: string;
     };
   };
   updateAttributes: (attrs: Record<string, string | number | null>) => void;
@@ -19,7 +21,7 @@ interface ImageBlockViewProps {
 
 const IMAGE_MINIMUM_WIDTH_PIXELS = 15;
 
-export const ImageBlockView = (props: ImageBlockViewProps) => {
+export function ImageBlockView(props: ImageBlockViewProps) {
   const { editor, getPos, node, selected, updateAttributes } = props;
   const imageWrapperRef = useRef<HTMLDivElement>(null);
   const imageRef = useRef<HTMLImageElement | null>(null);
@@ -89,7 +91,9 @@ export const ImageBlockView = (props: ImageBlockViewProps) => {
         contentEditable={false}
         ref={imageWrapperRef}
       >
+        {/* eslint-disable-next-line @next/next/no-img-element -- editor node view renders arbitrary user-supplied image URLs; next/image needs known remote hosts */}
         <img
+          role="presentation"
           className="!my-0"
           ref={imageRef}
           data-drag-handle
@@ -99,15 +103,13 @@ export const ImageBlockView = (props: ImageBlockViewProps) => {
           style={{ width: node.attrs.width }}
         />
 
-        {selected && (
-          <ResizableImageResizer
+        {selected ? <ResizableImageResizer
             onResize={handleResize}
             // className={classes.resizer}
-          />
-        )}
+          /> : null}
       </div>
     </NodeViewWrapper>
   );
-};
+}
 
 export default ImageBlockView;

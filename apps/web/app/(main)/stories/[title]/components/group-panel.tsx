@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment } from "react";
-import { type User } from "@repo/db";
+import { type User } from "lucia";
 import { nanoid } from "nanoid";
 import {
   ResizableHandle,
@@ -19,7 +19,7 @@ export function GroupPanel({
 }: {
   story: StoryWithFolder;
   user: User;
-}): JSX.Element {
+}): React.JSX.Element {
   const groups = useTabsStore((state) => state.groups);
   console.log("story: ", story);
   return (
@@ -42,7 +42,7 @@ export function EditorPanel({
   groupId: string;
   user: User;
   story: StoryWithFolder;
-}): JSX.Element | null {
+}): React.JSX.Element | null {
   const group = useTabsStore((state) =>
     state.groups.find((g) => g.id === groupId)
   );
@@ -52,7 +52,6 @@ export function EditorPanel({
   const setActiveTab = useTabsStore((state) => state.setActiveTab);
   const reorderTabs = useTabsStore((state) => state.reorderTabs);
   const splitTab = useTabsStore((state) => state.splitTab);
-  const setActiveGroup = useTabsStore((state) => state.setActiveGroup);
   if (!group) return null;
 
   const activeTabId = group.activeTabId;
@@ -83,7 +82,6 @@ export function EditorPanel({
         onRemoveTab={removeTab}
         onSetActiveTab={setActiveTab}
         onReorderTabs={reorderTabs}
-        onSetActiveGroup={setActiveGroup}
         onAddGraphTab={handleAddFlowTab}
         isActiveGroup={activeGroupId === group.id}
         tabs={tabs}

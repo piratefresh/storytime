@@ -8,9 +8,7 @@ interface SessionProviderProps {
   session: Session | null;
 }
 
-const SessionContext = createContext<SessionProviderProps>(
-  {} as SessionProviderProps
-);
+const SessionContext = createContext<SessionProviderProps | null>(null);
 
 export function SessionProvider({
   children,

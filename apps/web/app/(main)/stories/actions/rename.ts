@@ -117,9 +117,7 @@ async function getUniqueFileName(
   let uniqueName = name;
   let counter = 1;
 
-  // while loop will always run at least once
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-  while (true) {
+  for (;;) {
     const existingFile = await db.file.findFirst({
       where: {
         name: uniqueName,

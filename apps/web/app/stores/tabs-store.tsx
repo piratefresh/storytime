@@ -1,3 +1,4 @@
+import { type JSONContent } from "@tiptap/react";
 import { arrayMove } from "@dnd-kit/sortable";
 import { create } from "zustand";
 import { devtools, persist } from "zustand/middleware";
@@ -6,7 +7,7 @@ import { nanoid } from "@/lib/utils";
 export type TabTypes = "file" | "folder" | "story" | "flow";
 export interface Tab {
   label: string;
-  content: string | null;
+  content: JSONContent | string | null;
   id: string;
   storyTitle: string;
   storyId: string;
@@ -40,7 +41,7 @@ export interface TabsActions {
     content,
   }: {
     tabId: string;
-    content: string;
+    content: JSONContent | string | null;
   }) => void;
   splitTab: (groupId: string) => void;
   setActiveGroup: (groupId: string) => void;

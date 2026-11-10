@@ -1,5 +1,12 @@
 "use client";
 
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { type z } from "zod";
+import { useFormState, useFormStatus } from "react-dom";
+import { type User } from "lucia";
+import { type Folder } from "@repo/db";
+import { useSearchParams } from "next/navigation";
 import {
   Form,
   FormControl,
@@ -10,19 +17,11 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { TypographyH1 } from "@/components/ui/typography";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
 import { Input } from "@/components/ui/input";
-import { useFormState, useFormStatus } from "react-dom";
-import { User } from "lucia";
 import { Textarea } from "@/components/ui/textarea";
-
-import React from "react";
-import { FancyMultiSelect, Item } from "@/components/ui/fancy-box";
+import { FancyMultiSelect, type Item } from "@/components/ui/fancy-box";
 import { formSchema } from "@/app/schemas/create-asset-schema";
-import { createAsset } from "../actions/create-asset";
 import Tiptap from "@/components/tiptap/tiptap";
 import {
   Select,
@@ -31,8 +30,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Folder } from "@repo/db";
-import { useSearchParams } from "next/navigation";
+import { createAsset } from "../actions/create-asset";
 
 const FRAMEWORKS = [
   {
@@ -92,8 +90,6 @@ export function CreateAssetForm({
     },
   });
 
-  const { errors } = form.formState;
-
   const onAction = async () => {
     const valid = await form.trigger();
     if (valid) {
@@ -104,16 +100,13 @@ export function CreateAssetForm({
 
       if (response.error) {
         form.setError("root.serverError", {
-          type: `${response.error}`,
+          type: response.error,
         });
-      }
-
-      if (response) {
       }
     }
   };
 
-  const [state, dispatch] = useFormState(onAction, undefined);
+  const [, dispatch] = useFormState(onAction, undefined);
 
   return (
     <Form {...form}>
@@ -134,7 +127,7 @@ export function CreateAssetForm({
                     <SelectValue placeholder="Choose a folder to save too" />
                   </SelectTrigger>
                   <SelectContent>
-                    {folders?.map((folder) => (
+                    {folders.map((folder) => (
                       <SelectItem value={folder.id} key={folder.id}>
                         {folder.name}
                       </SelectItem>
@@ -168,7 +161,7 @@ export function CreateAssetForm({
             <FormItem>
               <FormLabel>Content</FormLabel>
               <FormControl>
-                <Tiptap user={user} contentId={id} {...field} />
+                <Tiptap user={user} storyId={id} {...field} />
               </FormControl>
               <FormDescription>
                 Default view between list and grid.
@@ -204,7 +197,6 @@ export function CreateAssetForm({
               <FormLabel>Tags</FormLabel>
               <FormControl>
                 <FancyMultiSelect
-                  value={field?.value ?? []}
                   onChange={field.onChange}
                   placeholder="Press enter to add a tag"
                   items={FRAMEWORKS}
@@ -225,7 +217,7 @@ export function CreateAssetForm({
   );
 }
 
-const SubmitButton = () => {
+function SubmitButton() {
   const status = useFormStatus();
 
   return (
@@ -233,4 +225,4 @@ const SubmitButton = () => {
       Submit
     </Button>
   );
-};
+}

@@ -1,14 +1,14 @@
 "use client";
 
-import { Editor as CoreEditor } from "@tiptap/core";
+import { type Editor as CoreEditor } from "@tiptap/core";
 import { memo, useEffect, useState } from "react";
-import { TableOfContentsStorage } from "@tiptap-pro/extension-table-of-contents";
+import { type TableOfContentsStorage } from "@tiptap-pro/extension-table-of-contents";
 import { cn } from "@/lib/utils";
 
-export type TableOfContentsProps = {
+export interface TableOfContentsProps {
   editor: CoreEditor;
   onItemClick?: () => void;
-};
+}
 
 export const TableOfContents = memo(
   ({ editor, onItemClick }: TableOfContentsProps) => {
@@ -16,7 +16,10 @@ export const TableOfContents = memo(
 
     useEffect(() => {
       const handler = ({ editor: currentEditor }: { editor: CoreEditor }) => {
-        setData({ ...currentEditor.extensionStorage.tableOfContents });
+        setData({
+          ...(currentEditor.extensionStorage
+            .tableOfContents as TableOfContentsStorage),
+        });
       };
 
       handler({ editor });

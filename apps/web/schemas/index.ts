@@ -49,12 +49,14 @@ export const renameSchema = z.discriminatedUnion("type", [
 export const deleteSchema = z.discriminatedUnion("type", [
   z.object({
     type: z.literal("file"),
+    storyId: z.string().min(1),
     fileId: z.string().min(1, {
       message: "File ID is required when type is file.",
     }),
   }),
   z.object({
     type: z.literal("folder"),
+    storyId: z.string().min(1),
     folderId: z.string().min(1, {
       message: "Folder ID is required when type is folder.",
     }),

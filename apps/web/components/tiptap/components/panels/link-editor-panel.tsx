@@ -1,30 +1,29 @@
+import { useState, useCallback, useMemo, useId } from "react";
 import { Button } from "@/components/ui/button";
 import { Icon } from "@/components/ui/icon";
 import { Switch } from "@/components/ui/switch";
-import { Toggle } from "@/components/ui/toggle";
-import { useState, useCallback, useMemo } from "react";
 
-export type LinkEditorPanelProps = {
+export interface LinkEditorPanelProps {
   initialUrl?: string;
   initialOpenInNewTab?: boolean;
   onSetLink: (url: string, openInNewTab?: boolean) => void;
-};
+}
 
 export const useLinkEditorState = ({
   initialUrl,
   initialOpenInNewTab,
   onSetLink,
 }: LinkEditorPanelProps) => {
-  const [url, setUrl] = useState(initialUrl || "");
+  const [url, setUrl] = useState(initialUrl ?? "");
   const [openInNewTab, setOpenInNewTab] = useState(
-    initialOpenInNewTab || false
+    initialOpenInNewTab ?? false
   );
 
   const onChange = useCallback((event: React.ChangeEvent<HTMLInputElement>) => {
     setUrl(event.target.value);
   }, []);
 
-  const isValidUrl = useMemo(() => /^(\S+):(\/\/)?\S+$/.test(url), [url]);
+  const isValidUrl = useMemo(() => /^(?:\S+):(?:\/\/)?\S+$/.test(url), [url]);
 
   const handleSubmit = useCallback(
     (e: React.FormEvent) => {
@@ -47,16 +46,17 @@ export const useLinkEditorState = ({
   };
 };
 
-export const LinkEditorPanel = ({
+export function LinkEditorPanel({
   onSetLink,
   initialOpenInNewTab,
   initialUrl,
-}: LinkEditorPanelProps) => {
+}: LinkEditorPanelProps) {
   const state = useLinkEditorState({
     onSetLink,
     initialOpenInNewTab,
     initialUrl,
   });
+  const newTabSwitchId = useId();
 
   return (
     <div className="p-2">
@@ -66,6 +66,7 @@ export const LinkEditorPanel = ({
       >
         <label className="flex items-center gap-2 p-2 rounded-lg bg-neutral-100 dark:bg-neutral-900 cursor-text">
           <Icon name="Link" className="flex-none text-black dark:text-white" />
+          <span className="sr-only">URL</span>
           <input
             type="url"
             className="flex-1 bg-transparent outline-none min-w-[12rem] text-black text-sm dark:text-white"
@@ -79,9 +80,12 @@ export const LinkEditorPanel = ({
         </Button>
       </form>
       <div className="mt-3">
-        <label className="flex items-center justify-start gap-2 text-sm font-semibold cursor-pointer select-none text-neutral-500 dark:text-neutral-400">
+        <label
+          htmlFor={newTabSwitchId}
+          className="flex items-center justify-start gap-2 text-sm font-semibold cursor-pointer select-none text-neutral-500 dark:text-neutral-400">
           Open in new tab
           <Switch
+            id={newTabSwitchId}
             checked={state.openInNewTab}
             onCheckedChange={state.setOpenInNewTab}
           />
@@ -89,4 +93,4 @@ export const LinkEditorPanel = ({
       </div>
     </div>
   );
-};
+}

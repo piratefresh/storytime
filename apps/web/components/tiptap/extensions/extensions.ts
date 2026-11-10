@@ -8,37 +8,29 @@ import { TaskItem } from "@tiptap/extension-task-item";
 import { TaskList } from "@tiptap/extension-task-list";
 import { Markdown } from "tiptap-markdown";
 import CharacterCount from "@tiptap/extension-character-count";
-import CodeBlockLowlight from "@tiptap/extension-code-block-lowlight";
-import { common, createLowlight } from "lowlight";
-import { Underline } from "@tiptap/extension-underline";
 import { TableOfContents } from "@tiptap-pro/extension-table-of-contents";
 import Table from "@tiptap/extension-table";
 import FontFamily from "@tiptap/extension-font-family";
-import { User } from "lucia";
-import GlobalDragHandle from "tiptap-extension-global-drag-handle";
+import UrlLink from "@tiptap/extension-link";
+import { Underline } from "@tiptap/extension-underline";
+import Dropcursor from "@tiptap/extension-dropcursor";
+import { FileHandler } from "@tiptap-pro/extension-file-handler";
+// Not a React hook despite its name: a plain async upload function.
+import { useUploadImage as uploadImage } from "@/hooks/use-upload-image";
+import { findSuggestionMatch } from "@/lib/editor/find-suggestion-match";
 import { Float } from "./float";
 import { CustomTooltipNode, Link } from "./node-link";
-import { LineNumbers } from "./line-number";
 import { PageBreak } from "./page-break";
-import { GenerateText } from "./generateText";
-import { TableOfContentsNode } from "./tableOfContentsNode";
+import { GenerateText } from "./generate-text";
+import { TableOfContentsNode } from "./table-of-contents-node";
 import { TableCell, TableHeader, TableRow } from "./table";
 import { Heading } from "./heading";
-import { FontSize } from "./fontSize";
-import AutoJoiner from "tiptap-extension-auto-joiner";
+import { FontSize } from "./font-size";
 import { Column, Columns } from "./multi-column";
 import { SlashCommand } from "./slash-command";
-import { Selection } from "./selection";
-import Dropcursor from "@tiptap/extension-dropcursor";
 import { Document } from "./document";
 // import Image from "../extensions/image";
-import { Image } from "./image/image";
-import { FileHandler } from "@tiptap-pro/extension-file-handler";
-import ImageUpload from "./document/image-upload/image-upload";
 import ImageBlock from "./image-block/image-block";
-import { useUploadImage } from "@/hooks/use-upload-image";
-import { SuggestionMatch, Trigger } from "@tiptap/suggestion";
-import { findSuggestionMatch } from "@/lib/editor/findSuggestionMatch";
 import { CodeBlock } from "./code-block/code-block";
 
 export const Extensions = ({
@@ -80,11 +72,13 @@ export const Extensions = ({
   // LineNumbers.configure({
   //   showLineNumbers: false, // Use state to pass down the configuration
   // }),
+  UrlLink.configure({ openOnClick: false }),
+  Underline,
   Link.configure({
     suggestion: {
       allowSpaces: true,
       findSuggestionMatch,
-      items: async ({ query }) => {
+      items: () => {
         return [
           {
             name: "Fire",
@@ -113,48 +107,49 @@ export const Extensions = ({
   FileHandler.configure({
     allowedMimeTypes: ["image/png", "image/jpeg", "image/gif", "image/webp"],
     onDrop: (currentEditor, files, pos) => {
-      files.forEach(async () => {
-        const file = files[0];
-        console.log("file", file);
-        if (file && contentId) {
-          const image = await useUploadImage({
-            file,
-            contentId,
-            storyId,
-            userId,
-          });
+      files.forEach((file) => {
+        void (async () => {
+          if (contentId) {
+            const image = await uploadImage({
+              file,
+              contentId,
+              storyId,
+              userId,
+            });
 
-          if (image.url) {
-            currentEditor
-              .chain()
-              .setImageBlockAt({ pos, src: image.url })
-              .focus()
-              .run();
+            if (image?.url) {
+              currentEditor
+                .chain()
+                .setImageBlockAt({ pos, src: image.url })
+                .focus()
+                .run();
+            }
           }
-        }
+        })();
       });
     },
     onPaste: (currentEditor, files) => {
-      files.forEach(async () => {
-        const file = files[0];
-        if (file && contentId) {
-          const image = await useUploadImage({
-            file,
-            contentId,
-            storyId,
-            userId,
-          });
-          if (image.url) {
-            return currentEditor
-              .chain()
-              .setImageBlockAt({
-                pos: currentEditor.state.selection.anchor,
-                src: image.url,
-              })
-              .focus()
-              .run();
+      files.forEach((file) => {
+        void (async () => {
+          if (contentId) {
+            const image = await uploadImage({
+              file,
+              contentId,
+              storyId,
+              userId,
+            });
+            if (image?.url) {
+              currentEditor
+                .chain()
+                .setImageBlockAt({
+                  pos: currentEditor.state.selection.anchor,
+                  src: image.url,
+                })
+                .focus()
+                .run();
+            }
           }
-        }
+        })();
       });
     },
   }),

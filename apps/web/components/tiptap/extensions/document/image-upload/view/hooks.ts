@@ -1,21 +1,27 @@
-import { DragEvent, useCallback, useEffect, useRef, useState } from "react";
+import {
+  type DragEvent,
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+} from "react";
 // import toast from "react-hot-toast";
 // import { API } from "@/lib/api";
 
-export type UploadResult = {
+export interface UploadResult {
   url: string | null;
   bucket: string;
   key: string;
   name?: string;
   size?: number;
-};
+}
 
 export const useUploader = ({
   onUpload,
   uploadImageFn,
 }: {
   onUpload: (url: string) => void;
-  uploadImageFn: (file: File) => Promise<UploadResult>;
+  uploadImageFn: (file: File) => Promise<UploadResult | null>;
 }) => {
   const [loading, setLoading] = useState(false);
 
@@ -23,17 +29,14 @@ export const useUploader = ({
     async (file: File) => {
       setLoading(true);
       try {
-        const url = await uploadImageFn(file);
-
-        onUpload(url);
-      } catch (errPayload: any) {
-        const error =
-          errPayload?.response?.data?.error || "Something went wrong";
-        // toast.error(error);
+        const result = await uploadImageFn(file);
+        if (result?.url) onUpload(result.url);
+      } catch {
+        // toast.error(errPayload?.response?.data?.error || "Something went wrong");
       }
       setLoading(false);
     },
-    [onUpload]
+    [onUpload, uploadImageFn]
   );
 
   return { loading, uploadFile };
@@ -93,13 +96,13 @@ export const useDropZone = ({
         }
       }
 
-      if (files.some((file) => file.type.indexOf("image") === -1)) {
+      if (files.some((file) => !file.type.includes("image"))) {
         return;
       }
 
       e.preventDefault();
 
-      const filteredFiles = files.filter((f) => f.type.indexOf("image") !== -1);
+      const filteredFiles = files.filter((f) => f.type.includes("image"));
 
       const file = filteredFiles.length > 0 ? filteredFiles[0] : undefined;
 

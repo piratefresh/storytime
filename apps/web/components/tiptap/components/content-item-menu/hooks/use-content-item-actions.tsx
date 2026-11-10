@@ -1,6 +1,6 @@
-import { Node } from "@tiptap/pm/model";
-import { NodeSelection } from "@tiptap/pm/state";
-import { Editor } from "@tiptap/react";
+import { type Node } from "@tiptap/pm/model";
+import { type NodeSelection } from "@tiptap/pm/state";
+import { type Editor, type JSONContent } from "@tiptap/react";
 import { useCallback } from "react";
 
 const useContentItemActions = (
@@ -24,15 +24,17 @@ const useContentItemActions = (
     editor.commands.setNodeSelection(currentNodePos);
 
     const { $anchor } = editor.state.selection;
+    // node(1) is undefined when the selection sits at the document root
+    const anchorNode = $anchor.node(1) as Node | undefined;
     const selectedNode =
-      $anchor.node(1) || (editor.state.selection as NodeSelection).node;
+      anchorNode ?? (editor.state.selection as NodeSelection).node;
 
     editor
       .chain()
       .setMeta("hideDragHandle", true)
       .insertContentAt(
-        currentNodePos + (currentNode?.nodeSize || 0),
-        selectedNode.toJSON()
+        currentNodePos + (currentNode?.nodeSize ?? 0),
+        selectedNode.toJSON() as JSONContent
       )
       .run();
   }, [editor, currentNodePos, currentNode?.nodeSize]);
@@ -58,11 +60,11 @@ const useContentItemActions = (
 
   const handleAdd = useCallback(() => {
     if (currentNodePos !== -1) {
-      const currentNodeSize = currentNode?.nodeSize || 0;
+      const currentNodeSize = currentNode?.nodeSize ?? 0;
       const insertPos = currentNodePos + currentNodeSize;
       const currentNodeIsEmptyParagraph =
         currentNode?.type.name === "paragraph" &&
-        currentNode?.content?.size === 0;
+        currentNode.content.size === 0;
       const focusPos = currentNodeIsEmptyParagraph
         ? currentNodePos + 2
         : insertPos + 2;
@@ -73,7 +75,7 @@ const useContentItemActions = (
           if (dispatch) {
             if (currentNodeIsEmptyParagraph) {
               tr.insertText("/", currentNodePos, currentNodePos + 1);
-            } else {
+            } else if (state.schema.nodes.paragraph) {
               tr.insert(
                 insertPos,
                 state.schema.nodes.paragraph.create(null, [
@@ -82,7 +84,7 @@ const useContentItemActions = (
               );
             }
 
-            return dispatch(tr);
+            dispatch(tr);
           }
 
           return true;

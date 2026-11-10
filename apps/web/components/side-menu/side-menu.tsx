@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { type User } from "lucia";
-import { type Folder, type File as StoryFile } from "@repo/db";
+import { type File as StoryFile } from "@repo/db";
 import { CreateStoryForm } from "@/app/(main)/stories/create/components/create-story-form";
 import { db } from "@/lib/db";
 import { type StoryWithFolder } from "@/app/(main)/stories/[title]/page";
@@ -16,13 +16,15 @@ import {
   DialogTrigger,
 } from "../ui/dialog";
 import { TreeView } from "../tree-view/tree-view";
-import { type TreeItemNode } from "../tree-view/tree-view";
+import { type NodeMetadata, type TreeNodeData } from "../tree-view/tree-view";
 
 interface SideMenuProps {
   user: User | null;
 }
 
-function constructFolderStructure(stories: StoryWithFolder[]): TreeItemNode {
+function constructFolderStructure(
+  stories: StoryWithFolder[]
+): TreeNodeData<NodeMetadata> {
   const allFolders = stories.flatMap((story) => story.folder);
 
   // Function to build folder and file hierarchy
@@ -30,7 +32,7 @@ function constructFolderStructure(stories: StoryWithFolder[]): TreeItemNode {
     parentId: string | null,
     storyId: string,
     storyTitle: string
-  ): (Folder | StoryFile)[] => {
+  ): TreeNodeData<NodeMetadata>[] => {
     const childFolders = allFolders
       .filter(
         (folder) => folder.parentId === parentId && folder.storyId === storyId
@@ -43,7 +45,7 @@ function constructFolderStructure(stories: StoryWithFolder[]): TreeItemNode {
             storyTitle,
             isRoot: false,
             type: "file",
-            content: file.content,
+            content: file.content as string | null, // Json column holds a JSON string
           },
           // Add missing properties to match File type
           description: null,
@@ -99,7 +101,7 @@ function constructFolderStructure(stories: StoryWithFolder[]): TreeItemNode {
                 storyId: story.id,
                 storyTitle: story.title,
                 type: "file" as const,
-                content: file.content,
+                content: file.content as string | null, // Json column holds a JSON string
               },
             })),
         ],
@@ -114,7 +116,7 @@ function constructFolderStructure(stories: StoryWithFolder[]): TreeItemNode {
   };
 }
 
-export async function SideMenu({ user }: SideMenuProps): Promise<JSX.Element> {
+export async function SideMenu({ user }: SideMenuProps): Promise<React.JSX.Element> {
   const stories = await db.story.findMany({
     where: {
       ownerId: user?.id,
@@ -148,7 +150,6 @@ export async function SideMenu({ user }: SideMenuProps): Promise<JSX.Element> {
   return (
     <div className="min-h-screen min-w-80 bg-neutral-800 border border-border">
       <div className="flex gap-4 items-center justify-center">
-        {/* <AddFolderForm /> */}
         <Button variant="ghost">
           <Icon name="FilePen" />
         </Button>

@@ -1,14 +1,5 @@
-import { FileTabs } from "@/components/file-tabs/file-tabs";
-import { validateRequest } from "@/lib/auth";
+import { redirect } from "next/navigation";
 
-export default async function Page(): Promise<JSX.Element> {
-  const { user } = await validateRequest();
-  if (!user) {
-    return <div>Unauthorized</div>;
-  }
-
-  return (
-    // <TestEditor />
-    <FileTabs user={user} tabs={[]} />
-  );
+export default function Page(): never {
+  redirect("/stories");
 }

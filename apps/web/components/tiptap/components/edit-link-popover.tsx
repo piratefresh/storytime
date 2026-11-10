@@ -1,18 +1,17 @@
 import { Icon } from "@/components/ui/icon";
 import { Toolbar } from "@/components/ui/toolbar";
-
-import { LinkEditorPanel } from "./panels/link-editor-panel";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { LinkEditorPanel } from "./panels/link-editor-panel";
 
-export type EditLinkPopoverProps = {
+export interface EditLinkPopoverProps {
   onSetLink: (link: string, openInNewTab?: boolean) => void;
-};
+}
 
-export const EditLinkPopover = ({ onSetLink }: EditLinkPopoverProps) => {
+export function EditLinkPopover({ onSetLink }: EditLinkPopoverProps) {
   return (
     <Popover>
       <PopoverTrigger asChild>
@@ -25,4 +24,4 @@ export const EditLinkPopover = ({ onSetLink }: EditLinkPopoverProps) => {
       </PopoverContent>
     </Popover>
   );
-};
+}

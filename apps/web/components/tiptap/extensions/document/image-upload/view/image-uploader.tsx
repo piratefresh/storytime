@@ -1,21 +1,25 @@
+import { type ChangeEvent, useCallback } from "react";
 import { Icon } from "@/components/ui/icon";
-import { UploadResult, useDropZone, useFileUpload, useUploader } from "./hooks";
-
 import { cn } from "@/lib/utils";
-import { ChangeEvent, useCallback } from "react";
 import { Button } from "@/components/ui/button";
+import {
+  type UploadResult,
+  useDropZone,
+  useFileUpload,
+  useUploader,
+} from "./hooks";
 
-export const ImageUploader = ({
+export function ImageUploader({
   onUpload,
   uploadImageFn,
 }: {
   onUpload: (url: string) => void;
-  uploadImageFn: (file: File) => Promise<UploadResult>;
-}) => {
+  uploadImageFn: (file: File) => Promise<UploadResult | null>;
+}) {
   const { loading, uploadFile } = useUploader({ onUpload, uploadImageFn });
   const { handleUploadClick, ref } = useFileUpload();
   const { draggedInside, onDrop, onDragEnter, onDragLeave } = useDropZone({
-    uploader: uploadFile,
+    uploader: (file) => void uploadFile(file),
   });
 
   const onFileChange = useCallback(
@@ -23,7 +27,7 @@ export const ImageUploader = ({
       const file = e.target.files?.[0];
 
       if (file) {
-        uploadFile(file);
+        void uploadFile(file);
       }
 
       return null;
@@ -80,6 +84,6 @@ export const ImageUploader = ({
       />
     </div>
   );
-};
+}
 
 export default ImageUploader;

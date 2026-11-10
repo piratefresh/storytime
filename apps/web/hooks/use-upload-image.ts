@@ -1,12 +1,7 @@
-import { createMedia } from "@/app/(main)/assets/media/actions/create-media";
+import crypto from "node:crypto";
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/s3-request-presigner";
-import crypto from "crypto";
-
-type SignedURLResponse = Promise<
-  | { error?: undefined; success: { url: string; id: number } }
-  | { error: string; success?: undefined }
->;
+import { createMedia } from "@/app/(main)/assets/media/actions/create-media";
 
 interface UploadResult {
   url: string | null;
@@ -16,19 +11,16 @@ interface UploadResult {
   size?: number;
 }
 
-type GetSignedURLParams = {
-  file: File;
-};
+const bucketName = process.env.NEXT_PUBLIC_AWS_BUCKET_NAME ?? "";
+const bucketRegion = process.env.NEXT_PUBLIC_AWS_BUCKET_REGION ?? "";
 
 const s3Client = new S3Client({
-  region: process.env.NEXT_PUBLIC_AWS_BUCKET_REGION!,
+  region: bucketRegion,
   credentials: {
-    accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY!,
-    secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY!,
+    accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY ?? "",
+    secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY ?? "",
   },
 });
-
-const maxFileSize = 1048576 * 10; // 1 MB
 
 const generateFileName = (bytes = 32) =>
   crypto.randomBytes(bytes).toString("hex");
@@ -43,11 +35,11 @@ export async function useUploadImage({
   contentId: string;
   storyId: string;
   userId: string;
-}): Promise<UploadResult> {
+}): Promise<UploadResult | null> {
   const fileName = generateFileName();
 
   const putObjectCommand = new PutObjectCommand({
-    Bucket: process.env.NEXT_PUBLIC_AWS_BUCKET_NAME!,
+    Bucket: bucketName,
     Key: fileName,
     Body: file,
     Metadata: {
@@ -61,12 +53,10 @@ export async function useUploadImage({
     });
 
     const userResponse = await fetch("/session/get-user");
-    const { user } = await userResponse.json();
+    const { user } = (await userResponse.json()) as { user?: unknown };
     console.log("user: ", user);
     if (!user) {
-      return {
-        error: "User not found",
-      };
+      return null;
     }
 
     const response = await fetch(url, {
@@ -79,7 +69,7 @@ export async function useUploadImage({
 
     if (response.ok) {
       // Construct the public URL of the uploaded file
-      const publicUrl = `https://${process.env.NEXT_PUBLIC_AWS_BUCKET_NAME!}.s3.${process.env.NEXT_PUBLIC_AWS_BUCKET_REGION!}.amazonaws.com/${fileName}`;
+      const publicUrl = `https://${bucketName}.s3.${bucketRegion}.amazonaws.com/${fileName}`;
       const createMediaResponse = await createMedia({
         fileId: contentId,
         url: publicUrl,
@@ -87,25 +77,24 @@ export async function useUploadImage({
         userId,
       });
       console.log("createMediaResponse: ", createMediaResponse);
-      if (createMediaResponse?.error) {
-        return { error: "Couldn't connect image to media library" };
+      if (!createMediaResponse || "error" in createMediaResponse) {
+        console.error("Couldn't connect image to media library");
+        return null;
       }
-      if (createMediaResponse?.success) {
-        return {
-          url: publicUrl,
-          bucket: process.env.NEXT_PUBLIC_AWS_BUCKET_NAME!,
-          key: fileName,
-          name: file.name,
-          size: file.size,
-        };
-      }
-    } else {
+      return {
+        url: publicUrl,
+        bucket: bucketName,
+        key: fileName,
+        name: file.name,
+        size: file.size,
+      };
+    } 
       console.error("Upload failed:", response.statusText);
-      return false;
-    }
+      return null;
+    
   } catch (error) {
     console.error("Error generating signed URL:", error);
 
-    return false;
+    return null;
   }
 }

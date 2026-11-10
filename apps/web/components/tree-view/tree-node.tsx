@@ -29,9 +29,8 @@ import {
   ContextMenuSubTrigger,
   ContextMenuTrigger,
 } from "../ui/context-menu";
-import { type TreeItemNode } from "./tree-view";
 import { DropdownMenuLabel } from "../ui/dropdown-menu";
-import { Context } from "@dnd-kit/sortable/dist/components";
+import { type TreeItemNode } from "./tree-view";
 
 interface TreeNodeProps extends INodeRendererProps {
   onDoubleClick?: (info: Folder) => void;
@@ -56,7 +55,7 @@ interface MenuSection {
   items: MenuItem[];
 }
 
-function ArrowIcon({ isOpen }: { isOpen: boolean }): JSX.Element {
+function ArrowIcon({ isOpen }: { isOpen: boolean }): React.JSX.Element {
   return isOpen ? <ChevronDown size={16} /> : <ChevronRight size={16} />;
 }
 
@@ -67,14 +66,13 @@ export function TreeNode({
   dispatch,
   isExpanded,
   isBranch,
-  isDraggingOverFolder,
   isSelected = false,
   dragAttributes,
   dragListeners,
   setDragNodeRef,
   isEditing,
   onEditing,
-}: TreeNodeProps): JSX.Element {
+}: TreeNodeProps): React.JSX.Element {
   const updateTabLabel = useTabsStore((state) => state.updateTabLabel);
   const removeTabFromAllGroups = useTabsStore(
     (state) => state.removeTabFromAllGroups
@@ -165,6 +163,7 @@ export function TreeNode({
           {
             label: "Create file",
             onClick: (info: TreeItemNode) => {
+              if (!info.metadata) return;
               const formData = new FormData();
               if (info.metadata.storyId) {
                 formData.append("storyId", info.metadata.storyId);
@@ -174,7 +173,7 @@ export function TreeNode({
                 typeof info.id === "string" &&
                 !info.metadata.isRoot
               ) {
-                formData.append("folderId", info.id);
+                formData.append("folderId", String(info.id));
               }
               startTransition(async () => {
                 await createFile(null, formData);
@@ -184,12 +183,13 @@ export function TreeNode({
           {
             label: "Create folder",
             onClick: (info: TreeItemNode) => {
+              if (!info.metadata) return;
               const formData = new FormData();
               if (info.metadata.storyId) {
                 formData.append("storyId", info.metadata.storyId);
               }
               if (!info.metadata.isRoot && info.id) {
-                formData.append("parentId", info.id);
+                formData.append("parentId", String(info.id));
               }
               startTransition(async () => {
                 await createFolder(null, formData);
@@ -236,20 +236,21 @@ export function TreeNode({
           {
             label: "Delete",
             onClick: (info: TreeItemNode) => {
+              if (!info.metadata) return;
               const formData = new FormData();
               formData.append("storyId", info.metadata.storyId);
               formData.append("name", info.name);
               formData.append("type", info.metadata.type);
               if (info.metadata.type === "file") {
-                formData.append("fileId", info.id);
+                formData.append("fileId", String(info.id));
               } else {
-                formData.append("folderId", info.id);
+                formData.append("folderId", String(info.id));
               }
 
               startTransition(async () => {
                 const response = await deleteFileFolder(null, formData);
                 if (response?.status) {
-                  removeTabFromAllGroups(info.id);
+                  removeTabFromAllGroups(String(info.id));
                 }
               });
             },
@@ -263,13 +264,6 @@ export function TreeNode({
         ],
       },
     ];
-  };
-
-  const handleClick = (e: React.MouseEvent<HTMLDivElement>) => {
-    const nodeProps = getNodeProps();
-    if (nodeProps.onClick) {
-      nodeProps.onClick(e as any);
-    }
   };
 
   const nodeProps = getNodeProps();
@@ -358,8 +352,8 @@ export function TreeNode({
       <ContextMenuContent>
         <DropdownMenuLabel>{nodeContent}</DropdownMenuLabel>
         <ContextMenuSeparator />
-        {getContextMenuItems().map((section, sectionIndex) => (
-          <Fragment key={sectionIndex}>
+        {contextMenuItems.map((section, sectionIndex) => (
+          <Fragment key={section.items.map((item) => item.label).join()}>
             {sectionIndex > 0 && <ContextMenuSeparator />}
             {section.items.map((item) =>
               item.subMenu ? (

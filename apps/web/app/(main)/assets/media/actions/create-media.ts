@@ -14,7 +14,7 @@ export async function createMedia({
   storyId: string;
   userId: string;
 }): Promise<{ error: string } | { success: string } | undefined> {
-  const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
+  const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
   if (!sessionId) {
     return {
       error: "Session not found",

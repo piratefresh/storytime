@@ -13,8 +13,8 @@ export interface ContextMenuProps {
   bottom: number | false;
   open: boolean;
   onClick?: () => void;
-  onAddFolder: (folderId: string) => Promise<void>;
-  onAddFile: (parentId: string) => Promise<void>;
+  onAddFolder: (folderId?: string) => Promise<void>;
+  onAddFile: (parentId?: string) => Promise<void>;
   data?: {
     label: string;
     folderId?: string;
@@ -25,7 +25,6 @@ export interface ContextMenuProps {
 }
 
 export default function ContextMenu({
-  id,
   top,
   left,
   right,
@@ -34,7 +33,7 @@ export default function ContextMenu({
   onAddFile,
   onAddFolder,
   data,
-}: ContextMenuProps): JSX.Element {
+}: ContextMenuProps): React.JSX.Element {
   return (
     <DropdownMenu defaultOpen open={open} modal={false}>
       <DropdownMenuContent

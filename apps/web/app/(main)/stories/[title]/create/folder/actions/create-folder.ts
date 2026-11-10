@@ -1,13 +1,13 @@
 "use server";
 
+import { type FolderView } from "@repo/db";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { type z } from "zod";
 import { formSchema } from "@/app/schemas/create-folder-schema";
 import { lucia } from "@/lib/auth";
 import db from "@/lib/db";
-import { ActionResult } from "@/lib/form";
-import { FolderView } from "@repo/db";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import { z } from "zod";
+import { type ActionResult } from "@/lib/form";
 
 type FormData = z.infer<typeof formSchema>;
 
@@ -26,7 +26,7 @@ export async function createFolder({
     };
   }
 
-  const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
+  const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
   if (!sessionId) {
     return {
       error: "Session not found",
@@ -62,11 +62,5 @@ export async function createFolder({
     };
   }
 
-  if (!folder) {
-    return {
-      error: "Failed to create folder",
-    };
-  }
-
-  return redirect(`/stories/${story?.title}/${folder.name}`);
+  return redirect(`/stories/${story.title}/${folder.name}`);
 }

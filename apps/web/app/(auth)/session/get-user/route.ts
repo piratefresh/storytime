@@ -1,11 +1,11 @@
 "use server";
 
-import { lucia } from "@/lib/auth";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
+import { lucia } from "@/lib/auth";
 
-export async function GET(request: Request) {
-  const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
+export async function GET() {
+  const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
   if (!sessionId) {
     return new NextResponse(
       JSON.stringify({ error: "Authentication required" }),
@@ -14,7 +14,7 @@ export async function GET(request: Request) {
       }
     );
   }
-  const { user, session } = await lucia.validateSession(sessionId);
+  const { user } = await lucia.validateSession(sessionId);
 
   if (!user) {
     return new NextResponse(
