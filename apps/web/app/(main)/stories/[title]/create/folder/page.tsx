@@ -1,6 +1,6 @@
 import { redirect } from "next/navigation";
 import { validateRequest } from "@/lib/auth";
-import { getStory } from "../../get-story";
+import { getStory } from "@/lib/stories";
 import { CreateFolderForm } from "./components/create-folder-form";
 
 async function CreateFolderPage({
@@ -14,10 +14,7 @@ async function CreateFolderPage({
   if (!user) {
     redirect("/stories");
   }
-  const story = await getStory({
-    title: decodeURIComponent(title),
-    userId: user.id,
-  });
+  const story = await getStory(user.id, decodeURIComponent(title));
 
   if (!story) {
     redirect("/stories");

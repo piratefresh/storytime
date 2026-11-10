@@ -15,7 +15,7 @@ import {
 } from "@xyflow/react";
 import Dagre from "@dagrejs/dagre";
 import "@xyflow/react/dist/style.css";
-import { type StoryWithFolder } from "@/app/(main)/stories/[title]/page";
+import { type StoryWithFolder } from "@/lib/stories";
 import FloatingEdge from "./floating-edge";
 import FloatingConnectionLine from "./floating-connection-line";
 import ContextMenu, { type ContextMenuProps } from "./context-menu";
@@ -107,7 +107,7 @@ function generateReactFlowData(story: StoryWithFolder): {
 const getLayoutedElements = (
   nodes: Node[],
   edges: Edge[],
-  options: { direction: "TB" | "LR" }
+  options: { direction: "TB" | "LR" },
 ) => {
   const g = new Dagre.graphlib.Graph().setDefaultEdgeLabel(() => ({}));
   g.setGraph({
@@ -123,7 +123,7 @@ const getLayoutedElements = (
       ...node,
       width: node.measured?.width ?? 0,
       height: node.measured?.height ?? 0,
-    })
+    }),
   );
 
   Dagre.layout(g);
@@ -147,7 +147,12 @@ const nodeTypes = {
   folder: FolderNode,
 };
 
-function Flow({ id, story, onAddFolder, onAddFile }: FlowProps): React.JSX.Element {
+function Flow({
+  id,
+  story,
+  onAddFolder,
+  onAddFile,
+}: FlowProps): React.JSX.Element {
   const { nodes: initialNodes, edges: initialEdges } = useMemo(() => {
     const { nodes, edges } = generateReactFlowData(story);
     return getLayoutedElements(nodes, edges, { direction: "TB" });
@@ -169,11 +174,11 @@ function Flow({ id, story, onAddFolder, onAddFile }: FlowProps): React.JSX.Eleme
             type: "floating",
             markerEnd: { type: MarkerType.Arrow },
           },
-          eds
-        )
+          eds,
+        ),
       );
     },
-    [setEdges]
+    [setEdges],
   );
 
   const onNodeContextMenu = useCallback(
@@ -198,7 +203,7 @@ function Flow({ id, story, onAddFolder, onAddFile }: FlowProps): React.JSX.Eleme
         data: node.data as ContextMenuProps["data"],
       });
     },
-    [onAddFile, onAddFolder]
+    [onAddFile, onAddFolder],
   );
 
   const onPaneClick = useCallback(() => {

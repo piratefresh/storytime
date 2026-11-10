@@ -1,30 +1,7 @@
-import { type Prisma } from "@repo/db";
 import { redirect } from "next/navigation";
 import { validateRequest } from "@/lib/auth";
+import { getStory } from "@/lib/stories";
 import { GroupPanel } from "./components/group-panel";
-import { getStory } from "./get-story";
-
-export type StoryWithFolder = Prisma.StoryGetPayload<{
-  include: {
-    folder: {
-      include: {
-        file: {
-          orderBy: {
-            name: "asc";
-          };
-        };
-      };
-      orderBy: {
-        name: "asc";
-      };
-    };
-    file: {
-      orderBy: {
-        name: "asc";
-      };
-    };
-  };
-}>;
 
 export default async function StoryPage({
   params,
@@ -38,12 +15,7 @@ export default async function StoryPage({
     redirect("/stories");
   }
 
-  const story = await getStory({
-    title: decodeURIComponent(title),
-    userId: user.id,
-  });
-
-  console.log("story: ", JSON.stringify(story));
+  const story = await getStory(user.id, decodeURIComponent(title));
 
   if (!story) {
     redirect("/stories");

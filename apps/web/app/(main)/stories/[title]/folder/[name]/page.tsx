@@ -1,24 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { cache } from "react";
 import { Button } from "@/components/ui/button";
-import db from "@/lib/db";
+import { getStory } from "@/lib/stories";
 import { validateProtected } from "@/lib/validate-protected";
 
-const getStory = cache(
-  async ({ title, userId }: { title: string; userId: string }) => {
-    const item = await db.story.findFirst({
-      where: {
-        ownerId: userId,
-        title,
-      },
-      include: {
-        folder: true,
-      },
-    });
-    return item;
-  }
-);
 async function FolderPage({
   params,
 }: {
@@ -27,10 +12,7 @@ async function FolderPage({
   const { title, name } = await params;
   const { user } = await validateProtected({ redirectURL: "/stories" });
 
-  const story = await getStory({
-    title: decodeURIComponent(title),
-    userId: user.id,
-  });
+  const story = await getStory(user.id, decodeURIComponent(title));
 
   if (!story) {
     redirect("/stories");
@@ -39,7 +21,7 @@ async function FolderPage({
   return (
     <div className="flex">
       <h2>
-        {name} of {story.title}
+        {decodeURIComponent(name)} of {story.title}
       </h2>
       <Link href={`/stories/${story.title}/create/assets`}>
         <Button className="self-start">Add an Asset</Button>

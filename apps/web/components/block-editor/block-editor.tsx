@@ -2,7 +2,7 @@
 
 import { EditorContent, EditorContext, type JSONContent } from "@tiptap/react";
 import React from "react";
-import { type User } from "lucia";
+import type { User } from "@/lib/auth";
 import { useTabsStore } from "@/app/stores/tabs-provider";
 import ImageBlockMenu from "../tiptap/extensions/image-block/components/image-block-menu";
 import { ContentItemMenu } from "../tiptap/components/content-item-menu";
@@ -14,7 +14,7 @@ import { useBlockEditor } from "./use-block-editor";
 interface BlockEditorProps {
   onChange: (
     content: JSONContent | string | null,
-    plainTextContent: string
+    plainTextContent: string,
   ) => void;
   user: User;
   contentId?: string;
@@ -33,7 +33,8 @@ export function BlockEditor({
   const { editor, tocSidebar } = useBlockEditor({
     onChange: (jsonContent, plainText) => {
       handleOnChange(jsonContent, plainText);
-      if (contentId) updateTabContent({ tabId: contentId, content: jsonContent });
+      if (contentId)
+        updateTabContent({ tabId: contentId, content: jsonContent });
     },
     user,
     contentId,

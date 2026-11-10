@@ -1,72 +1,43 @@
 "use server";
 
-import { ZodError } from "zod";
 import { revalidatePath } from "next/cache";
+import { and, db, eq, outlineNode } from "@repo/db";
 import { validateRequest } from "@/lib/auth";
+import { assertOwnsProject } from "@/lib/stories";
 import { type FormState, type FormResponse } from "@/types";
-import { db } from "@/lib/db";
 import { saveFileSchema } from "@/schemas";
 
 export async function saveFile(
   state: FormState,
   data: FormData,
-  skipRevalidation?: boolean
+  skipRevalidation?: boolean,
 ): Promise<FormResponse> {
-  const { session } = await validateRequest();
-  if (!session) {
-    throw new ZodError([
-      {
-        path: ["auth"],
-        code: "custom",
-        message: "This action requires authentication.",
-      },
-    ]);
+  const { user } = await validateRequest();
+  if (!user) {
+    return { status: "error", message: "This action requires authentication." };
   }
 
-  const parsedData = saveFileSchema.parse({
+  const { fileId, storyId, content } = saveFileSchema.parse({
     fileId: data.get("fileId"),
     content: data.get("content"),
     storyId: data.get("storyId"),
   });
 
-  const { fileId, storyId, content } = parsedData;
-
   try {
-    const file = await db.file.update({
-      where: {
-        id: fileId,
-        storyId,
-      },
-      data: {
-        content: content ?? undefined,
-      },
-      include: {
-        story: true,
-      },
-    });
-
-    if (!file.story) {
-      throw new ZodError([
-        {
-          path: ["story"],
-          code: "custom",
-          message: "story not found, cannot rename.",
-        },
-      ]);
+    await assertOwnsProject(storyId, user.id);
+    if (content !== null && content !== undefined) {
+      await db
+        .update(outlineNode)
+        // Store the Tiptap doc as real JSON, not a JSON string inside jsonb.
+        .set({ content: JSON.parse(content) as unknown })
+        .where(
+          and(eq(outlineNode.id, fileId), eq(outlineNode.projectId, storyId)),
+        );
     }
-
-    if (!skipRevalidation) {
-      revalidatePath(`/`);
-    }
-
-    return { message: `Content saved.`, status: "success" };
+    if (!skipRevalidation) revalidatePath("/");
+    return { message: "Content saved.", status: "success" };
   } catch (error) {
-    // Log the error for debugging; this is particularly useful during development
     console.error("Error during database operation:", error);
-
-    return {
-      status: "error",
-      message: "Failed to rename file",
-    };
+    return { status: "error", message: "Failed to save file" };
   }
 }

@@ -1,132 +1,51 @@
 "use server";
 
-import { ZodError } from "zod";
 import { revalidatePath } from "next/cache";
+import { and, db, eq, outlineNode } from "@repo/db";
 import { validateRequest } from "@/lib/auth";
+import { assertOwnsProject } from "@/lib/stories";
 import { type FormState, type FormResponse } from "@/types";
-import { db } from "@/lib/db";
 import { updateSchema } from "@/schemas";
 
+/** Moves a file or folder under a new parent. */
 export async function updateFileFolder(
   state: FormState,
   data: FormData,
-  skipRevalidation?: boolean
+  skipRevalidation?: boolean,
 ): Promise<FormResponse> {
-  const { session } = await validateRequest();
-  if (!session) {
-    throw new ZodError([
-      {
-        path: ["auth"],
-        code: "custom",
-        message: "This action requires authentication.",
-      },
-    ]);
+  const { user } = await validateRequest();
+  if (!user) {
+    return { status: "error", message: "This action requires authentication." };
   }
 
-  const parsedData = updateSchema.parse({
+  const parsed = updateSchema.parse({
     fileId: data.get("fileId"),
     folderId: data.get("folderId"),
     storyId: data.get("storyId"),
     type: data.get("type") as "file" | "folder",
     parentId: data.get("parentId"),
   });
+  const id = parsed.type === "folder" ? parsed.folderId : parsed.fileId;
+  const label = parsed.type === "folder" ? "Folder" : "File";
 
-  if (parsedData.type === "folder") {
-    const { folderId, storyId, parentId } = parsedData;
-    try {
-      const folder = await db.folder.update({
-        where: {
-          id: folderId,
-          storyId,
-        },
-        data: {
-          parentId,
-        },
-        include: {
-          story: true,
-        },
-      });
-
-      if (!folder.story) {
-        throw new ZodError([
-          {
-            path: ["story"],
-            code: "custom",
-            message: "story not found, cannot rename.",
-          },
-        ]);
-      }
-
-      if (!skipRevalidation) {
-        revalidatePath(`/`);
-      }
-
-      return { message: `Folder renamed.`, status: "success" };
-    } catch (error) {
-      // Log the error for debugging; this is particularly useful during development
-      console.error("Error during database operation:", error);
-
-      return {
-        status: "error",
-        message: "Failed to rename folder",
-      };
-    }
-  } else {
-    const { fileId, storyId, parentId } = parsedData;
-
-    const oldFile = await db.file.findUnique({
-      where: {
-        id: fileId,
-      },
-    });
-
-    if (!oldFile) {
-      throw new ZodError([
-        {
-          path: ["file"],
-          code: "custom",
-          message: "File does not exist.",
-        },
-      ]);
-    }
-
-    try {
-      const file = await db.file.update({
-        where: {
-          id: fileId,
-          storyId,
-        },
-        data: {
-          folderId: parentId,
-        },
-        include: {
-          story: true,
-        },
-      });
-
-      if (!file.story) {
-        throw new ZodError([
-          {
-            path: ["story"],
-            code: "custom",
-            message: "story not found, cannot rename.",
-          },
-        ]);
-      }
-
-      if (!skipRevalidation) {
-        revalidatePath(`/`);
-      }
-
-      return { message: `File renamed.`, status: "success" };
-    } catch (error) {
-      // Log the error for debugging; this is particularly useful during development
-      console.error("Error during database operation:", error);
-
-      return {
-        status: "error",
-        message: "Failed to rename file",
-      };
-    }
+  try {
+    await assertOwnsProject(parsed.storyId, user.id);
+    // Dropping on the story itself sends the story id as parent: that means the root.
+    const parentId =
+      parsed.parentId === parsed.storyId ? null : parsed.parentId;
+    await db
+      .update(outlineNode)
+      .set({ parentId })
+      .where(
+        and(eq(outlineNode.id, id), eq(outlineNode.projectId, parsed.storyId)),
+      );
+    if (!skipRevalidation) revalidatePath("/");
+    return { message: `${label} moved.`, status: "success" };
+  } catch (error) {
+    console.error("Error during database operation:", error);
+    return {
+      status: "error",
+      message: `Failed to move ${label.toLowerCase()}`,
+    };
   }
 }

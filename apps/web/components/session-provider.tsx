@@ -1,7 +1,7 @@
 "use client";
 
-import { type Session, type User } from "lucia";
 import { createContext, useContext } from "react";
+import type { Session, User } from "@/lib/auth";
 
 interface SessionProviderProps {
   user: User | null;

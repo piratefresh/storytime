@@ -14,13 +14,16 @@ interface UploadResult {
 const bucketName = process.env.NEXT_PUBLIC_AWS_BUCKET_NAME ?? "";
 const bucketRegion = process.env.NEXT_PUBLIC_AWS_BUCKET_REGION ?? "";
 
-const s3Client = new S3Client({
-  region: bucketRegion,
-  credentials: {
-    accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY ?? "",
-    secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY ?? "",
-  },
-});
+// Created on first upload so the editor still loads when AWS env vars are absent.
+let s3: S3Client | undefined;
+const getS3Client = (): S3Client =>
+  (s3 ??= new S3Client({
+    region: bucketRegion,
+    credentials: {
+      accessKeyId: process.env.NEXT_PUBLIC_AWS_ACCESS_KEY ?? "",
+      secretAccessKey: process.env.NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY ?? "",
+    },
+  }));
 
 const generateFileName = (bytes = 32) =>
   crypto.randomBytes(bytes).toString("hex");
@@ -48,12 +51,12 @@ export async function useUploadImage({
   });
 
   try {
-    const url = await getSignedUrl(s3Client, putObjectCommand, {
+    const url = await getSignedUrl(getS3Client(), putObjectCommand, {
       expiresIn: 3600,
     });
 
-    const userResponse = await fetch("/session/get-user");
-    const { user } = (await userResponse.json()) as { user?: unknown };
+    const userResponse = await fetch("/api/auth/get-session");
+    const { user } = ((await userResponse.json()) ?? {}) as { user?: unknown };
     console.log("user: ", user);
     if (!user) {
       return null;
@@ -88,10 +91,9 @@ export async function useUploadImage({
         name: file.name,
         size: file.size,
       };
-    } 
-      console.error("Upload failed:", response.statusText);
-      return null;
-    
+    }
+    console.error("Upload failed:", response.statusText);
+    return null;
   } catch (error) {
     console.error("Error generating signed URL:", error);
 

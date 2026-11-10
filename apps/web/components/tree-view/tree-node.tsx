@@ -1,6 +1,5 @@
 import { type DraggableAttributes } from "@dnd-kit/core";
 import { type SyntheticListenerMap } from "@dnd-kit/core/dist/hooks/utilities";
-import { type Folder } from "@repo/db";
 import {
   Fragment,
   startTransition,
@@ -11,6 +10,7 @@ import {
 } from "react";
 import { type INodeRendererProps } from "react-accessible-treeview";
 import { ChevronDown, ChevronRight, FileIcon, FolderIcon } from "lucide-react";
+import { type StoryFolder as Folder } from "@/lib/stories";
 import { useTabsStore } from "@/app/stores/tabs-provider";
 import { useUpdateStoryUrl } from "@/hooks/use-update-story-url";
 import { createFolder } from "@/app/(main)/stories/actions/create-folder";
@@ -75,7 +75,7 @@ export function TreeNode({
 }: TreeNodeProps): React.JSX.Element {
   const updateTabLabel = useTabsStore((state) => state.updateTabLabel);
   const removeTabFromAllGroups = useTabsStore(
-    (state) => state.removeTabFromAllGroups
+    (state) => state.removeTabFromAllGroups,
   );
 
   const updateStoryUrl = useUpdateStoryUrl();
@@ -120,7 +120,7 @@ export function TreeNode({
       onEditing,
       updateStoryUrl,
       updateTabLabel,
-    ]
+    ],
   );
 
   const handleSubmit = (e: React.FormEvent): void => {
@@ -213,7 +213,7 @@ export function TreeNode({
                 label: "Choose destination...",
                 onClick: () => {
                   console.log(
-                    "Choose destination - functionality to be implemented"
+                    "Choose destination - functionality to be implemented",
                   );
                 },
               },
@@ -327,7 +327,7 @@ export function TreeNode({
         "aria-selected:!bg-selection",
         "group",
         "h-[28px]",
-        "hover:bg-control"
+        "hover:bg-control",
       )}
       style={{
         marginLeft: 10 * (level - 1),
@@ -383,7 +383,7 @@ export function TreeNode({
                 >
                   {item.label}
                 </ContextMenuItem>
-              )
+              ),
             )}
           </Fragment>
         ))}

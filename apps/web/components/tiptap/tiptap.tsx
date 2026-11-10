@@ -4,8 +4,8 @@ import React from "react";
 import { EditorProvider, useCurrentEditor } from "@tiptap/react";
 // extensions
 import { type EditorProps } from "@tiptap/pm/view";
-import { type User } from "lucia";
 import { type MarkdownStorage } from "tiptap-markdown";
+import type { User } from "@/lib/auth";
 import { TableOfContents } from "../table-of-contents";
 import { CharacterCountDisplay } from "./extensions/character-count-display/character-count-display";
 import { TextMenu } from "./text-menu";
@@ -143,7 +143,7 @@ function Tiptap({
             console.log("value: ", value);
             console.log(
               "markdown: ",
-              (editor.storage.markdown as MarkdownStorage).getMarkdown()
+              (editor.storage.markdown as MarkdownStorage).getMarkdown(),
             );
             if (onChange) {
               onChange(value);

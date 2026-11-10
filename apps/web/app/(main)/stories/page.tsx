@@ -9,10 +9,12 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { TypographyH1 } from "@/components/ui/typography";
-import { db } from "@/lib/db";
+import { validateRequest } from "@/lib/auth";
+import { getStories } from "@/lib/stories";
 
 export default async function StoriesPage(): Promise<React.ReactElement> {
-  const stories = await db.story.findMany({});
+  const { user } = await validateRequest();
+  const stories = user ? await getStories(user.id) : [];
 
   return (
     <div className="flex flex-col flex-1 px-8 gap-8">

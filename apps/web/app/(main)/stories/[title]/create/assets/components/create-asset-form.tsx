@@ -4,9 +4,9 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { type z } from "zod";
 import { useFormState, useFormStatus } from "react-dom";
-import { type User } from "lucia";
-import { type Folder } from "@repo/db";
 import { useSearchParams } from "next/navigation";
+import type { User } from "@/lib/auth";
+import { type StoryFolder as Folder } from "@/lib/stories";
 import {
   Form,
   FormControl,

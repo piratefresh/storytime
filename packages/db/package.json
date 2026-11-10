@@ -5,19 +5,19 @@
   "main": "./index.ts",
   "types": "./index.ts",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "db:generate": "dotenv -e .env prisma generate",
-    "db:push": "dotenv -e .env prisma db push --skip-generate",
-    "db:studio": "npx prisma studio",
-    "db:drop": "dotenv -e .env prisma db push --force-reset"
+    "db:generate": "drizzle-kit generate",
+    "db:migrate": "dotenv -e .env -- drizzle-kit migrate",
+    "db:studio": "dotenv -e .env -- drizzle-kit studio"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
-  "devDependencies": {
-    "prisma": "^5.9.1"
-  },
   "dependencies": {
-    "@prisma/client": "5.9.1"
+    "drizzle-orm": "^0.45.4",
+    "postgres": "^4.1.0"
+  },
+  "devDependencies": {
+    "dotenv-cli": "^7.3.0",
+    "drizzle-kit": "^0.31.11"
   }
 }

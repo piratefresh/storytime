@@ -1,121 +1,55 @@
-import { Lucia } from "lucia";
-import { PrismaAdapter } from "@lucia-auth/adapter-prisma";
-import type { Session, User } from "lucia";
-import { cookies } from "next/headers";
-import { TimeSpan, createDate } from "oslo";
-import { generateRandomString, alphabet } from "oslo/crypto";
-import { GitHub, Google } from "arctic";
-import { db } from "./db";
+import { betterAuth } from "better-auth";
+import { drizzleAdapter } from "better-auth/adapters/drizzle";
+import { nextCookies } from "better-auth/next-js";
+import { magicLink } from "better-auth/plugins/magic-link";
+import { headers } from "next/headers";
+import { Resend } from "resend";
+import { db, user, session, account, verification } from "@repo/db";
 
-const adapter = new PrismaAdapter(db.session, db.user);
+const resend = process.env.RESEND_API_KEY
+  ? new Resend(process.env.RESEND_API_KEY)
+  : null;
 
-// const sql = postgres(process.env.DATABASE_URL!);
-
-// const adapter = new PostgresJsAdapter(sql, {
-//   user: "User",
-//   session: "Session",
-// });
-
-export const lucia = new Lucia(adapter, {
-  sessionCookie: {
-    expires: false,
-    attributes: {
-      secure: process.env.NODE_ENV === "production",
+export const auth = betterAuth({
+  database: drizzleAdapter(db, {
+    provider: "pg",
+    schema: { user, session, account, verification },
+  }),
+  socialProviders: {
+    google: {
+      clientId: process.env.GOOGLE_CLIENT_ID ?? "",
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET ?? "",
+      enabled: Boolean(process.env.GOOGLE_CLIENT_ID),
     },
   },
-  getUserAttributes: (attributes) => {
-    return {
-      // attributes has the type of DatabaseUserAttributes
-      username: attributes.username,
-      emailVerified: attributes.emailVerified,
-      email: attributes.email,
-      providerId: attributes.providerId,
-      providerUserId: attributes.providerUserId,
-    };
-  },
+  plugins: [
+    magicLink({
+      sendMagicLink: async ({ email, url }) => {
+        if (!resend) {
+          // Dev without RESEND_API_KEY: click the link from the server log.
+          console.info(`[auth] magic link for ${email}: ${url}`);
+          return;
+        }
+        const { error } = await resend.emails.send({
+          from: process.env.EMAIL_FROM ?? "Storytime <onboarding@resend.dev>",
+          to: email,
+          subject: "Sign in to Storytime",
+          html: `<p><a href="${url}">Sign in to Storytime</a></p><p>This link expires in 5 minutes. If you didn't ask for it, ignore this email.</p>`,
+        });
+        if (error) throw new Error(error.message);
+      },
+    }),
+    nextCookies(), // must stay last
+  ],
 });
 
-export const github = new GitHub(
-  process.env.GITHUB_CLIENT_ID ?? "",
-  process.env.GITHUB_SECRET ?? ""
-);
-
-export const google = new Google(
-  process.env.GOOGLE_CLIENT_ID ?? "",
-  process.env.GOOGLE_SECRET ?? "",
-  process.env.GOOGLE_REDIRECT_URI ?? ""
-);
+export type Session = typeof auth.$Infer.Session.session;
+export type User = typeof auth.$Infer.Session.user;
 
 export const validateRequest = async (): Promise<
   { user: User; session: Session } | { user: null; session: null }
-> => {
-  const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
-  if (!sessionId) {
-    return {
-      user: null,
-      session: null,
-    };
-  }
-
-  const result = await lucia.validateSession(sessionId);
-  // next.js throws when you attempt to set cookie when rendering page
-  try {
-    if (result.session?.fresh) {
-      const sessionCookie = lucia.createSessionCookie(result.session.id);
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes
-      );
-    }
-    if (!result.session) {
-      const sessionCookie = lucia.createBlankSessionCookie();
-      (await cookies()).set(
-        sessionCookie.name,
-        sessionCookie.value,
-        sessionCookie.attributes
-      );
-    }
-  } catch {
-    /* empty */
-  }
-  return result;
-};
-
-export async function generateEmailVerificationCode(
-  userId: string,
-  email: string
-): Promise<string> {
-  await db.emailVerificationCode.deleteMany({
-    where: {
-      userId,
-    },
-  });
-
-  const code = generateRandomString(8, alphabet("0-9"));
-  await db.emailVerificationCode.create({
-    data: {
-      userId,
-      email,
-      code,
-      expiresAt: createDate(new TimeSpan(5, "m")), // 5 minutes
-    },
-  });
-
-  return code;
-}
-
-declare module "lucia" {
-  interface Register {
-    Lucia: typeof lucia;
-    DatabaseUserAttributes: DatabaseUserAttributes;
-  }
-}
-
-interface DatabaseUserAttributes {
-  username: string;
-  email: string;
-  emailVerified: boolean;
-  providerId: string;
-  providerUserId: string;
-}
+> =>
+  (await auth.api.getSession({ headers: await headers() })) ?? {
+    user: null,
+    session: null,
+  };

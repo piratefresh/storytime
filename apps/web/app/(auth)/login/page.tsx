@@ -11,7 +11,7 @@ function LoginPage(): React.JSX.Element {
       <div className="flex flex-col gap-4">
         <TypographyH1>Storytime</TypographyH1>
         <TypographyP>Create stories</TypographyP>
-        <TypographyH2>Login</TypographyH2>
+        <TypographyH2>Sign in</TypographyH2>
 
         <UserAuthForm />
       </div>

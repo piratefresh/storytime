@@ -1,114 +1,70 @@
 "use client";
 
-import { usePathname } from "next/navigation";
-import { useFormState, useFormStatus } from "react-dom";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { type z } from "zod";
-import Link from "next/link";
-import { login } from "@/app/(auth)/login/actions/login";
-import { signup } from "@/app/(auth)/register/actions/signup";
-import { userAuthSchema } from "@/app/schemas/user-auth-schema";
+import { useState } from "react";
+import { authClient } from "@/lib/auth-client";
 import { cn } from "@/lib/utils";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "./ui/form";
 import { Input } from "./ui/input";
+import { Label } from "./ui/label";
 import { Button } from "./ui/button";
-import { GithubLoginButton } from "./github-login-button";
 import { TypographyP } from "./ui/typography";
 
-type FormData = z.infer<typeof userAuthSchema>;
+export function UserAuthForm({
+  className,
+  ...props
+}: React.HTMLAttributes<HTMLDivElement>): React.JSX.Element {
+  const [status, setStatus] = useState<"idle" | "sending" | "sent">("idle");
+  const [error, setError] = useState<string | null>(null);
 
-type UserAuthFormProps = React.HTMLAttributes<HTMLDivElement>
-
-export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
-  const pathname = usePathname();
-
-  const form = useForm<FormData>({
-    resolver: zodResolver(userAuthSchema),
-  });
-
-  const { errors } = form.formState;
-
-  const onAction = async () => {
-    const valid = await form.trigger();
-    if (valid) {
-      if (pathname === "/login") {
-        const response = await login(form.getValues());
-        form.setError("root.serverError", {
-          type: response.error,
-        });
-      } else {
-        const response = await signup(form.getValues());
-        form.setError("root.serverError", {
-          type: response.error,
-        });
-      }
-    }
+  const onSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    setStatus("sending");
+    setError(null);
+    const email = new FormData(e.currentTarget).get("email") as string;
+    const { error: err } = await authClient.signIn.magicLink({
+      email,
+      callbackURL: "/stories",
+    });
+    if (err) {
+      setError(err.message ?? "Could not send the sign-in link");
+      setStatus("idle");
+    } else setStatus("sent");
   };
 
-  const [, dispatch] = useFormState(onAction, undefined);
+  if (status === "sent")
+    return <TypographyP>Check your email for a sign-in link.</TypographyP>;
 
   return (
     <div className={cn("grid gap-6", className)} {...props}>
-      <Form {...form}>
-        <form action={dispatch} className="flex flex-col gap-4">
-          <FormField
-            control={form.control}
-            name="email"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Email</FormLabel>
-                <FormControl>
-                  <Input placeholder="shadcn" {...field} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormField
-            control={form.control}
-            name="password"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Password</FormLabel>
-                <FormControl>
-                  <Input placeholder="shadcn" type="password" {...field} />
-                </FormControl>
-
-                <FormMessage />
-              </FormItem>
-            )}
-          />
-
-          <FormMessage>{errors.root?.serverError?.type}</FormMessage>
-
-          <SubmitButton />
-        </form>
-      </Form>
-      <Link href={pathname === "/login" ? "/register" : "/login"}>
-        <TypographyP>Create Account</TypographyP>
-      </Link>
-      <GithubLoginButton
-        isLogin={pathname === "/login"}
-      />
+      <form onSubmit={(e) => void onSubmit(e)} className="flex flex-col gap-4">
+        <Label htmlFor="email">Email</Label>
+        <Input
+          id="email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          required
+        />
+        {error ? (
+          <p role="alert" className="text-sm text-destructive">
+            {error}
+          </p>
+        ) : null}
+        <Button disabled={status === "sending"} type="submit">
+          Email me a sign-in link
+        </Button>
+      </form>
+      <Button
+        variant="outline"
+        type="button"
+        onClick={() =>
+          void authClient.signIn.social({
+            provider: "google",
+            callbackURL: "/stories",
+          })
+        }
+      >
+        Continue with Google
+      </Button>
     </div>
-  );
-}
-
-function SubmitButton() {
-  const status = useFormStatus();
-
-  return (
-    <Button disabled={status.pending} type="submit">
-      Submit
-    </Button>
   );
 }
