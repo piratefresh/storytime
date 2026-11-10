@@ -28,7 +28,8 @@ export async function saveFile(
     if (content !== null && content !== undefined) {
       await db
         .update(outlineNode)
-        .set({ content })
+        // Store the Tiptap doc as real JSON, not a JSON string inside jsonb.
+        .set({ content: JSON.parse(content) as unknown })
         .where(
           and(eq(outlineNode.id, fileId), eq(outlineNode.projectId, storyId)),
         );

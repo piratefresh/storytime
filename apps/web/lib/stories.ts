@@ -76,7 +76,8 @@ export const getStories = cache(
           name: n.title,
           folderId: n.parentId,
           storyId: p.id,
-          content: n.content,
+          // The editor expects a JSON string (Prisma handed back the raw string).
+          content: n.content === null ? null : JSON.stringify(n.content),
           type: null,
           url: null,
         }));
