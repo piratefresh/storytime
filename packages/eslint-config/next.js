@@ -40,5 +40,12 @@ module.exports = {
   // add rules configurations here
   rules: {
     "import/no-default-export": "off",
+    // @typescript-eslint/no-unused-vars covers this; the base rule double-reports.
+    "no-unused-vars": "off",
+    // Return types are inferred; annotating every component is noise.
+    "@typescript-eslint/explicit-function-return-type": "off",
+    // False positives on React, zod and Tiptap default + named exports.
+    "import/no-named-as-default": "off",
+    "import/no-named-as-default-member": "off",
   },
 };

@@ -1,22 +1,22 @@
-import { BubbleMenu, Editor } from "@tiptap/react";
-import { Toolbar } from "../ui/toolbar";
-import { useTextmenuCommands } from "./hooks/useTextmenuCommands";
-import { useTextmenuStates } from "./hooks/useTextmenuStates";
+import { BubbleMenu, type Editor } from "@tiptap/react";
 import React from "react";
+import { Toolbar } from "../ui/toolbar";
 import { Icon } from "../ui/icon";
-import { AIDropdown } from "./components/AI-dropdown";
-import { ContentTypePicker } from "./components/content-type-picker";
-import { useTextmenuContentTypes } from "./hooks/useTextmenuContentTypes";
 import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { useTextmenuCommands } from "./hooks/use-textmenu-commands";
+import { useTextmenuStates } from "./hooks/use-textmenu-states";
+import { AIDropdown } from "./components/ai-dropdown";
+import { ContentTypePicker } from "./components/content-type-picker";
+import { useTextmenuContentTypes } from "./hooks/use-textmenu-content-types";
 import { ColorPicker } from "./components/colorpicker";
 import { FontFamilyPicker } from "./components/font-family-picker";
 import { FontSizePicker } from "./components/font-size-picker";
 import { EditLinkPopover } from "./components/edit-link-popover";
 
-export type TextMenuProps = {
-  appendTo?: React.RefObject<any>;
+export interface TextMenuProps {
+  appendTo?: React.RefObject<HTMLElement | null>;
   editor: Editor;
-};
+}
 
 // We memorize the button so each button is not rerendered
 // on every editor state change
@@ -26,7 +26,7 @@ const MemoFontFamilyPicker = React.memo(FontFamilyPicker);
 const MemoFontSizePicker = React.memo(FontSizePicker);
 const MemoContentTypePicker = React.memo(ContentTypePicker);
 
-export function TextMenu({ editor, appendTo }: TextMenuProps) {
+export function TextMenu({ editor }: TextMenuProps) {
   const menuRef = React.useRef<HTMLDivElement | null>(null);
 
   const commands = useTextmenuCommands(editor);
@@ -52,12 +52,12 @@ export function TextMenu({ editor, appendTo }: TextMenuProps) {
         <MemoFontFamilyPicker
           container={menuRef.current}
           onChange={commands.onSetFont}
-          value={states.currentFont || ""}
+          value={states.currentFont ?? ""}
         />
         <MemoFontSizePicker
           container={menuRef.current}
           onChange={commands.onSetFontSize}
-          value={states.currentSize || ""}
+          value={states.currentSize ?? ""}
         />
         <Toolbar.Divider />
         <MemoButton
@@ -108,14 +108,14 @@ export function TextMenu({ editor, appendTo }: TextMenuProps) {
         <Popover modal>
           <PopoverTrigger asChild>
             <MemoButton
-              active={!!states.currentHighlight}
+              active={Boolean(states.currentHighlight)}
               tooltip="Highlight text"
             >
               <Icon name="Highlighter" />
             </MemoButton>
           </PopoverTrigger>
           <PopoverContent
-            onOpenAutoFocus={(e) => e.preventDefault()}
+            onOpenAutoFocus={(e) => { e.preventDefault(); }}
             side="top"
             sideOffset={8}
             portalProps={{ container: menuRef.current }}
@@ -129,12 +129,12 @@ export function TextMenu({ editor, appendTo }: TextMenuProps) {
         </Popover>
         <Popover>
           <PopoverTrigger asChild>
-            <MemoButton active={!!states.currentColor} tooltip="Text color">
+            <MemoButton active={Boolean(states.currentColor)} tooltip="Text color">
               <Icon name="Palette" />
             </MemoButton>
           </PopoverTrigger>
           <PopoverContent
-            onOpenAutoFocus={(e) => e.preventDefault()}
+            onOpenAutoFocus={(e) => { e.preventDefault(); }}
             side="top"
             sideOffset={8}
             portalProps={{ container: menuRef.current }}

@@ -8,8 +8,8 @@ export function Form({
   onSubmit,
 }: {
   children: React.ReactNode;
-  action: (prevState: any, formData: FormData) => Promise<ActionResult>;
-  onSubmit: any;
+  action: (prevState: ActionResult, formData: FormData) => Promise<ActionResult>;
+  onSubmit?: React.FormEventHandler<HTMLFormElement>;
 }) {
   const [state, formAction] = useFormState(action, {
     error: null,

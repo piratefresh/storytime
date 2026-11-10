@@ -36,7 +36,7 @@ import { type Tab, type TabTypes } from "@/app/stores/tabs-store";
 import { updateFileFolder } from "@/app/(main)/stories/actions/update-file-folder";
 import { TreeNode } from "./tree-node";
 
-interface NodeMetadata {
+export interface NodeMetadata {
   storyId: string;
   storyTitle: string;
   isRoot?: boolean;
@@ -53,7 +53,7 @@ export interface TreeItemNode {
   parent?: NodeId;
 }
 
-interface TreeNodeData<M extends NodeMetadata> {
+export interface TreeNodeData<M extends NodeMetadata> {
   id?: NodeId;
   name: string;
   isBranch?: boolean;
@@ -61,14 +61,8 @@ interface TreeNodeData<M extends NodeMetadata> {
   metadata?: M;
 }
 
-interface ContextMenuItems {
-  label: string;
-  onClick: (info: TreeItemNode) => void;
-}
-
 export interface TreeViewProps extends React.ComponentPropsWithoutRef<"div"> {
   folder: TreeNodeData<NodeMetadata>;
-  contextMenuItems: ContextMenuItems[];
 }
 
 interface SortableTreeNodeProps extends INodeRendererProps {
@@ -86,7 +80,7 @@ function SortableTreeNode({
   dispatch,
   overItem,
   ...props
-}: SortableTreeNodeProps): JSX.Element {
+}: SortableTreeNodeProps): React.JSX.Element {
   const [isEditing, setIsEditing] = useState(false);
 
   const { attributes, listeners, setNodeRef, transition, isDragging, isOver } =
@@ -366,8 +360,8 @@ const TreeView = forwardRef<HTMLUListElement, TreeViewProps>(
                   : node.element.metadata.type;
 
                 const content = JSON.parse(
-                  node.element.metadata.content
-                ) as string;
+                  String(node.element.metadata.content ?? "null")
+                ) as string | null;
                 console.log("node.element.metadata: ", node.element.metadata);
                 const tab: Tab = {
                   label: fileName,

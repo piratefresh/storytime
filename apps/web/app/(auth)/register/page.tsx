@@ -5,7 +5,7 @@ import {
 } from "@/components/ui/typography";
 import { UserAuthForm } from "@/components/user-auth-form";
 
-function RegisterPage(): JSX.Element {
+function RegisterPage(): React.JSX.Element {
   return (
     <div className="grid place-content-center w-full min-h-screen">
       <div className="flex flex-col gap-4">

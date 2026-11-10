@@ -1,3 +1,4 @@
+import { useCallback } from "react";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -7,7 +8,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Icon } from "@/components/ui/icon";
 import { Toolbar } from "@/components/ui/toolbar";
-import { useCallback } from "react";
 
 const FONT_FAMILY_GROUPS = [
   {
@@ -39,29 +39,29 @@ const FONT_FAMILIES = FONT_FAMILY_GROUPS.flatMap((group) => [
   group.options,
 ]).flat();
 
-export type FontFamilyPickerProps = {
+export interface FontFamilyPickerProps {
   container: HTMLDivElement | null;
-  onChange: (value: string) => void; // eslint-disable-line no-unused-vars
+  onChange: (value: string) => void;  
   value: string;
-};
+}
 
-export const FontFamilyPicker = ({
+export function FontFamilyPicker({
   container,
   onChange,
   value,
-}: FontFamilyPickerProps) => {
+}: FontFamilyPickerProps) {
   const currentValue = FONT_FAMILIES.find((size) => size.value === value);
-  const currentFontLabel = currentValue?.label.split(" ")[0] || "Inter";
+  const currentFontLabel = currentValue?.label.split(" ")[0] ?? "Inter";
 
   const selectFont = useCallback(
-    (font: string) => () => onChange(font),
+    (font: string) => () => { onChange(font); },
     [onChange]
   );
 
   return (
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
-        <Toolbar.Button active={!!currentValue?.value}>
+        <Toolbar.Button active={Boolean(currentValue?.value)}>
           {currentFontLabel}
           <Icon name="ChevronDown" className="w-2 h-2" />
         </Toolbar.Button>
@@ -88,4 +88,4 @@ export const FontFamilyPicker = ({
       </DropdownMenuContent>
     </DropdownMenu>
   );
-};
+}

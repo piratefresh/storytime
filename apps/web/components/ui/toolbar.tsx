@@ -1,10 +1,9 @@
 // https://github.com/ueberdosis/tiptap-templates/blob/9463b7d46f2c02a3a0907af8f52667b2b1e7d953/templates/next-block-editor-app/src/components/ui/Toolbar.tsx
 
-import React, { ButtonHTMLAttributes, HTMLProps, forwardRef } from "react";
-
+import { type ButtonHTMLAttributes, type HTMLProps, forwardRef } from "react";
 import { cn } from "@/lib/utils";
 import { Surface } from "./surface";
-import { Button, ButtonProps } from "./button";
+import { Button, type ButtonProps } from "./button";
 import { Tooltip, TooltipContent, TooltipTrigger } from "./tooltip";
 
 export type ToolbarWrapperProps = {
@@ -78,8 +77,8 @@ const ToolbarButton = forwardRef<HTMLButtonElement, ToolbarButtonProps>(
       size = "icon",
       className,
       tooltip,
-      tooltipShortcut,
-      activeClassname,
+      tooltipShortcut: _tooltipShortcut,
+      activeClassname: _activeClassname,
       ...rest
     },
     ref

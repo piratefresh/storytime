@@ -1,6 +1,8 @@
-import { Handle, Position, type NodeProps } from "reactflow";
+import { Handle, Position, type Node, type NodeProps } from "@xyflow/react";
 
-export function FileNode({ data }: NodeProps): JSX.Element {
+type LabelNode = Node<{ label: string }>;
+
+export function FileNode({ data }: NodeProps<LabelNode>): React.JSX.Element {
   return (
     <div className="px-4 py-2 shadow-md rounded-md bg-white border-2 border-stone-400">
       <div className="flex">
@@ -25,7 +27,7 @@ export function FileNode({ data }: NodeProps): JSX.Element {
   );
 }
 
-export function FolderNode({ data }: NodeProps): JSX.Element {
+export function FolderNode({ data }: NodeProps<LabelNode>): React.JSX.Element {
   return (
     <div className="px-4 py-2 shadow-md rounded-md bg-white border-2 border-stone-400">
       <div className="flex">

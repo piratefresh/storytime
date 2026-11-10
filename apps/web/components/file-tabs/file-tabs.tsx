@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { type User } from "lucia";
+import { type JSONContent } from "@tiptap/react";
 import {
   DndContext,
   closestCenter,
@@ -18,7 +19,7 @@ import {
   horizontalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { SplitSquareHorizontal } from "lucide-react";
-import { ReactFlowProvider, useReactFlow } from "reactflow";
+import { ReactFlowProvider, useReactFlow } from "@xyflow/react";
 import { cn } from "@/lib/utils";
 import { useUpdateStoryUrl } from "@/hooks/use-update-story-url";
 import { type Tab } from "@/app/stores/tabs-store";
@@ -41,7 +42,7 @@ import { FileTab } from "./file-tab";
 import { SortableItem } from "./sortable-item";
 
 interface FileTabsProps {
-  user: User | null;
+  user: User;
   tabs: Tab[];
   story: StoryWithFolder;
   groupId: string;
@@ -67,7 +68,7 @@ export function FileTabs({
   onAddGraphTab,
   tabs,
   story,
-}: FileTabsProps): JSX.Element {
+}: FileTabsProps): React.JSX.Element {
   const updateStoryUrl = useUpdateStoryUrl();
 
   const [activeId, setActiveId] = useState<string | number | null>(null);
@@ -105,7 +106,7 @@ export function FileTabs({
     content,
     tab,
   }: {
-    content: string;
+    content: JSONContent | string | null;
     tab: Tab;
   }): Promise<void> => {
     if (tab.type === "file") {
@@ -128,7 +129,7 @@ export function FileTabs({
         className="relative flex flex-col flex-1 min-h-screen w-full overflow-hidden"
         value={activeTabId?.toString()}
         onValueChange={(tabId) => {
-          const tab = tabs.find((tab) => tab.id === tabId);
+          const tab = tabs.find((t) => t.id === tabId);
           if (tab) {
             handleOnTabChange({
               tabId,
@@ -138,7 +139,7 @@ export function FileTabs({
         }}
       >
         <SortableContext
-          items={tabs?.map((tab) => tab.id)}
+          items={tabs.map((tab) => tab.id)}
           strategy={horizontalListSortingStrategy}
         >
           <div className="flex flex-row">
@@ -200,7 +201,6 @@ export function FileTabs({
               key={tab.id}
               value={String(tab.id)}
             >
-              {console.log("tab: ", tab)}
               {tab.type === "flow" ? (
                 <ReactFlowProvider>
                   <FlowTab id={tab.id} story={story} />
@@ -208,7 +208,7 @@ export function FileTabs({
               ) : (
                 <BlockEditor
                   user={user}
-                  onChange={(content: string) =>
+                  onChange={(content) =>
                     void handleSaveChange({ content, tab })
                   }
                   content={tab.content ?? ""}
@@ -229,9 +229,9 @@ interface FlowTabProps {
   id: string;
 }
 
-export function FlowTab({ story, id }: FlowTabProps): JSX.Element {
+export function FlowTab({ story, id }: FlowTabProps): React.JSX.Element {
   const { addNodes, addEdges } = useReactFlow();
-  const handleAddFile = async (folderId: string): Promise<void> => {
+  const handleAddFile = async (folderId?: string): Promise<void> => {
     const formData = new FormData();
 
     if (story.id) {
@@ -269,7 +269,7 @@ export function FlowTab({ story, id }: FlowTabProps): JSX.Element {
     }
   };
 
-  const handleAddFolder = async (parentId: string): Promise<void> => {
+  const handleAddFolder = async (parentId?: string): Promise<void> => {
     const formData = new FormData();
 
     if (story.id) {
@@ -316,4 +316,4 @@ export function FlowTab({ story, id }: FlowTabProps): JSX.Element {
     />
   );
 }
-export { Tab };
+export type { Tab };

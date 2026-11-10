@@ -3,10 +3,10 @@
 import { isWithinExpirationDate } from "oslo";
 import { cookies } from "next/headers";
 import type { User } from "lucia";
+import { redirect } from "next/navigation";
 import { lucia } from "@/lib/auth";
 import db from "@/lib/db";
-import { redirect } from "next/navigation";
-import { ActionResult } from "@/lib/form";
+import { type ActionResult } from "@/lib/form";
 
 interface FormData {
   code: string;
@@ -16,7 +16,7 @@ export async function emailVerification(
   formData: FormData
 ): Promise<ActionResult> {
   try {
-    const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
+    const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
     if (!sessionId) {
       return {
         error: "Session not found",
@@ -56,7 +56,7 @@ export async function emailVerification(
 
     const session = await lucia.createSession(user.id, {});
     const sessionCookie = lucia.createSessionCookie(session.id);
-    cookies().set(
+    (await cookies()).set(
       sessionCookie.name,
       sessionCookie.value,
       sessionCookie.attributes

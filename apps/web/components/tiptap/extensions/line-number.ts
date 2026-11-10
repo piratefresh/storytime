@@ -1,7 +1,7 @@
 import { Extension } from "@tiptap/core";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
-import { Node as ProsemirrorNode } from "@tiptap/pm/model";
-import { Plugin, PluginKey, TextSelection } from "@tiptap/pm/state";
+import { type Node as ProsemirrorNode } from "@tiptap/pm/model";
+import { Plugin, PluginKey } from "@tiptap/pm/state";
 
 function createLineNumberWidget(lineNumber: string) {
   const lineNumberElement = document.createElement("div");
@@ -43,7 +43,7 @@ function generateLineNumbers(
 
         // Adjust linePos to the start of the next line
         if (i < lines.length - 1) {
-          linePos += lines[i].length + 1; // +1 for the newline character
+          linePos += (lines[i]?.length ?? 0) + 1; // +1 for the newline character
         }
       }
 
@@ -64,7 +64,7 @@ function generateLineNumbers(
 
 const lineNumbersKey = new PluginKey("lineNumbers");
 
-export const LineNumbers = Extension.create({
+export const LineNumbers = Extension.create<{ showLineNumbers: boolean }>({
   name: "lineNumbers",
 
   addOptions() {
@@ -74,20 +74,22 @@ export const LineNumbers = Extension.create({
   },
 
   addProseMirrorPlugins() {
-    const extension = this;
+    const { options } = this;
     return [
       new Plugin({
         key: lineNumbersKey,
         state: {
           init(_, { doc }) {
-            return generateLineNumbers(doc, extension.options.showLineNumbers);
+            return generateLineNumbers(doc, options.showLineNumbers);
           },
           apply(transaction, oldState) {
-            const newState =
-              transaction.getMeta("lineNumbers")?.showLineNumbers;
+            const meta = transaction.getMeta("lineNumbers") as
+              | { showLineNumbers?: boolean }
+              | undefined;
+            const newState = meta?.showLineNumbers;
 
             if (newState !== undefined) {
-              extension.options.showLineNumbers = newState;
+              options.showLineNumbers = newState;
 
               return generateLineNumbers(transaction.doc, newState);
             }

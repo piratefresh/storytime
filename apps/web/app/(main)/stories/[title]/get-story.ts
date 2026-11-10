@@ -28,6 +28,11 @@ export const getStory = cache(
             name: "asc",
           },
         },
+        file: {
+          orderBy: {
+            name: "asc",
+          },
+        },
       },
     });
     return story ?? null;

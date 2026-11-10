@@ -1,15 +1,15 @@
 import { forwardRef } from "react";
+import { type icons } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { icons } from "lucide-react";
 import { Icon } from "@/components/ui/icon";
 
-export type CommandButtonProps = {
+export interface CommandButtonProps {
   active?: boolean;
   description: string;
   icon: keyof typeof icons;
   onClick: () => void;
   title: string;
-};
+}
 
 export const CommandButton = forwardRef<HTMLButtonElement, CommandButtonProps>(
   ({ active, icon, onClick, title }, ref) => {
@@ -20,7 +20,12 @@ export const CommandButton = forwardRef<HTMLButtonElement, CommandButtonProps>(
     );
 
     return (
-      <button ref={ref} onClick={onClick} className={wrapperClass}>
+      <button
+        ref={ref}
+        type="button"
+        onClick={onClick}
+        className={wrapperClass}
+      >
         <Icon name={icon} className="w-3 h-3" />
         <div className="flex flex-col items-start justify-start">
           <div className="text-sm font-medium">{title}</div>

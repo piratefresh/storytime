@@ -1,1 +1,1 @@
-export { CMDK } from "./cmdk";
+export { Cmdk } from "./cmdk";

@@ -1,18 +1,18 @@
 "use client";
 
-import { usePathname, useSearchParams } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useFormState, useFormStatus } from "react-dom";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { type z } from "zod";
+import Link from "next/link";
 import { login } from "@/app/(auth)/login/actions/login";
 import { signup } from "@/app/(auth)/register/actions/signup";
 import { userAuthSchema } from "@/app/schemas/user-auth-schema";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-
-import { z } from "zod";
+import { cn } from "@/lib/utils";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -20,17 +20,14 @@ import {
 } from "./ui/form";
 import { Input } from "./ui/input";
 import { Button } from "./ui/button";
-import { cn } from "@/lib/utils";
 import { GithubLoginButton } from "./github-login-button";
-import Link from "next/link";
 import { TypographyP } from "./ui/typography";
 
 type FormData = z.infer<typeof userAuthSchema>;
 
-interface UserAuthFormProps extends React.HTMLAttributes<HTMLDivElement> {}
+type UserAuthFormProps = React.HTMLAttributes<HTMLDivElement>
 
 export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
-  const searchParams = useSearchParams();
   const pathname = usePathname();
 
   const form = useForm<FormData>({
@@ -45,18 +42,18 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
       if (pathname === "/login") {
         const response = await login(form.getValues());
         form.setError("root.serverError", {
-          type: `${response.error}`,
+          type: response.error,
         });
       } else {
         const response = await signup(form.getValues());
         form.setError("root.serverError", {
-          type: `${response.error}`,
+          type: response.error,
         });
       }
     }
   };
 
-  const [state, dispatch] = useFormState(onAction, undefined);
+  const [, dispatch] = useFormState(onAction, undefined);
 
   return (
     <div className={cn("grid gap-6", className)} {...props}>
@@ -100,13 +97,13 @@ export function UserAuthForm({ className, ...props }: UserAuthFormProps) {
         <TypographyP>Create Account</TypographyP>
       </Link>
       <GithubLoginButton
-        isLogin={pathname === "/login" ? "/register" : "/login"}
+        isLogin={pathname === "/login"}
       />
     </div>
   );
 }
 
-const SubmitButton = () => {
+function SubmitButton() {
   const status = useFormStatus();
 
   return (
@@ -114,4 +111,4 @@ const SubmitButton = () => {
       Submit
     </Button>
   );
-};
+}

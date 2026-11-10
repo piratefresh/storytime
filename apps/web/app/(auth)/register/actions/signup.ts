@@ -1,13 +1,13 @@
 "use server";
-import { z } from "zod";
+import { type z } from "zod";
 import { cookies } from "next/headers";
-import { generateEmailVerificationCode, lucia } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { generateId, Scrypt } from "lucia";
-import { db } from "@/lib/db";
 import { Resend } from "resend";
+import { db } from "@/lib/db";
+import { generateEmailVerificationCode, lucia } from "@/lib/auth";
 import { VerifyUserEmailTemplate } from "@/components/email-templates/verify-user";
-import { userAuthSchema } from "@/app/schemas/user-auth-schema";
+import { type userAuthSchema } from "@/app/schemas/user-auth-schema";
 
 type FormData = z.infer<typeof userAuthSchema>;
 
@@ -51,7 +51,7 @@ export async function signup(data: FormData) {
 
   const userId = generateId(15);
 
-  let user = await db.user.findFirst({
+  const user = await db.user.findFirst({
     where: {
       email,
     },
@@ -74,7 +74,7 @@ export async function signup(data: FormData) {
   await sendEmailVerificationCode({ email, code });
   const session = await lucia.createSession(userId, {});
   const sessionCookie = lucia.createSessionCookie(session.id);
-  cookies().set(
+  (await cookies()).set(
     sessionCookie.name,
     sessionCookie.value,
     sessionCookie.attributes

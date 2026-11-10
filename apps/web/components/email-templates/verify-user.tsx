@@ -5,9 +5,11 @@ interface EmailTemplateProps {
   email: string;
 }
 
-export const VerifyUserEmailTemplate: React.FC<
-  Readonly<EmailTemplateProps>
-> = ({ code, email }) => (
+export function VerifyUserEmailTemplate({
+  code,
+  email,
+}: Readonly<EmailTemplateProps>): React.JSX.Element {
+  return (
   <div>
     <h1>Welcome, {code}!</h1>
 
@@ -15,4 +17,5 @@ export const VerifyUserEmailTemplate: React.FC<
       Verify email
     </a>
   </div>
-);
+  );
+}

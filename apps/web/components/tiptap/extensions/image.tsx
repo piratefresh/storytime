@@ -1,13 +1,12 @@
 import React from "react";
-import { cn } from "@/lib/utils";
-import TiptapImage, { ImageOptions } from "@tiptap/extension-image";
+import TiptapImage, { type ImageOptions } from "@tiptap/extension-image";
 import { Plugin, PluginKey } from "@tiptap/pm/state";
-import { EditorView } from "@tiptap/pm/view";
 import {
   ReactNodeViewRenderer,
   NodeViewWrapper,
-  NodeViewWrapperProps,
+  type NodeViewProps,
 } from "@tiptap/react";
+import { cn } from "@/lib/utils";
 
 export const Direction = {
   Top: "top",
@@ -20,28 +19,27 @@ export const Direction = {
   Left: "left",
 };
 
-// declare module "@tiptap/core" {
-//   interface Commands<ReturnType> {
-//     imageBlock: {
-//       setImageBlockAlign: (align: "left" | "center" | "right") => ReturnType;
-//       setImageBlockWidth: (width: number) => ReturnType;
-//       setImageBlockFloat: (float: "left" | "right" | "none") => ReturnType;
-//     };
-//   }
-// }
+// setImageBlockAlign / setImageBlockWidth are declared in image-block/image-block.ts
+declare module "@tiptap/core" {
+  interface Commands<ReturnType> {
+    imageFloat: {
+      setImageBlockFloat: (float: "left" | "right" | "none") => ReturnType;
+    };
+  }
+}
 
-interface IResizer {
+interface ResizerProps {
   onResize: (direction: string, x: number, y: number) => void;
   selected: boolean;
 }
 
-type UploadResult = {
+interface UploadResult {
   url: string | null;
   bucket: string;
   key: string;
   name?: string;
   size?: number;
-};
+}
 
 type CustomImageOptions = ImageOptions & {
   uploadImage: (file: File) => Promise<UploadResult>;
@@ -51,7 +49,7 @@ type CustomImageOptions = ImageOptions & {
   onUploadEnd?: () => void;
 };
 
-export const Resizer = ({ onResize, selected }: IResizer) => {
+export function Resizer({ onResize, selected }: ResizerProps) {
   const [direction, setDirection] = React.useState("");
   const [mouseDown, setMouseDown] = React.useState(false);
 
@@ -74,7 +72,7 @@ export const Resizer = ({ onResize, selected }: IResizer) => {
   }, [mouseDown, direction, onResize]);
 
   React.useEffect(() => {
-    const handleMouseUp = () => setMouseDown(false);
+    const handleMouseUp = () => { setMouseDown(false); };
 
     window.addEventListener("mouseup", handleMouseUp);
 
@@ -83,69 +81,53 @@ export const Resizer = ({ onResize, selected }: IResizer) => {
     };
   }, []);
 
-  const handleMouseDown = (direction: string) => {
-    setDirection(direction);
+  const handleMouseDown = (newDirection: string) => {
+    setDirection(newDirection);
     setMouseDown(true);
   };
-  if (!selected) return <></>;
+  if (!selected) return null;
   return (
     <>
       <div
+        role="presentation"
         className="absolute cursor-nw-resize h-2.5 w-2.5 z-20 top-0 left-0 bg-[#335dff] border border-[#335dff]"
         onMouseDown={() => {
           handleMouseDown(Direction.TopLeft);
         }}
-      ></div>
+       />
 
       <div
+        role="presentation"
         className="absolute cursor-nesw-resize h-2.5 w-2.5 z-20 top-0 right-0 bg-[#335dff] border border-[#335dff]"
-        onMouseDown={() => handleMouseDown(Direction.TopRight)}
-      ></div>
+        onMouseDown={() => { handleMouseDown(Direction.TopRight); }}
+       />
 
       <div
+        role="presentation"
         className="absolute cursor-nwse-resize w-2.5 h-2.5 z-20 right-0 bottom-0 bg-[#335dff] border border-[#335dff]"
-        onMouseDown={() => handleMouseDown(Direction.BottomRight)}
-      ></div>
+        onMouseDown={() => { handleMouseDown(Direction.BottomRight); }}
+       />
 
       <div
+        role="presentation"
         className="absolute cursor-nesw-resize h-2.5 w-2.5 z-20 left-0 bottom-0 bg-[#335dff] border border-[#335dff]"
-        onMouseDown={() => handleMouseDown(Direction.BottomLeft)}
-      ></div>
+        onMouseDown={() => { handleMouseDown(Direction.BottomLeft); }}
+       />
     </>
   );
-};
+}
 
-export const Component = (props: NodeViewWrapperProps) => {
+interface ImageAttrs {
+  src?: string;
+  width?: string | number;
+  height?: string | number;
+  align?: string;
+  float?: React.CSSProperties["float"];
+}
+
+export function Component(props: NodeViewProps) {
   const imageRef = React.useRef<HTMLImageElement>(null);
-  const [aspectRatio, setAspectRatio] = React.useState(0);
-  const [dimensions, setDimensions] = React.useState({ width: 0, height: 0 });
-
-  React.useEffect(() => {
-    // Convert Base64 string to a Blob
-    const fetchImageDimensions = async () => {
-      const response = await fetch(props.node?.attrs.src);
-      const blob = await response.blob();
-      const url = URL.createObjectURL(blob);
-
-      // Load the image and extract dimensions
-      const img = new Image();
-      img.onload = () => {
-        setDimensions({ width: img.width, height: img.height });
-        URL.revokeObjectURL(url); // Clean up the blob URL
-      };
-      img.src = url;
-    };
-
-    fetchImageDimensions();
-  }, [props.node?.attrs.src]);
-
-  const handleAspectRatio = (
-    e: React.SyntheticEvent<HTMLImageElement, Event>
-  ) => {
-    const image = imageRef.current;
-    if (!image) return;
-    setAspectRatio(image.naturalWidth / image.naturalHeight);
-  };
+  const attrs = props.node.attrs as ImageAttrs;
 
   const handleResize = (
     direction: string,
@@ -158,7 +140,7 @@ export const Component = (props: NodeViewWrapperProps) => {
 
     if (!panel) return;
 
-    const { width, height, x, y } = panel.getBoundingClientRect();
+    const { width, height } = panel.getBoundingClientRect();
     const resizeTop = () => {
       const newHeight = height - movementY;
       props.updateAttributes({ height: newHeight });
@@ -207,34 +189,34 @@ export const Component = (props: NodeViewWrapperProps) => {
       as="figure"
       className={cn("relative flex node-imageBlock", {
         "has-focus": props.selected,
-        "mr-auto": props.node?.attrs.align === "left",
-        "mx-auto": props.node?.attrs.align === "center",
-        "ml-auto": props.node?.attrs.align === "right",
+        "mr-auto": attrs.align === "left",
+        "mx-auto": attrs.align === "center",
+        "ml-auto": attrs.align === "right",
       })}
-      style={{ float: props.node?.attrs.float ?? "none" }}
-      height={props.node?.attrs.height}
-      width={props.node?.attrs.width}
+      style={{ float: attrs.float ?? "none" }}
+      height={attrs.height}
+      width={attrs.width}
     >
       <Resizer onResize={handleResize} selected={props.selected} />
 
+      {/* eslint-disable-next-line @next/next/no-img-element -- editor node view renders arbitrary user-supplied image URLs; next/image needs known remote hosts */}
       <img
         className={cn({
           "border-2 border-blue-500 z-10": props.selected,
         })}
         ref={imageRef}
-        src={props.node?.attrs.src}
-        height={props.node?.attrs.height}
-        width={props.node?.attrs.width}
-        draggable={true}
+        src={attrs.src}
+        height={attrs.height}
+        width={attrs.width}
+        draggable
         data-drag-handle
-        onLoad={(e) => handleAspectRatio(e)}
-        // alt="uploaded image"
+        alt=""
       />
     </NodeViewWrapper>
   );
-};
+}
 
-export const KB = 1024 as const;
+export const KB = 1024;
 
 export function formatBytes(bytes: number, decimals = 2) {
   if (bytes <= 0) return "0 Bytes";
@@ -243,7 +225,7 @@ export function formatBytes(bytes: number, decimals = 2) {
   const i = Math.floor(Math.log(bytes) / Math.log(KB));
 
   return (
-    parseFloat((bytes / Math.pow(KB, i)).toFixed(decimals)) + " " + sizes[i]
+    `${String(parseFloat((bytes / Math.pow(KB, i)).toFixed(decimals)))} ${String(sizes[i])}`
   );
 }
 
@@ -255,13 +237,13 @@ export const CustomImage = TiptapImage.extend<CustomImageOptions>({
     return {
       setImageBlockAlign:
         (align) =>
-        ({ state, commands }) =>
+        ({ commands }) =>
           commands.updateAttributes("imageBlock", { align }),
       setImageBlockWidth:
         (width) =>
         ({ commands }) =>
           commands.updateAttributes("imageBlock", {
-            width: `${Math.max(0, Math.min(100, width))}%`,
+            width: `${String(Math.max(0, Math.min(100, width)))}%`,
           }),
       setImageBlockFloat:
         (float) =>
@@ -280,7 +262,7 @@ export const CustomImage = TiptapImage.extend<CustomImageOptions>({
         // tell them to render on the img tag
         renderHTML: (attributes) => {
           return {
-            width: attributes.width,
+            width: attributes.width as string | number,
           };
         },
       },
@@ -288,7 +270,7 @@ export const CustomImage = TiptapImage.extend<CustomImageOptions>({
         default: "auto",
         renderHTML: (attributes) => {
           return {
-            height: attributes.height,
+            height: attributes.height as string | number,
           };
         },
       },
@@ -298,7 +280,7 @@ export const CustomImage = TiptapImage.extend<CustomImageOptions>({
         renderHTML: (attributes) => {
           console.log("attributes: ", attributes);
           return {
-            "data-align": attributes.align,
+            "data-align": attributes.align as string,
           };
         },
       },
@@ -308,7 +290,7 @@ export const CustomImage = TiptapImage.extend<CustomImageOptions>({
         renderHTML: (attributes) => {
           console.log("attributes: ", attributes);
           return {
-            "data-float": attributes.float,
+            "data-float": attributes.float as string,
           };
         },
       },
@@ -316,7 +298,7 @@ export const CustomImage = TiptapImage.extend<CustomImageOptions>({
         default: undefined,
         parseHTML: (element) => element.getAttribute("alt"),
         renderHTML: (attributes) => ({
-          alt: attributes.alt,
+          alt: attributes.alt as string | undefined,
         }),
       },
 
@@ -325,7 +307,7 @@ export const CustomImage = TiptapImage.extend<CustomImageOptions>({
       isDraggable: {
         default: true,
         // We don't want it to render on the img tag
-        renderHTML: (attributes) => {
+        renderHTML: () => {
           return {};
         },
       },
@@ -341,10 +323,11 @@ export const CustomImage = TiptapImage.extend<CustomImageOptions>({
 
   addOptions() {
     return {
-      ...this.parent?.(),
+      ...this.parent(),
     };
   },
   addProseMirrorPlugins() {
+    /* eslint-disable no-alert -- prototype upload feedback; no toast system is wired into this extension yet */
     return [
       new Plugin({
         key: new PluginKey("imageUpload"),
@@ -391,11 +374,11 @@ export const CustomImage = TiptapImage.extend<CustomImageOptions>({
                     const image = imageNode.create({ src });
                     const transaction =
                       view.state.tr.replaceSelectionWith(image);
-                    return view.dispatch(transaction);
+                    view.dispatch(transaction);
                   };
                 })
                 .catch(() =>
-                  window.alert(`Failed to upload image. Please try again`)
+                  { window.alert(`Failed to upload image. Please try again`); }
                 );
             }
 
@@ -426,7 +409,7 @@ export const CustomImage = TiptapImage.extend<CustomImageOptions>({
               console.log("file: ", file);
               this.options
                 .uploadImage(file)
-                .then((url) => {
+                .then((url: UploadResult | null) => {
                   console.log("url: ", url);
                   this.options.onUploadEnd?.();
                   // pre-load image
@@ -450,12 +433,6 @@ export const CustomImage = TiptapImage.extend<CustomImageOptions>({
                     const image = imageNode.create({ src });
 
                     console.log(image); // Check the output here
-                    if (!imageNode) {
-                      console.error(
-                        "Image node type is not defined in the schema."
-                      );
-                      return false;
-                    }
 
                     const transaction =
                       view.state.tr.replaceSelectionWith(image);
@@ -465,16 +442,12 @@ export const CustomImage = TiptapImage.extend<CustomImageOptions>({
                       console.error("replaceSelectionWith is not a function");
                       return false;
                     }
-                    if (!transaction) {
-                      console.error("Failed to create a transaction.");
-                      return false;
-                    }
                     console.log("transaction", transaction);
-                    return view.dispatch(transaction);
+                    view.dispatch(transaction);
                   };
                 })
                 .catch(() =>
-                  window.alert(`Failed to upload image. Please try again`)
+                  { window.alert(`Failed to upload image. Please try again`); }
                 );
             }
 
@@ -483,6 +456,7 @@ export const CustomImage = TiptapImage.extend<CustomImageOptions>({
         },
       }),
     ];
+    /* eslint-enable no-alert -- end of upload plugin */
   },
 });
 

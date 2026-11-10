@@ -1,12 +1,11 @@
 "use server";
 
 import { cookies } from "next/headers";
-import { lucia } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { Scrypt } from "lucia";
+import { type z } from "zod";
 import { db } from "@/lib/db";
-
-import { z } from "zod";
+import { lucia } from "@/lib/auth";
 import { userAuthSchema } from "@/app/schemas/user-auth-schema";
 
 type FormData = z.infer<typeof userAuthSchema>;
@@ -28,7 +27,7 @@ export async function login(formData: FormData) {
     },
   });
 
-  if (!existingUser) {
+  if (!existingUser?.hashedPassword) {
     // NOTE:
     // Returning immediately allows malicious actors to figure out valid usernames from response times,
     // allowing them to only focus on guessing passwords in brute-force attacks.
@@ -58,7 +57,7 @@ export async function login(formData: FormData) {
 
   const session = await lucia.createSession(existingUser.id, {});
   const sessionCookie = lucia.createSessionCookie(session.id);
-  cookies().set(
+  (await cookies()).set(
     sessionCookie.name,
     sessionCookie.value,
     sessionCookie.attributes

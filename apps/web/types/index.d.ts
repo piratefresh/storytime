@@ -1,4 +1,4 @@
-import { LucideIcon } from "lucide-react";
+import { type LucideIcon } from "lucide-react";
 
 export interface SiteConfig {
   name: string;
@@ -33,7 +33,7 @@ export type SidebarNavItem = {
     }
   | {
       href?: string;
-      items?: NavLink[];
+      items?: NavItem[];
     }
 );
 

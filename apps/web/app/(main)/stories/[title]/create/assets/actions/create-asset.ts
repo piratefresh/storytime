@@ -1,12 +1,12 @@
 "use server";
 
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { type z } from "zod";
 import { formSchema } from "@/app/schemas/create-asset-schema";
 import { lucia } from "@/lib/auth";
 import db from "@/lib/db";
-import { ActionResult } from "@/lib/form";
-import { cookies } from "next/headers";
-import { redirect } from "next/navigation";
-import { z } from "zod";
+import { type ActionResult } from "@/lib/form";
 
 type FormData = z.infer<typeof formSchema>;
 
@@ -25,7 +25,7 @@ export async function createAsset({
     };
   }
 
-  const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
+  const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
   if (!sessionId) {
     return {
       error: "Session not found",
@@ -38,13 +38,13 @@ export async function createAsset({
     };
   }
 
-  const asset = await db.asset.create({
+  await db.asset.create({
     data: {
       content: formData.content,
       description: formData.description,
       name: formData.name,
       type: "note",
-      tags: formData?.tags?.map((tag) => tag.value) ?? [],
+      tags: formData.tags?.map((tag) => tag.value) ?? [],
       folderId: formData.folderId,
       storyId,
     },
@@ -62,11 +62,5 @@ export async function createAsset({
     };
   }
 
-  if (!asset) {
-    return {
-      error: "Failed to create asset",
-    };
-  }
-
-  return redirect(`/stories/${story?.title}`);
+  return redirect(`/stories/${story.title}`);
 }

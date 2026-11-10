@@ -52,7 +52,7 @@ export const Columns = Node.create({
   renderHTML({ HTMLAttributes }) {
     return [
       "div",
-      { "data-type": "columns", class: `layout-${HTMLAttributes.layout}` },
+      { "data-type": "columns", class: `layout-${String(HTMLAttributes.layout)}` },
       0,
     ];
   },

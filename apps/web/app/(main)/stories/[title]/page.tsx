@@ -27,10 +27,11 @@ export type StoryWithFolder = Prisma.StoryGetPayload<{
 }>;
 
 export default async function StoryPage({
-  params: { title },
+  params,
 }: {
-  params: { title: string };
-}): Promise<JSX.Element | null> {
+  params: Promise<{ title: string }>;
+}): Promise<React.JSX.Element | null> {
+  const { title } = await params;
   const { user } = await validateRequest();
 
   if (!user) {

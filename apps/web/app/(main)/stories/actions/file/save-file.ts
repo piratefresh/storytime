@@ -38,7 +38,7 @@ export async function saveFile(
         storyId,
       },
       data: {
-        content,
+        content: content ?? undefined,
       },
       include: {
         story: true,

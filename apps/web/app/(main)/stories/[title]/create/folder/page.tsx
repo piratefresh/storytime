@@ -1,13 +1,14 @@
-import { validateRequest } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { CreateFolderForm } from "./components/create-folder-form";
+import { validateRequest } from "@/lib/auth";
 import { getStory } from "../../get-story";
+import { CreateFolderForm } from "./components/create-folder-form";
 
 async function CreateFolderPage({
-  params: { title },
+  params,
 }: {
-  params: { title: string };
+  params: Promise<{ title: string }>;
 }) {
+  const { title } = await params;
   const { user } = await validateRequest();
 
   if (!user) {
@@ -22,7 +23,7 @@ async function CreateFolderPage({
     redirect("/stories");
   }
 
-  return <CreateFolderForm user={user} id={story?.id} />;
+  return <CreateFolderForm user={user} id={story.id} />;
 }
 
 export default CreateFolderPage;

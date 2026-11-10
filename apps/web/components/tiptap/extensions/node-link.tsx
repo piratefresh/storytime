@@ -2,36 +2,34 @@ import {
   Extension,
   InputRule,
   Node,
-  Range,
-  mergeAttributes,
-  Editor,
+  type Range,
+  type Editor,
 } from "@tiptap/core";
-import Suggestion, { SuggestionOptions } from "@tiptap/suggestion";
+import Suggestion, { type SuggestionOptions } from "@tiptap/suggestion";
 import { PluginKey, TextSelection } from "@tiptap/pm/state";
-import type { Node as ModelNode } from "@tiptap/pm/model";
 import {
   NodeViewWrapper,
-  NodeViewWrapperProps,
+  type NodeViewProps,
   ReactNodeViewRenderer,
   ReactRenderer,
 } from "@tiptap/react";
 import tippy, { type Instance as TippyInstance } from "tippy.js";
 import type { ComponentPropsWithoutRef } from "react";
 import React from "react";
+import { CommandInput } from "cmdk";
 import {
   Command,
   CommandGroup,
   CommandItem,
   CommandList,
 } from "@/components/ui/command";
-import { CommandInput } from "cmdk";
 import { cn } from "@/lib/utils";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { findSuggestionMatch } from "@/lib/editor/findSuggestionMatch";
+import { findSuggestionMatch } from "@/lib/editor/find-suggestion-match";
 
 const DOM_RECT_FALLBACK: DOMRect = {
   bottom: 0,
@@ -49,18 +47,18 @@ const DOM_RECT_FALLBACK: DOMRect = {
 
 export const LinkPluginKey = new PluginKey("LinkPluginKey");
 
-export type LinkCommandOptions = {
+export interface LinkCommandOptions {
   suggestion: Omit<SuggestionOptions, "editor">;
-};
+}
 
-export type SuggestionListRef = {
+export interface SuggestionListRef {
   // For convenience using this SuggestionList from within the
   // mentionSuggestionOptions, we'll match the signature of SuggestionOptions's
   // `onKeyDown` returned in its `render` function
   onKeyDown: NonNullable<
     ReturnType<NonNullable<SuggestionOptions<string>["render"]>>["onKeyDown"]
   >;
-};
+}
 
 const insertDoubleBracketsInputRule = () => {
   return new InputRule({
@@ -90,7 +88,7 @@ export const Link = Extension.create<LinkCommandOptions>({
         }: {
           editor: Editor;
           range: Range;
-          props: any;
+          props: { command: (args: { editor: Editor; range: Range }) => void };
         }) => {
           props.command({ editor, range });
         },
@@ -152,31 +150,11 @@ export const Link = Extension.create<LinkCommandOptions>({
   parseHTML() {
     return [
       {
-        tag: `span[data-state="${this.name}"]`,
+        tag: `span[data-state="${String(this.name)}"]`,
       },
     ];
   },
 
-  renderHTML({
-    node,
-    HTMLAttributes,
-  }: {
-    node: ModelNode;
-    HTMLAttributes: Record<string, any>;
-  }) {
-    return [
-      "span",
-      mergeAttributes(
-        { "data-state": this.name },
-        this.options.HTMLAttributes,
-        HTMLAttributes
-      ),
-      this.options.renderLabel({
-        options: this.options,
-        node,
-      }),
-    ];
-  },
   addInputRules() {
     return [insertDoubleBracketsInputRule()];
   },
@@ -191,24 +169,40 @@ export const Link = Extension.create<LinkCommandOptions>({
   },
 });
 
+interface NodeLinkItem {
+  name: string;
+  text: string;
+}
+
 interface NodeLinkListProps extends ComponentPropsWithoutRef<typeof Command> {
-  items: any[];
+  items: NodeLinkItem[];
   query: string;
   editor: Editor;
   range: Range;
 }
 
-export type NodeLinkListRef = {
+export interface NodeLinkListRef {
   // For convenience using this SuggestionList from within the
   // mentionSuggestionOptions, we'll match the signature of SuggestionOptions's
   // `onKeyDown` returned in its `render` function
   onKeyDown: NonNullable<
     ReturnType<NonNullable<SuggestionOptions<string>["render"]>>["onKeyDown"]
   >;
-};
+}
 
 const NodeLinkList = React.forwardRef<NodeLinkListRef, NodeLinkListProps>(
-  ({ children, className, query, editor, itemScope, range, ...rest }, ref) => {
+  function NodeLinkList(
+    {
+      children: _children,
+      className,
+      query,
+      editor,
+      itemScope: _itemScope,
+      range,
+      ...rest
+    },
+    _ref
+  ) {
     const commandListRef = React.useRef<HTMLDivElement>(null);
 
     // const [searchQuery, setSearchQuery] = React.useState<string>("");
@@ -250,7 +244,7 @@ const NodeLinkList = React.forwardRef<NodeLinkListRef, NodeLinkListProps>(
         <CommandInput value={query} style={{ display: "none" }} />
         <CommandList ref={commandListRef}>
           <CommandGroup>
-            {rest.items?.map((item) => (
+            {rest.items.map((item) => (
               <CommandItem
                 key={item.name}
                 value={item.name}
@@ -277,21 +271,27 @@ const NodeLinkList = React.forwardRef<NodeLinkListRef, NodeLinkListProps>(
   }
 );
 
-const TooltipComponent = (props: NodeViewWrapperProps) => {
+interface TooltipAttrs {
+  label: string | null;
+  metaData: string | null;
+}
+
+function TooltipComponent(props: NodeViewProps) {
+  const attrs = props.node.attrs as TooltipAttrs;
   return (
     <NodeViewWrapper as="span">
       <Tooltip>
         <TooltipTrigger className="text-neutral-400 underline">
-          {props.node.attrs.label}
+          {attrs.label}
         </TooltipTrigger>
         <TooltipContent className="max-w-96">
-          <p className="font-semibold !mt-0">{props.node.attrs.label}</p>
-          {props.node.attrs.metaData}
+          <p className="font-semibold !mt-0">{attrs.label}</p>
+          {attrs.metaData}
         </TooltipContent>
       </Tooltip>
     </NodeViewWrapper>
   );
-};
+}
 
 export const CustomTooltipNode = Node.create({
   name: "customTooltip",
@@ -335,10 +335,11 @@ export const CustomTooltipNode = Node.create({
   },
 
   renderHTML({ node }) {
+    const attrs = node.attrs as TooltipAttrs;
     return [
       "span",
-      { "data-tooltip": node.attrs.label, "data-meta": node.attrs.metaData },
-      node.attrs.label,
+      { "data-tooltip": attrs.label, "data-meta": attrs.metaData },
+      attrs.label,
     ];
   },
 

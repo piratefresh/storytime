@@ -1,7 +1,7 @@
 import { Node, ReactNodeViewRenderer } from "@tiptap/react";
+import { type ImageOptions } from "@tiptap/extension-image";
 import { ImageUpload as ImageUploadComponent } from "./view/image-upload";
-import { ImageOptions } from "@tiptap/extension-image";
-import { UploadResult } from "./view/hooks";
+import { type UploadResult } from "./view/hooks";
 
 declare module "@tiptap/core" {
   interface Commands<ReturnType> {
@@ -12,7 +12,7 @@ declare module "@tiptap/core" {
 }
 
 type CustomImageOptions = ImageOptions & {
-  uploadImage: (file: File) => Promise<UploadResult>;
+  uploadImage: (file: File) => Promise<UploadResult | null>;
   maxFileSize: number;
   accept: string[];
   onUploadStart?: () => void;
@@ -48,8 +48,8 @@ export const ImageUpload = Node.create<CustomImageOptions>({
 
   addOptions() {
     return {
-      ...this.parent?.(),
-      uploadFunction: null, // Default to null, can be set through configure
+      ...this.parent(),
+      uploadImage: () => Promise.resolve(null), // set through configure()
     };
   },
 

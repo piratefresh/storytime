@@ -5,13 +5,21 @@ import Suggestion, {
   type SuggestionKeyDownProps,
 } from "@tiptap/suggestion";
 import { PluginKey } from "@tiptap/pm/state";
-import tippy from "tippy.js";
+import tippy, { type Instance } from "tippy.js";
 import { GROUPS } from "./groups";
-import { MenuList } from "./menu-list";
+import { MenuList, type MenuListRef } from "./menu-list";
+import { type Command, type Group, type MenuListProps } from "./types";
 
 const extensionName = "slashCommand";
 
-let popup: any;
+interface SlashCommandStorage {
+  rect: DOMRect | Omit<DOMRect, "x" | "y" | "toJSON">;
+}
+
+const getStorage = (editor: Editor) =>
+  editor.storage[extensionName] as SlashCommandStorage;
+
+let popup: Instance[] | null = null;
 
 export const SlashCommand = Extension.create({
   name: extensionName,
@@ -40,7 +48,8 @@ export const SlashCommand = Extension.create({
 
   addProseMirrorPlugins() {
     return [
-      Suggestion({
+      // Items are Groups, but MenuList calls `command` with a single Command
+      Suggestion<Group | Command>({
         editor: this.editor,
         char: "/",
         allowSpaces: true,
@@ -65,7 +74,7 @@ export const SlashCommand = Extension.create({
             isValidAfterContent
           );
         },
-        command: ({ editor, props }: { editor: Editor; props: any }) => {
+        command: ({ editor, props }) => {
           const { view, state } = editor;
           const { $head, $from } = view.state.selection;
 
@@ -80,7 +89,7 @@ export const SlashCommand = Extension.create({
           const tr = state.tr.deleteRange(from, end);
           view.dispatch(tr);
 
-          props.action(editor);
+          if ("action" in props) props.action(editor);
           view.focus();
         },
         items: ({ query }: { query: string }) => {
@@ -130,7 +139,8 @@ export const SlashCommand = Extension.create({
           return withEnabledSettings;
         },
         render: () => {
-          let component: any = null;
+          let component: ReactRenderer<MenuListRef, MenuListProps> | null =
+            null;
 
           let scrollHandler: (() => void) | null = null;
 
@@ -142,87 +152,79 @@ export const SlashCommand = Extension.create({
               });
 
               const { view } = props.editor;
-
-              const editorNode = view.dom;
+              const element = component.element as HTMLElement;
 
               const getReferenceClientRect = () => {
                 if (!props.clientRect) {
-                  return props.editor.storage[extensionName].rect;
+                  return getStorage(props.editor).rect as DOMRect;
                 }
 
                 const rect = props.clientRect();
 
                 if (!rect) {
-                  return props.editor.storage[extensionName].rect;
+                  return getStorage(props.editor).rect as DOMRect;
                 }
 
                 let yPos = rect.y;
 
-                if (
-                  rect.top + component.element.offsetHeight + 40 >
-                  window.innerHeight
-                ) {
+                if (rect.top + element.offsetHeight + 40 > window.innerHeight) {
                   const diff =
-                    rect.top +
-                    component.element.offsetHeight -
-                    window.innerHeight +
-                    40;
+                    rect.top + element.offsetHeight - window.innerHeight + 40;
                   yPos = rect.y - diff;
                 }
 
-                // Account for when the editor is bound inside a container that doesn't go all the way to the edge of the screen
-                const editorXOffset = editorNode.getBoundingClientRect().x;
                 return new DOMRect(rect.x, yPos, rect.width, rect.height);
               };
 
               scrollHandler = () => {
-                popup?.[0].setProps({
+                popup?.[0]?.setProps({
                   getReferenceClientRect,
                 });
               };
 
               view.dom.parentElement?.addEventListener("scroll", scrollHandler);
 
-              popup?.[0].setProps({
+              popup?.[0]?.setProps({
                 getReferenceClientRect,
                 appendTo: () => document.body,
-                content: component.element,
+                content: element,
               });
 
-              popup?.[0].show();
+              popup?.[0]?.show();
             },
 
             onUpdate(props: SuggestionProps) {
-              component.updateProps(props);
+              component?.updateProps(props);
 
               const { view } = props.editor;
 
-              const editorNode = view.dom;
-
               const getReferenceClientRect = () => {
                 if (!props.clientRect) {
-                  return props.editor.storage[extensionName].rect;
+                  return getStorage(props.editor).rect as DOMRect;
                 }
 
                 const rect = props.clientRect();
 
                 if (!rect) {
-                  return props.editor.storage[extensionName].rect;
+                  return getStorage(props.editor).rect as DOMRect;
                 }
 
                 // Account for when the editor is bound inside a container that doesn't go all the way to the edge of the screen
                 return new DOMRect(rect.x, rect.y, rect.width, rect.height);
               };
 
-              const scrollHandler = () => {
-                popup?.[0].setProps({
+              const updateScrollHandler = () => {
+                popup?.[0]?.setProps({
                   getReferenceClientRect,
                 });
               };
 
-              view.dom.parentElement?.addEventListener("scroll", scrollHandler);
+              view.dom.parentElement?.addEventListener(
+                "scroll",
+                updateScrollHandler
+              );
 
-              props.editor.storage[extensionName].rect = props.clientRect
+              getStorage(props.editor).rect = props.clientRect
                 ? getReferenceClientRect()
                 : {
                     width: 0,
@@ -232,27 +234,27 @@ export const SlashCommand = Extension.create({
                     right: 0,
                     bottom: 0,
                   };
-              popup?.[0].setProps({
+              popup?.[0]?.setProps({
                 getReferenceClientRect,
               });
             },
 
             onKeyDown(props: SuggestionKeyDownProps) {
               if (props.event.key === "Escape") {
-                popup?.[0].hide();
+                popup?.[0]?.hide();
 
                 return true;
               }
 
-              if (!popup?.[0].state.isShown) {
-                popup?.[0].show();
+              if (!popup?.[0]?.state.isShown) {
+                popup?.[0]?.show();
               }
 
-              return component.ref?.onKeyDown(props);
+              return component?.ref?.onKeyDown(props) ?? false;
             },
 
             onExit(props) {
-              popup?.[0].hide();
+              popup?.[0]?.hide();
               if (scrollHandler) {
                 const { view } = props.editor;
                 view.dom.parentElement?.removeEventListener(

@@ -4,7 +4,6 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useFormState, useFormStatus } from "react-dom";
-import { type User } from "lucia";
 import React from "react";
 import {
   Form,
@@ -22,7 +21,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { MultiSelect } from "@/components/ui/multiselect";
 import { Genres } from "@/app/constants/genres";
 
-const genreOptions = Object.entries(Genres).map(([key, value]) => ({
+const genreOptions = Object.values(Genres).map((value) => ({
   value,
   label: value,
 }));
@@ -37,7 +36,7 @@ const formSchema = z.object({
   genre: z.array(z.string()),
 });
 
-export function CreateStoryForm(): JSX.Element {
+export function CreateStoryForm(): React.JSX.Element {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -47,14 +46,12 @@ export function CreateStoryForm(): JSX.Element {
     },
   });
 
-  const { errors } = form.formState;
-
   const onAction = async () => {
     const valid = await form.trigger();
     if (valid) {
       const response = await createStory({ ...form.getValues(), content: "" });
       console.log("response: ", response);
-      if (response?.error) {
+      if (response.error) {
         form.setError("root.serverError", {
           type: response.error,
         });
@@ -62,7 +59,7 @@ export function CreateStoryForm(): JSX.Element {
     }
   };
 
-  const [state, dispatch] = useFormState(onAction, undefined);
+  const [, dispatch] = useFormState(onAction, undefined);
   return (
     <Form {...form}>
       <form action={dispatch} className="space-y-8 w-full max-w-screen-md">
@@ -130,7 +127,7 @@ export function CreateStoryForm(): JSX.Element {
   );
 }
 
-function SubmitButton(): JSX.Element {
+function SubmitButton(): React.JSX.Element {
   const status = useFormStatus();
 
   return (

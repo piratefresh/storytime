@@ -1,11 +1,10 @@
 import { mergeAttributes, Node } from "@tiptap/core";
 import { Plugin } from "@tiptap/pm/state";
 import { Decoration, DecorationSet } from "@tiptap/pm/view";
-
 import { getCellsInColumn, isRowSelected, selectRow } from "./utils";
 
 export interface TableCellOptions {
-  HTMLAttributes: Record<string, any>;
+  HTMLAttributes: Record<string, unknown>;
 }
 
 export const TableCell = Node.create<TableCellOptions>({

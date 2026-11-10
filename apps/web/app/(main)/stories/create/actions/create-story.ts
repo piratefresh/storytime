@@ -1,11 +1,11 @@
 "use server";
 
-import { lucia } from "@/lib/auth";
-import db from "@/lib/db";
-import { ActionResult } from "@/lib/form";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { lucia } from "@/lib/auth";
+import db from "@/lib/db";
+import { type ActionResult } from "@/lib/form";
 
 const storySchema = z.object({
   title: z.string(),
@@ -24,7 +24,7 @@ export async function createStory(formData: FormData): Promise<ActionResult> {
     };
   }
 
-  const sessionId = cookies().get(lucia.sessionCookieName)?.value ?? null;
+  const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
   if (!sessionId) {
     return {
       error: "Session not found",
@@ -62,12 +62,6 @@ export async function createStory(formData: FormData): Promise<ActionResult> {
       content: formData.content,
     },
   });
-
-  if (!story) {
-    return {
-      error: "Failed to create story",
-    };
-  }
 
   return redirect(`/stories/${story.title}`);
 }

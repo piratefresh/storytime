@@ -1,6 +1,6 @@
 import { Extension } from "@tiptap/core";
 
-export const Float = Extension.create({
+export const Float = Extension.create<{ types: string[] }>({
   name: "float",
   addOptions() {
     return {
@@ -25,7 +25,7 @@ export const Float = Extension.create({
               console.log("attributes.float", attributes.float);
               if (attributes.float === "default") return {};
               console.log("attributes.float", attributes.float);
-              return { style: `float: ${attributes.float}` };
+              return { style: `float: ${String(attributes.float)}` };
             },
           },
         },

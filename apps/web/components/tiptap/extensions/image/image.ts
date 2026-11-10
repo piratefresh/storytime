@@ -1,6 +1,6 @@
 import { Image as BaseImage } from "@tiptap/extension-image";
 import { ReactNodeViewRenderer } from "@tiptap/react";
-import { MarkdownNodeSpec } from "tiptap-markdown";
+import { type MarkdownNodeSpec } from "tiptap-markdown";
 import ImageBlockView from "../image-block/components/image-block-view";
 
 export const Image = BaseImage.extend({

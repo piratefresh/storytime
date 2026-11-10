@@ -1,11 +1,11 @@
-import { cn } from "@/lib/utils";
 import { memo, useCallback } from "react";
+import { cn } from "@/lib/utils";
 
-export type ColorButtonProps = {
+export interface ColorButtonProps {
   color?: string;
   active?: boolean;
-  onColorChange?: (color: string) => void; // eslint-disable-line no-unused-vars
-};
+  onColorChange?: (color: string) => void;  
+}
 
 export const ColorButton = memo(
   ({ color, active, onColorChange }: ColorButtonProps) => {
@@ -22,16 +22,20 @@ export const ColorButton = memo(
 
     const handleClick = useCallback(() => {
       if (onColorChange) {
-        onColorChange(color || "");
+        onColorChange(color ?? "");
       }
     }, [onColorChange, color]);
 
     return (
-      <button onClick={handleClick} className={wrapperClassName}>
+      <button
+        type="button"
+        onClick={handleClick}
+        className={wrapperClassName}
+      >
         <div
-          style={{ backgroundColor: color, color: color }}
+          style={{ backgroundColor: color, color }}
           className={bubbleClassName}
-        ></div>
+         />
       </button>
     );
   }

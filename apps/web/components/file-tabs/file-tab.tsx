@@ -1,5 +1,6 @@
 import { XIcon } from "lucide-react";
 import { type Tab } from "@/app/stores/tabs-store";
+import { cn } from "@/lib/utils";
 import {
   ContextMenu,
   ContextMenuContent,
@@ -7,7 +8,6 @@ import {
   ContextMenuTrigger,
 } from "../ui/context-menu";
 import { TabsTrigger } from "../ui/tabs";
-import { cn } from "@/lib/utils";
 
 interface FileTabProps {
   active: boolean;
@@ -19,7 +19,7 @@ export function FileTab({
   active = false,
   tab,
   onClose,
-}: FileTabProps): JSX.Element {
+}: FileTabProps): React.JSX.Element {
   return (
     <ContextMenu>
       <ContextMenuTrigger>

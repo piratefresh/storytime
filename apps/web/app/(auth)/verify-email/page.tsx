@@ -1,15 +1,12 @@
 import { ResendVerificationForm } from "@/components/resend-verification-form";
 import { VerifyEmailForm } from "@/components/verify-email-form";
 
-function VerifyUserPage({
-  params,
+async function VerifyUserPage({
   searchParams,
 }: {
-  params: { slug: string };
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const code = searchParams?.code;
-  const email = searchParams?.email;
+  const { code, email } = await searchParams;
   return (
     <div className="bg-background">
       <h1>Welcome, {code}!</h1>

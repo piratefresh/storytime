@@ -1,25 +1,30 @@
 "use client";
 
-import { Position, MarkerType, Node, XYPosition, Edge } from "reactflow";
+import {
+  Position,
+  type InternalNode,
+  type XYPosition,
+} from "@xyflow/react";
 
 // this helper function returns the intersection point
 // of the line between the center of the intersectionNode and the target node
-function getNodeIntersection(intersectionNode: Node, targetNode: Node) {
+function getNodeIntersection(
+  intersectionNode: InternalNode,
+  targetNode: InternalNode
+) {
   // https://math.stackexchange.com/questions/1724792/an-algorithm-for-finding-the-intersection-point-between-a-center-of-vision-and-a
-  const {
-    width: intersectionNodeWidth,
-    height: intersectionNodeHeight,
-    positionAbsolute: intersectionNodePosition = { x: 0, y: 0 },
-  } = intersectionNode;
-  const targetPosition = targetNode.positionAbsolute ?? { x: 0, y: 0 };
+  const { width: intersectionNodeWidth, height: intersectionNodeHeight } =
+    intersectionNode.measured;
+  const intersectionNodePosition = intersectionNode.internals.positionAbsolute;
+  const targetPosition = targetNode.internals.positionAbsolute;
 
   const w = (intersectionNodeWidth ?? 0) / 2;
   const h = (intersectionNodeHeight ?? 0) / 2;
 
   const x2 = intersectionNodePosition.x + w;
   const y2 = intersectionNodePosition.y + h;
-  const x1 = targetPosition.x + (targetNode.width ?? 0) / 2;
-  const y1 = targetPosition.y + (targetNode.height ?? 0) / 2;
+  const x1 = targetPosition.x + (targetNode.measured.width ?? 0) / 2;
+  const y1 = targetPosition.y + (targetNode.measured.height ?? 0) / 2;
 
   const xx1 = (x1 - x2) / (2 * w) - (y1 - y2) / (2 * h);
   const yy1 = (x1 - x2) / (2 * w) + (y1 - y2) / (2 * h);
@@ -33,10 +38,10 @@ function getNodeIntersection(intersectionNode: Node, targetNode: Node) {
 }
 
 // returns the position (top,right,bottom or right) passed node compared to the intersection point
-function getEdgePosition(node: Node, intersectionPoint: XYPosition) {
-  const n = { ...node.positionAbsolute, ...node };
-  const nx = Math.round(n.x ?? 0);
-  const ny = Math.round(n.y ?? 0);
+function getEdgePosition(node: InternalNode, intersectionPoint: XYPosition) {
+  const n = { ...node.measured, ...node.internals.positionAbsolute };
+  const nx = Math.round(n.x);
+  const ny = Math.round(n.y);
   const px = Math.round(intersectionPoint.x);
   const py = Math.round(intersectionPoint.y);
 
@@ -57,7 +62,7 @@ function getEdgePosition(node: Node, intersectionPoint: XYPosition) {
 }
 
 // returns the parameters (sx, sy, tx, ty, sourcePos, targetPos) you need to create an edge
-export function getEdgeParams(source: Node, target: Node) {
+export function getEdgeParams(source: InternalNode, target: InternalNode) {
   const sourceIntersectionPoint = getNodeIntersection(source, target);
   const targetIntersectionPoint = getNodeIntersection(target, source);
 
@@ -72,37 +77,4 @@ export function getEdgeParams(source: Node, target: Node) {
     sourcePos,
     targetPos,
   };
-}
-
-export function createNodesAndEdges() {
-  const nodes: Node[] = [];
-  const edges: Edge[] = [];
-  let center = { x: 0, y: 0 };
-
-  if (typeof window !== "undefined") {
-    center = { x: window.innerWidth / 2, y: window.innerHeight / 2 };
-  }
-
-  nodes.push({ id: "target", data: { label: "Target" }, position: center });
-
-  for (let i = 0; i < 3; i++) {
-    const degrees = i * (360 / 8);
-    const radians = degrees * (Math.PI / 180);
-    const x = 250 * Math.cos(radians) + center.x;
-    const y = 250 * Math.sin(radians) + center.y;
-
-    nodes.push({ id: `${i}`, data: { label: "Source" }, position: { x, y } });
-
-    edges.push({
-      id: `edge-${i}`,
-      target: "target",
-      source: `${i}`,
-      type: "floating",
-      markerEnd: {
-        type: MarkerType.Arrow,
-      },
-    });
-  }
-
-  return { nodes, edges };
 }

@@ -1,24 +1,23 @@
 import DragHandle from "@tiptap-pro/extension-drag-handle-react";
-import { Editor, useCurrentEditor } from "@tiptap/react";
-
+import { type Editor } from "@tiptap/react";
 import { useEffect, useState } from "react";
+import { PopoverClose } from "@radix-ui/react-popover";
 import { Toolbar } from "@/components/ui/toolbar";
 import { Icon } from "@/components/ui/icon";
-import { useData } from "./hooks/use-data";
-import useContentItemActions from "./hooks/use-content-item-actions";
 import {
   Popover,
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
-import { PopoverClose } from "@radix-ui/react-popover";
 import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { useData } from "./hooks/use-data";
+import useContentItemActions from "./hooks/use-content-item-actions";
 
-export type ContentItemMenuProps = {
+export interface ContentItemMenuProps {
   editor: Editor;
-};
+}
 
-export const ContentItemMenu = ({ editor }: ContentItemMenuProps) => {
+export function ContentItemMenu({ editor }: ContentItemMenuProps) {
   const [menuOpen, setMenuOpen] = useState(false);
 
   const data = useData();
@@ -92,4 +91,4 @@ export const ContentItemMenu = ({ editor }: ContentItemMenuProps) => {
       </div>
     </DragHandle>
   );
-};
+}

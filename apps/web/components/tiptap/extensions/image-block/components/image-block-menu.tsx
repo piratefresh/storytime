@@ -1,31 +1,14 @@
-import { BubbleMenu, useCurrentEditor } from "@tiptap/react";
-import React, { useCallback, useRef } from "react";
-import { Instance, sticky } from "tippy.js";
-import { v4 as uuid } from "uuid";
-
-import getRenderContainer from "@/lib/editor/getRenderContainer";
-import { MenuProps } from "../../../types";
+import { BubbleMenu } from "@tiptap/react";
+import { useCallback, useId, useRef } from "react";
+import { type Instance, sticky } from "tippy.js";
 import { Toolbar } from "@/components/ui/toolbar";
 import { Icon } from "@/components/ui/icon";
-import CustomImage from "../../image";
-import ImageBlock from "../image-block";
-import Image from "../../image/image";
+import { type MenuProps } from "../../../types";
 
-export const ImageBlockMenu = ({ appendTo, editor }: MenuProps) => {
+export function ImageBlockMenu({ appendTo, editor }: MenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
   const tippyInstance = useRef<Instance | null>(null);
-
-  if (!editor) return null;
-
-  const getReferenceClientRect = useCallback(() => {
-    const renderContainer = getRenderContainer(editor, "node-imageBlock");
-    console.log("renderContainer: ", renderContainer);
-    const rect =
-      renderContainer?.getBoundingClientRect() ||
-      new DOMRect(-1000, -1000, 0, 0);
-
-    return rect;
-  }, [editor]);
+  const menuId = useId();
 
   const shouldShow = useCallback(() => {
     const isActive = editor.isActive("imageBlock");
@@ -57,17 +40,6 @@ export const ImageBlockMenu = ({ appendTo, editor }: MenuProps) => {
       .run();
   }, [editor]);
 
-  const onWidthChange = useCallback(
-    (value: number) => {
-      editor
-        .chain()
-        .focus(undefined, { scrollIntoView: false })
-        .setImageBlockWidth(value)
-        .run();
-    },
-    [editor]
-  );
-
   // const onFloatRight = useCallback(() => {
   //   editor.chain().focus().updateAttributes("image", { float: "right" }).run();
   // }, [editor]);
@@ -91,7 +63,7 @@ export const ImageBlockMenu = ({ appendTo, editor }: MenuProps) => {
   return (
     <BubbleMenu
       editor={editor}
-      pluginKey={`imageBlockMenu-${uuid()}`}
+      pluginKey={`imageBlockMenu-${menuId}`}
       shouldShow={shouldShow}
       updateDelay={0}
       tippyOptions={{
@@ -104,13 +76,13 @@ export const ImageBlockMenu = ({ appendTo, editor }: MenuProps) => {
           tippyInstance.current = instance;
         },
         appendTo: () => {
-          return appendTo?.current;
+          return appendTo?.current as Element;
         },
         plugins: [sticky],
         sticky: "popper",
       }}
     >
-      <Toolbar.Wrapper shouldShowContent={true} ref={menuRef}>
+      <Toolbar.Wrapper shouldShowContent ref={menuRef}>
         <Toolbar.Button
           tooltip="Align image left"
           active={editor.isActive("imageBlock", { align: "left" })}
@@ -164,6 +136,6 @@ export const ImageBlockMenu = ({ appendTo, editor }: MenuProps) => {
       </Toolbar.Wrapper>
     </BubbleMenu>
   );
-};
+}
 
 export default ImageBlockMenu;

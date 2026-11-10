@@ -1,14 +1,14 @@
-import { github, lucia } from "@/lib/auth";
 import { cookies } from "next/headers";
 import { OAuth2RequestError } from "arctic";
 import { generateId } from "lucia";
+import { github, lucia } from "@/lib/auth";
 import db from "@/lib/db";
 
 export async function GET(request: Request): Promise<Response> {
   const url = new URL(request.url);
   const code = url.searchParams.get("code");
   const state = url.searchParams.get("state");
-  const storedState = cookies().get("github_oauth_state")?.value ?? null;
+  const storedState = (await cookies()).get("github_oauth_state")?.value ?? null;
   if (!code || !state || !storedState || state !== storedState) {
     return new Response(null, {
       status: 400,
@@ -22,7 +22,7 @@ export async function GET(request: Request): Promise<Response> {
         Authorization: `Bearer ${tokens.accessToken}`,
       },
     });
-    const githubUser: GitHubUser = await githubUserResponse.json();
+    const githubUser = (await githubUserResponse.json()) as GitHubUser;
     const existingUser = await db.user.findFirst({
       where: {
         oAuthAccount: {
@@ -38,7 +38,7 @@ export async function GET(request: Request): Promise<Response> {
     if (existingUser) {
       const session = await lucia.createSession(existingUser.id, {});
       const sessionCookie = lucia.createSessionCookie(session.id);
-      cookies().set(
+      (await cookies()).set(
         sessionCookie.name,
         sessionCookie.value,
         sessionCookie.attributes
@@ -56,7 +56,7 @@ export async function GET(request: Request): Promise<Response> {
     await db.user.create({
       data: {
         id: userId,
-        email: githubUser?.email ? githubUser.email : githubUser.login,
+        email: githubUser.email ? githubUser.email : githubUser.login,
         oAuthAccount: {
           create: {
             providerId: githubUser.id.toString(),
@@ -73,7 +73,7 @@ export async function GET(request: Request): Promise<Response> {
     // });
     const session = await lucia.createSession(userId, {});
     const sessionCookie = lucia.createSessionCookie(session.id);
-    cookies().set(
+    (await cookies()).set(
       sessionCookie.name,
       sessionCookie.value,
       sessionCookie.attributes

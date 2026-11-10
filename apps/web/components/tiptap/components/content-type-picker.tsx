@@ -1,6 +1,5 @@
-import { icons } from "lucide-react";
+import { type icons } from "lucide-react";
 import { useMemo } from "react";
-
 import { Toolbar } from "@/components/ui/toolbar";
 import { Icon } from "@/components/ui/icon";
 import {
@@ -11,7 +10,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 
-export type ContentTypePickerOption = {
+export interface ContentTypePickerOption {
   label: string;
   id: string;
   type: "option";
@@ -19,34 +18,29 @@ export type ContentTypePickerOption = {
   isActive: () => boolean;
   onClick: () => void;
   icon: keyof typeof icons;
-};
+}
 
-export type ContentTypePickerCategory = {
+export interface ContentTypePickerCategory {
   label: string;
   id: string;
   type: "category";
-};
+}
 
-export type ContentPickerOptions = Array<
-  ContentTypePickerOption | ContentTypePickerCategory
->;
+export type ContentPickerOptions = (ContentTypePickerOption | ContentTypePickerCategory)[];
 
-export type ContentTypePickerProps = {
+export interface ContentTypePickerProps {
   options: ContentPickerOptions;
   container: HTMLDivElement | null;
-};
+}
 
 const isOption = (
   option: ContentTypePickerOption | ContentTypePickerCategory
 ): option is ContentTypePickerOption => option.type === "option";
-const isCategory = (
-  option: ContentTypePickerOption | ContentTypePickerCategory
-): option is ContentTypePickerCategory => option.type === "category";
 
-export const ContentTypePicker = ({
+export function ContentTypePicker({
   options,
   container,
-}: ContentTypePickerProps) => {
+}: ContentTypePickerProps) {
   const activeItem = useMemo(
     () =>
       options.find((option) => option.type === "option" && option.isActive()),
@@ -57,11 +51,11 @@ export const ContentTypePicker = ({
     <DropdownMenu modal={false}>
       <DropdownMenuTrigger asChild>
         <Toolbar.Button
-          active={activeItem?.id !== "paragraph" && !!activeItem?.type}
+          active={activeItem?.id !== "paragraph" && Boolean(activeItem?.type)}
         >
           <Icon
             name={
-              (activeItem?.type === "option" && activeItem.icon) || "Pilcrow"
+              activeItem?.type === "option" ? activeItem.icon : "Pilcrow"
             }
           />
           <Icon name="ChevronDown" className="w-2 h-2" />
@@ -84,17 +78,16 @@ export const ContentTypePicker = ({
                 {option.label}
               </DropdownMenuItem>
             );
-          } else if (isCategory(option)) {
-            return (
-              <div className="first:mt-0" key={option.id}>
-                <DropdownMenuLabel key={option.id}>
-                  {option.label}
-                </DropdownMenuLabel>
-              </div>
-            );
           }
+          return (
+            <div className="first:mt-0" key={option.id}>
+              <DropdownMenuLabel key={option.id}>
+                {option.label}
+              </DropdownMenuLabel>
+            </div>
+          );
         })}
       </DropdownMenuContent>
     </DropdownMenu>
   );
-};
+}

@@ -15,7 +15,6 @@ import {
   Tailwind,
   Text,
 } from "@react-email/components";
-import * as React from "react";
 
 interface VercelInviteUserEmailProps {
   username?: string;
@@ -33,7 +32,7 @@ const baseUrl = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}`
   : "";
 
-export const VercelInviteUserEmail = ({
+export function VercelInviteUserEmail({
   username = "zenorocha",
   userImage = `${baseUrl}/static/vercel-user.png`,
   invitedByUsername = "bukinoshita",
@@ -43,7 +42,7 @@ export const VercelInviteUserEmail = ({
   inviteLink = "https://vercel.com/teams/invite/foo",
   inviteFromIp = "204.13.186.218",
   inviteFromLocation = "São Paulo, Brazil",
-}: VercelInviteUserEmailProps) => {
+}: VercelInviteUserEmailProps) {
   const previewText = `Join ${invitedByUsername} on Vercel`;
 
   return (
@@ -129,7 +128,7 @@ export const VercelInviteUserEmail = ({
               located in{" "}
               <span className="text-black">{inviteFromLocation}</span>. If you
               were not expecting this invitation, you can ignore this email. If
-              you are concerned about your account's safety, please reply to
+              you are concerned about your account&apos;s safety, please reply to
               this email to get in touch with us.
             </Text>
           </Container>
@@ -137,6 +136,6 @@ export const VercelInviteUserEmail = ({
       </Tailwind>
     </Html>
   );
-};
+}
 
 export default VercelInviteUserEmail;

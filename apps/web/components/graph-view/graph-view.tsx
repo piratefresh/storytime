@@ -1,7 +1,8 @@
 "use client";
 
 import { useCallback, useMemo, useRef, useState } from "react";
-import ReactFlow, {
+import {
+  ReactFlow,
   addEdge,
   type Edge,
   type EdgeTypes,
@@ -11,9 +12,9 @@ import ReactFlow, {
   type OnConnect,
   useEdgesState,
   useNodesState,
-} from "reactflow";
+} from "@xyflow/react";
 import Dagre from "@dagrejs/dagre";
-import "reactflow/dist/style.css";
+import "@xyflow/react/dist/style.css";
 import { type StoryWithFolder } from "@/app/(main)/stories/[title]/page";
 import FloatingEdge from "./floating-edge";
 import FloatingConnectionLine from "./floating-connection-line";
@@ -23,8 +24,8 @@ import { FileNode, FolderNode } from "./nodes";
 interface FlowProps {
   id: string;
   story: StoryWithFolder;
-  onAddFolder: (folderId: string) => Promise<void>;
-  onAddFile: (parentId: string) => Promise<void>;
+  onAddFolder: (folderId?: string) => Promise<void>;
+  onAddFile: (parentId?: string) => Promise<void>;
 }
 
 const edgeTypes: EdgeTypes = {
@@ -42,7 +43,6 @@ function generateReactFlowData(story: StoryWithFolder): {
     data: { label: story.title, id: story.id, type: "story" },
     position: { x: 0, y: 0 }, // Top center position
   };
-  if (!story.folder) return { nodes: [topNode], edges: [] };
   const nodes: Node[] = [topNode]; // Include the top node
   const edges: Edge[] = []; // Initialize edges array
   const levelMap = { [`story-${story.id}`]: 0 }; // Level map to track node levels
@@ -147,16 +147,16 @@ const nodeTypes = {
   folder: FolderNode,
 };
 
-function Flow({ id, story, onAddFolder, onAddFile }: FlowProps): JSX.Element {
+function Flow({ id, story, onAddFolder, onAddFile }: FlowProps): React.JSX.Element {
   const { nodes: initialNodes, edges: initialEdges } = useMemo(() => {
     const { nodes, edges } = generateReactFlowData(story);
     return getLayoutedElements(nodes, edges, { direction: "TB" });
   }, [story]);
 
-  const [nodes, setNodes, onNodesChange] = useNodesState<Node[]>(initialNodes);
+  const [nodes, , onNodesChange] = useNodesState<Node>(initialNodes);
   const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
   const [menu, setMenu] = useState<ContextMenuProps | null>(null);
-  const ref = useRef(null);
+  const ref = useRef<HTMLDivElement>(null);
 
   console.log("nodes: ", nodes);
 
@@ -183,6 +183,7 @@ function Flow({ id, story, onAddFolder, onAddFile }: FlowProps): JSX.Element {
 
       // Calculate position of the context menu. We want to make sure it
       // doesn't get positioned off-screen.
+      if (!ref.current) return;
       const pane = ref.current.getBoundingClientRect();
       setMenu({
         id: node.id,
@@ -194,7 +195,7 @@ function Flow({ id, story, onAddFolder, onAddFile }: FlowProps): JSX.Element {
         open: true,
         onAddFolder,
         onAddFile,
-        data: node.data,
+        data: node.data as ContextMenuProps["data"],
       });
     },
     [onAddFile, onAddFolder]
