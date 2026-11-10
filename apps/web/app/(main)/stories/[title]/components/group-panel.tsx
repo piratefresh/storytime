@@ -1,8 +1,8 @@
 "use client";
 
 import { Fragment } from "react";
-import { type User } from "lucia";
 import { nanoid } from "nanoid";
+import type { User } from "@/lib/auth";
 import {
   ResizableHandle,
   ResizablePanel,
@@ -11,7 +11,7 @@ import {
 import { FileTabs } from "@/components/file-tabs/file-tabs";
 import { useTabsStore } from "@/app/stores/tabs-provider";
 import { type Tab } from "@/app/stores/tabs-store";
-import { type StoryWithFolder } from "../page";
+import { type StoryWithFolder } from "@/lib/stories";
 
 export function GroupPanel({
   story,
@@ -44,7 +44,7 @@ export function EditorPanel({
   story: StoryWithFolder;
 }): React.JSX.Element | null {
   const group = useTabsStore((state) =>
-    state.groups.find((g) => g.id === groupId)
+    state.groups.find((g) => g.id === groupId),
   );
   const activeGroupId = useTabsStore((state) => state.activeGroupId);
   const addTab = useTabsStore((state) => state.addTab);

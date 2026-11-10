@@ -6,21 +6,21 @@
   "globalEnv": [
     "DATABASE_URL",
     "RESEND_API_KEY",
-    "GITHUB_CLIENT_ID",
-    "GITHUB_SECRET",
     "GOOGLE_CLIENT_ID",
     "GOOGLE_SECRET",
     "AWS_ACCESS_KEY",
     "AWS_SECRET_KEY",
     "AWS_BUCKET_NAME",
     "AWS_BUCKET_REGION",
-    "GOOGLE_REDIRECT_URI",
     "NEXT_PUBLIC_AWS_ACCESS_KEY",
     "NEXT_PUBLIC_AWS_SECRET_ACCESS_KEY",
     "NEXT_PUBLIC_AWS_BUCKET_NAME",
     "NEXT_PUBLIC_AWS_BUCKET_REGION",
     "VERCEL_URL",
-    "NODE_ENV"
+    "NODE_ENV",
+    "BETTER_AUTH_SECRET",
+    "BETTER_AUTH_URL",
+    "EMAIL_FROM"
   ],
   "tasks": {
     "topo": {
@@ -51,19 +51,6 @@
     },
     "db:generate": {
       "cache": false,
-      "dependsOn": [
-        "^build"
-      ],
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        ".env"
-      ]
-    },
-    "db:push": {
-      "cache": false,
-      "dependsOn": [
-        "^build"
-      ],
       "inputs": [
         "$TURBO_DEFAULT$",
         ".env"
@@ -71,23 +58,11 @@
     },
     "db:studio": {
       "cache": false,
-      "dependsOn": [
-        "^build"
-      ],
       "inputs": [
         "$TURBO_DEFAULT$",
         ".env"
-      ]
-    },
-    "db:drop": {
-      "cache": false,
-      "dependsOn": [
-        "^build"
       ],
-      "inputs": [
-        "$TURBO_DEFAULT$",
-        ".env"
-      ]
+      "persistent": true
     },
     "web:dev": {
       "cache": false,
@@ -104,6 +79,13 @@
       "dependsOn": [
         "^build"
       ],
+      "inputs": [
+        "$TURBO_DEFAULT$",
+        ".env"
+      ]
+    },
+    "db:migrate": {
+      "cache": false,
       "inputs": [
         "$TURBO_DEFAULT$",
         ".env"

@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { type z } from "zod";
 import { useFormState, useFormStatus } from "react-dom";
-import { type User } from "lucia";
+import type { User } from "@/lib/auth";
 import {
   Form,
   FormControl,
@@ -58,12 +58,7 @@ const FRAMEWORKS = [
   },
 ] satisfies Item[];
 
-export function CreateFolderForm({
-  id,
-}: {
-  user: User | null;
-  id: string;
-}) {
+export function CreateFolderForm({ id }: { user: User | null; id: string }) {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {

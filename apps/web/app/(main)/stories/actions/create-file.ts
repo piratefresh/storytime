@@ -1,89 +1,61 @@
 "use server";
 
-import { ZodError } from "zod";
 import { revalidatePath } from "next/cache";
-import { type File } from "@repo/db";
+import { db, outlineNode } from "@repo/db";
 import { validateRequest } from "@/lib/auth";
+import {
+  assertOwnsProject,
+  uniqueSiblingTitle,
+  type StoryFile,
+} from "@/lib/stories";
 import { type FormState, type FormResponse } from "@/types";
-import { db } from "@/lib/db";
 import { createFileSchema } from "@/schemas";
 
 export async function createFile(
   state: FormState,
-  data: FormData
-): Promise<FormResponse<File>> {
+  data: FormData,
+): Promise<FormResponse<StoryFile>> {
   const { storyId, name, folderId } = createFileSchema.parse({
     name: data.get("name"),
     storyId: data.get("storyId"),
     folderId: data.get("folderId"),
   });
-  const { session } = await validateRequest();
-  if (!session) {
-    throw new ZodError([
-      {
-        path: ["auth"],
-        code: "custom",
-        message: "This action requires authentication.",
-      },
-    ]);
+  const { user } = await validateRequest();
+  if (!user) {
+    return { status: "error", message: "This action requires authentication." };
   }
 
-  // Check if the folder name already exists
-  let newName = name ?? "Untitled";
-  let counter = 0;
-  while (
-    await db.file.findFirst({
-      where: {
-        storyId,
-        name: newName,
-        folderId,
-      },
-    })
-  ) {
-    counter++;
-    newName = `Untitled ${counter.toString()}`;
-  }
   try {
-    const newFile = await db.file.create({
-      data: {
-        storyId,
-        userId: session.userId,
-        name: newName,
-        folderId,
-      },
+    await assertOwnsProject(storyId, user.id);
+    const parentId = folderId ?? null;
+    const title = await uniqueSiblingTitle({
+      projectId: storyId,
+      parentId,
+      base: name ?? "Untitled",
     });
 
-    const story = await db.story.findUnique({
-      where: {
-        id: storyId,
-        ownerId: session.userId,
-      },
-    });
-
-    if (!story) {
-      throw new ZodError([
-        {
-          path: ["story"],
-          code: "custom",
-          message: "Story not found, failed to create file",
-        },
-      ]);
-    }
+    const [scene] = await db
+      .insert(outlineNode)
+      .values({ projectId: storyId, parentId, kind: "scene", title })
+      .returning();
+    if (!scene) throw new Error("Insert returned no row");
 
     revalidatePath("/");
-
     return {
-      message: `File created successfully.`,
+      message: "File created successfully.",
       status: "success",
-      data: newFile,
+      data: {
+        id: scene.id,
+        name: scene.title,
+        folderId: scene.parentId,
+        storyId,
+        content: scene.content,
+        type: null,
+        url: null,
+      },
     };
   } catch (error) {
-    // Log the error for debugging; this is particularly useful during development
     console.error("Error during database operation:", error);
-
-    return {
-      status: "error",
-      message: "Failed to create file",
-    };
+    return { status: "error", message: "Failed to create file" };
   }
 }

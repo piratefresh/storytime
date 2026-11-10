@@ -1,10 +1,9 @@
 "use server";
 
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
-import { lucia } from "@/lib/auth";
-import db from "@/lib/db";
+import { and, db, eq, project } from "@repo/db";
+import { validateRequest } from "@/lib/auth";
 import { type ActionResult } from "@/lib/form";
 
 const storySchema = z.object({
@@ -16,52 +15,36 @@ const storySchema = z.object({
 type FormData = z.infer<typeof storySchema>;
 
 export async function createStory(formData: FormData): Promise<ActionResult> {
-  const validatedFields = storySchema.safeParse(formData);
-  // If form validation fails, return errors early. Otherwise, continue.
-  if (!validatedFields.success) {
-    return {
-      error: "Missing Fields. Failed to Create Invoice.",
-    };
+  if (!storySchema.safeParse(formData).success) {
+    return { error: "Missing fields. Failed to create story." };
   }
 
-  const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
-  if (!sessionId) {
-    return {
-      error: "Session not found",
-    };
-  }
-  const { user } = await lucia.validateSession(sessionId);
-  if (!user) {
-    return {
-      error: "User not found",
-    };
-  }
+  const { user } = await validateRequest();
+  if (!user) return { error: "User not found" };
 
-  // Check if a story with the same title already exists for the user
-  const existingStory = await db.story.findFirst({
-    where: {
-      ownerId: user.id,
-      title: formData.title,
-    },
-  });
-
-  if (existingStory) {
+  const [existing] = await db
+    .select({ id: project.id })
+    .from(project)
+    .where(
+      and(eq(project.ownerId, user.id), eq(project.title, formData.title)),
+    );
+  if (existing) {
     return {
       error:
         "You already have a story with this title. Please choose a different title.",
     };
   }
 
-  const story = await db.story.create({
-    data: {
+  const [story] = await db
+    .insert(project)
+    .values({
       title: formData.title,
       description: formData.description,
       genre: formData.genre,
       ownerId: user.id,
-      status: "PLANNING",
-      content: formData.content,
-    },
-  });
+    })
+    .returning();
+  if (!story) throw new Error("Insert returned no row");
 
   return redirect(`/stories/${story.title}`);
 }

@@ -39,8 +39,8 @@ export const PageBreak = Node.create<PageBreakRuleOptions>({
       {
         tag: "div",
         getAttrs: (node) =>
-          (node as HTMLElement).style.pageBreakAfter === "always" &&
-          (node as HTMLElement).dataset.pageBreak === "true" &&
+          (node).style.pageBreakAfter === "always" &&
+          (node).dataset.pageBreak === "true" &&
           null,
       },
     ];

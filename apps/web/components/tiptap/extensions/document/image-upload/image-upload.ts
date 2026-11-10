@@ -48,7 +48,8 @@ export const ImageUpload = Node.create<CustomImageOptions>({
 
   addOptions() {
     return {
-      ...this.parent(),
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- typed as always set, but undefined at runtime with @tiptap/extension-image 2.2.3
+      ...this.parent?.(),
       uploadImage: () => Promise.resolve(null), // set through configure()
     };
   },

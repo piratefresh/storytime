@@ -1,15 +1,16 @@
 "use server";
 
-import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { type z } from "zod";
+import { db, entity } from "@repo/db";
 import { formSchema } from "@/app/schemas/create-asset-schema";
-import { lucia } from "@/lib/auth";
-import db from "@/lib/db";
+import { validateRequest } from "@/lib/auth";
+import { assertOwnsProject } from "@/lib/stories";
 import { type ActionResult } from "@/lib/form";
 
 type FormData = z.infer<typeof formSchema>;
 
+// Assets became entities (STO-1072). Tags and folder placement have no home there yet.
 export async function createAsset({
   formData,
   storyId,
@@ -17,50 +18,22 @@ export async function createAsset({
   formData: FormData;
   storyId: string;
 }): Promise<ActionResult> {
-  const validatedFields = formSchema.safeParse(formData);
-  // If form validation fails, return errors early. Otherwise, continue.
-  if (!validatedFields.success) {
-    return {
-      error: "Submitted data is invalid. Failed to create folder.",
-    };
+  if (!formSchema.safeParse(formData).success) {
+    return { error: "Submitted data is invalid. Failed to create asset." };
   }
 
-  const sessionId = (await cookies()).get(lucia.sessionCookieName)?.value ?? null;
-  if (!sessionId) {
-    return {
-      error: "Session not found",
-    };
-  }
-  const { user } = await lucia.validateSession(sessionId);
-  if (!user) {
-    return {
-      error: "User not found",
-    };
-  }
+  const { user } = await validateRequest();
+  if (!user) return { error: "User not found" };
+  const story = await assertOwnsProject(storyId, user.id);
 
-  await db.asset.create({
-    data: {
-      content: formData.content,
-      description: formData.description,
-      name: formData.name,
-      type: "note",
-      tags: formData.tags?.map((tag) => tag.value) ?? [],
-      folderId: formData.folderId,
-      storyId,
-    },
+  await db.insert(entity).values({
+    projectId: story.id,
+    type: formData.type,
+    name: formData.name,
+    description: [formData.description, formData.content]
+      .filter(Boolean)
+      .join("\n\n"),
   });
-
-  const story = await db.story.findUnique({
-    where: {
-      id: storyId,
-    },
-  });
-
-  if (!story) {
-    return {
-      error: "Story not found, failed to create folder",
-    };
-  }
 
   return redirect(`/stories/${story.title}`);
 }

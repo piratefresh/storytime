@@ -1,7 +1,6 @@
 "use client";
 
 import { useState } from "react";
-import { type User } from "lucia";
 import { type JSONContent } from "@tiptap/react";
 import {
   DndContext,
@@ -20,10 +19,11 @@ import {
 } from "@dnd-kit/sortable";
 import { SplitSquareHorizontal } from "lucide-react";
 import { ReactFlowProvider, useReactFlow } from "@xyflow/react";
+import type { User } from "@/lib/auth";
 import { cn } from "@/lib/utils";
 import { useUpdateStoryUrl } from "@/hooks/use-update-story-url";
 import { type Tab } from "@/app/stores/tabs-store";
-import { type StoryWithFolder } from "@/app/(main)/stories/[title]/page";
+import { type StoryWithFolder } from "@/lib/stories";
 import { createFile } from "@/app/(main)/stories/actions/create-file";
 import { createFolder } from "@/app/(main)/stories/actions/create-folder";
 import { saveFile } from "@/app/(main)/stories/actions/file/save-file";
@@ -74,7 +74,7 @@ export function FileTabs({
   const [activeId, setActiveId] = useState<string | number | null>(null);
   const sensors = useSensors(
     useSensor(MouseSensor, { activationConstraint: { distance: 5 } }),
-    useSensor(TouchSensor)
+    useSensor(TouchSensor),
   );
 
   const handleDragStart = (event: DragStartEvent): void => {
@@ -182,7 +182,7 @@ export function FileTabs({
           {activeId ? (
             <div
               className={cn(
-                "inline-flex items-center justify-center whitespace-nowrap px-3 py-1.5 text-sm font-medium bg-neutral-800 border border-border ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
+                "inline-flex items-center justify-center whitespace-nowrap px-3 py-1.5 text-sm font-medium bg-neutral-800 border border-border ring-offset-background transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm",
               )}
               id={activeId.toString()}
             >

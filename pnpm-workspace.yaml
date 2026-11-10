@@ -2,13 +2,7 @@ packages:
   - "apps/*"
   - "packages/*"
 
-publicHoistPattern:
-  - "*prisma*"
-
 allowBuilds:
-  "@prisma/client": true
-  "@prisma/engines": true
   "@swc/core": true
   core-js-pure: false
   esbuild: true
-  prisma: true

@@ -1,13 +1,13 @@
 import { type JSONContent, useEditor } from "@tiptap/react";
 import { type EditorProps } from "@tiptap/pm/view";
-import { type User } from "lucia";
+import type { User } from "@/lib/auth";
 import { useSidebar } from "@/hooks/use-sidebar";
 import { Extensions } from "../tiptap/extensions/extensions";
 
 interface BlockEditorProps {
   onChange: (
     content: JSONContent | string | null,
-    plainTextContent: string
+    plainTextContent: string,
   ) => void;
   user: User;
   contentId?: string;

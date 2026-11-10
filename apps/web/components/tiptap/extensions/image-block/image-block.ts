@@ -128,7 +128,8 @@ export const ImageBlock = TiptapImage.extend({
 
   addOptions() {
     return {
-      ...this.parent(),
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition -- typed as always set, but undefined at runtime with @tiptap/extension-image 2.2.3
+      ...this.parent?.(),
     };
   },
 
